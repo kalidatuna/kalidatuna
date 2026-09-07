@@ -1,6 +1,6 @@
 # Hi, I'm Datuna
 
-I'm interested in software engineering, automation, and open-source development.
+Im in software engineering, automation, and open-source development.
 
 ## What I'm working on
 
