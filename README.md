@@ -1,13 +1,19 @@
 # Hi, I'm Datuna
 
-Im in software engineering, automation, and open-source development.
+I work on software engineering, automation, and open-source development, with a focus on Python and JavaScript tools.
 
-## What I'm working on
+## Selected projects
 
-- Developer automation tools
-- Open-source contributions
-- Python and JavaScript projects
+| Project | What it does | Current scope |
+| --- | --- | --- |
+| [Bounty Scout](https://github.com/kalidatuna/bounty-scout) | Summarizes GitHub issues, repository activity, and linked pull requests to help review development opportunities. | Command-line prototype with a heuristic score; reward terms require manual verification. |
+| [RGBlink VUE / Companion PoC](https://github.com/kalidatuna/rgblink-vue-companion-poc) | Generates VISCA camera commands and exposes actions through a Bitfocus Companion module skeleton. | Offline packet and action tests; live camera transport remains unverified. |
+| [DeyeCloud EMS PoC](https://github.com/kalidatuna/deyecloud-ems-poc) | Provides station discovery, telemetry, and explicit opt-in control requests for DeyeCloud. | Diagnostic prototype with fake-transport tests; deployment requires device-specific validation. |
 
 ## Current focus
 
-I'm building tools for evaluating open-source issues and development bounties, while contributing fixes to open-source projects.
+- Practical developer automation and tools for reviewing open-source issues.
+- Small, testable integrations with clear examples and documented limitations.
+- Python and JavaScript projects that make external services easier to inspect and use.
+
+Each repository documents its setup, validation steps, and remaining work. For project-specific questions or reproducible bug reports, use that repository's issue tracker.
