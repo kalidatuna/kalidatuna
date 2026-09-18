@@ -16,4 +16,8 @@ I work on software engineering, automation, and open-source development, with a 
 - Small, testable integrations with clear examples and documented limitations.
 - Python and JavaScript projects that make external services easier to inspect and use.
 
+## Contributions
+
+I contribute through documentation improvements, reproducible issue reports, and small code changes that improve project clarity and reliability.
+
 Each repository documents its setup, validation steps, and remaining work. For project-specific questions or reproducible bug reports, use that repository's issue tracker.
