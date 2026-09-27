@@ -1,0 +1,84 @@
+{
+  "name": "Demo - Retry-safe lead intake",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "demo-lead-intake",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "e16d2ac0-67be-4e91-90a3-a6e9923a0a01",
+      "name": "Lead Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "demo-lead-intake"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json.body ?? $json;\nconst email = String(input.email ?? '').trim().toLowerCase();\nconst source = String(input.source ?? 'web').trim().toLowerCase();\nconst externalId = String(input.lead_id ?? input.id ?? '').trim();\n\nif (!email) {\n  return [{ json: { ok: false, status: 'invalid', error: 'email is required' } }];\n}\n\nconst operationKey = `lead:${source}:${externalId || email}`;\nconst state = $getWorkflowStaticData('global');\nstate.seen ??= {};\n\nif (state.seen[operationKey]) {\n  return [{\n    json: {\n      ok: true,\n      status: 'duplicate',\n      duplicate: true,\n      operationKey,\n      firstSeenAt: state.seen[operationKey],\n      note: 'Safe duplicate. Do not create a second CRM record or follow-up.'\n    }\n  }];\n}\n\nconst now = new Date().toISOString();\nstate.seen[operationKey] = now;\n\nreturn [{\n  json: {\n    ok: true,\n    status: 'accepted',\n    duplicate: false,\n    operationKey,\n    crmUpsert: {\n      external_key: operationKey,\n      email,\n      name: String(input.name ?? '').trim(),\n      company: String(input.company ?? '').trim(),\n      source\n    },\n    followUp: {\n      lead_key: operationKey,\n      due_at: input.follow_up_at ?? null,\n      reason: 'new inbound lead'\n    },\n    receivedAt: now\n  }\n}];"
+      },
+      "id": "e16d2ac0-67be-4e91-90a3-a6e9923a0a02",
+      "name": "Normalize + Dedupe",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "e16d2ac0-67be-4e91-90a3-a6e9923a0a03",
+      "name": "Return Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        520,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Lead Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize + Dedupe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize + Dedupe": {
+      "main": [
+        [
+          {
+            "node": "Return Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "dc6af8e5-4908-481d-9502-6bfeb2b61900",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}
