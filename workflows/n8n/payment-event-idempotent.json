@@ -1,0 +1,84 @@
+{
+  "name": "Demo - Idempotent payment event",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "demo-payment-event",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "667d5f3e-dfc1-44a2-af65-88e720a0b001",
+      "name": "Payment Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "demo-payment-event"
+    },
+    {
+      "parameters": {
+        "jsCode": "const event = $json.body ?? $json;\nconst eventId = String(event.event_id ?? event.id ?? '').trim();\nconst invoiceId = String(event.invoice_id ?? '').trim();\nconst status = String(event.status ?? '').trim().toLowerCase();\n\nif (!eventId || !invoiceId || !status) {\n  return [{\n    json: {\n      ok: false,\n      status: 'invalid',\n      error: 'event_id, invoice_id and status are required'\n    }\n  }];\n}\n\nconst operationKey = `payment-event:${eventId}`;\nconst state = $getWorkflowStaticData('global');\nstate.processed ??= {};\n\nif (state.processed[operationKey]) {\n  return [{\n    json: {\n      ok: true,\n      duplicate: true,\n      operationKey,\n      firstProcessedAt: state.processed[operationKey],\n      note: 'Duplicate delivery accepted without repeating downstream side effects.'\n    }\n  }];\n}\n\nconst now = new Date().toISOString();\nstate.processed[operationKey] = now;\n\nreturn [{\n  json: {\n    ok: true,\n    duplicate: false,\n    operationKey,\n    accountingUpdate: {\n      invoice_id: invoiceId,\n      payment_status: status,\n      amount: event.amount ?? null,\n      currency: event.currency ?? null,\n      paid_at: event.paid_at ?? null,\n      source_event_id: eventId\n    },\n    receiptRequest: status === 'paid'\n      ? {\n          idempotency_key: `receipt:${invoiceId}`,\n          invoice_id: invoiceId,\n          email: event.customer_email ?? null\n        }\n      : null,\n    processedAt: now\n  }\n}];"
+      },
+      "id": "667d5f3e-dfc1-44a2-af65-88e720a0b002",
+      "name": "Validate + Dedupe Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "667d5f3e-dfc1-44a2-af65-88e720a0b003",
+      "name": "Return Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        520,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Payment Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate + Dedupe Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate + Dedupe Event": {
+      "main": [
+        [
+          {
+            "node": "Return Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "14e0bbf6-e3a1-4c44-a19c-99d783214d42",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}
