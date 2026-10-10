@@ -72,7 +72,7 @@ def test_recover_detail_blends_towards_resized_original(fake_pipeline, gradient)
 
 
 def test_preview_patch_matches_full_render(fake_pipeline, gradient):
-    s = Settings(scale=4, tile=0)
+    s = Settings(scale=4, tile=0, prescale=1.0)
     full, _ = fake_pipeline.process(gradient, s)
     cache = {}
     patch, (x, y, w, h) = fake_pipeline.preview(gradient, s, (10, 8, 20, 16), cache=cache)
@@ -80,8 +80,13 @@ def test_preview_patch_matches_full_render(fake_pipeline, gradient):
     np.testing.assert_allclose(patch, full[y:y + h, x:x + w], atol=1e-6)
     # A post-processing change reuses the cached AI result.
     assert len(cache) == 1
-    fake_pipeline.preview(gradient, Settings(scale=4, tile=0, sharpen=0.5), (10, 8, 20, 16), cache=cache)
+    fake_pipeline.preview(gradient, Settings(scale=4, tile=0, sharpen=0.5, prescale=1.0), (10, 8, 20, 16), cache=cache)
     assert len(cache) == 1
+    # With a soft-source shrink, the crop is resampled on a slightly different grid: close, not identical.
+    s2 = Settings(scale=4, tile=0, prescale=0.5)
+    full2, _ = fake_pipeline.process(gradient, s2)
+    patch2, (x, y, w, h) = fake_pipeline.preview(gradient, s2, (10, 8, 20, 16))
+    assert np.abs(patch2 - full2[y:y + h, x:x + w]).max() < 2 / 255
 
 
 def test_face_crop_and_paste_roundtrip():
@@ -358,3 +363,27 @@ def test_to_half_uses_tested_override_without_spandrel_refusal():
     assert not to_half(dat) and dtype(dat) == torch.float32
     span = Desc("SPAN", True)
     assert to_half(span) and dtype(span) == torch.float16
+
+
+def test_softness_detection_separates_sharp_and_blurry():
+    from enhancer import softness
+
+    rng = np.random.default_rng(8)
+    sharp = cv2.GaussianBlur(rng.random((256, 192, 3)).astype(np.float32), (0, 0), 0.7)
+    blurry = cv2.GaussianBlur(sharp, (0, 0), 2.5)
+    to8 = lambda a: (np.clip(a, 0, 1) * 255).astype(np.uint8)
+    assert softness.detect([to8(sharp)]) == 1.0
+    f = softness.detect([to8(blurry), to8(blurry)])
+    assert f in (0.5, 0.4, 0.33)
+    assert softness.detect([]) == 1.0
+
+
+def test_prescale_keeps_output_size_and_uses_one_pass(fake_pipeline, gradient):
+    s = Settings(model="social-fast", scale=2, prescale=0.4, tile=0)
+    assert fake_pipeline.passes_needed(s, 64, 48, 0.4) == 1  # 5x needed: one 4x pass + small resize
+    assert fake_pipeline.passes_needed(Settings(model="social-fast", scale=6), 64, 48) == 2  # unchanged otherwise
+    out, _ = fake_pipeline.process(gradient, s)
+    assert out.shape == (96, 128, 3)
+    resolved = fake_pipeline.resolve(Settings(prescale=0.0), [(gradient * 255).astype(np.uint8)])
+    assert resolved.prescale in (1.0, 0.5, 0.4, 0.33)
+    assert fake_pipeline.resolve(Settings(prescale=0.5), []).prescale == 0.5

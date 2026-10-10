@@ -400,6 +400,17 @@ class MainWindow(QMainWindow):
             self.viewer.set_message(f"Cannot open {it.path.name}: {e}")
             return
         w, h = it.image.size
+        if "prescale" not in it.extra:
+            from .. import softness
+
+            if it.video:
+                from ..video import sample_frames
+
+                frames = sample_frames(it.path)
+            else:
+                frames = [it.image.rgb]
+            it.extra["prescale"] = softness.detect(frames)
+        self.panel.set_detected_prescale(it.extra["prescale"])
         self.panel.set_input_size(w, h)
         self.panel.set_video(it.video)
         self.test_btn.setEnabled(it.video)
@@ -542,6 +553,8 @@ class MainWindow(QMainWindow):
                 return  # the running preview already covers this area
         rects.append(rect)
         s = self.panel.settings()
+        if s.prescale <= 0:
+            s.prescale = it.extra.get("prescale", 1.0)
         pipe = self.pipeline(s.device)
         cache = self.preview_cache
         rgb = it.image.rgb

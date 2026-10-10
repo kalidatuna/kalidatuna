@@ -128,6 +128,23 @@ def read_frame(path: str | Path, index: int = 0) -> np.ndarray:
     return frame.reshape(info.height, info.width, 3).astype(np.float32) / 255.0
 
 
+def sample_frames(src: str | Path, info: VideoInfo | None = None, count: int = 5) -> list[np.ndarray]:
+    """A few frames spread over the video, as uint8 RGB arrays (for softness detection)."""
+    info = info or probe(src)
+    duration = info.frames / float(info.fps) if info.fps else 0
+    times = [duration * (i + 0.5) / count for i in range(count)] if duration else [0.0]
+    out = []
+    for t in times:
+        raw = subprocess.run(
+            [ffmpeg_bin(), "-v", "error", "-ss", f"{t:.3f}", "-i", str(src), "-frames:v", "1",
+             "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
+            capture_output=True,
+        ).stdout
+        if len(raw) >= info.width * info.height * 3:
+            out.append(np.frombuffer(raw, np.uint8)[: info.width * info.height * 3].reshape(info.height, info.width, 3))
+    return out
+
+
 def even_settings(s: Settings, w: int, h: int) -> Settings:
     """Most video codecs need even dimensions."""
     ow, oh = s.output_size(w, h)
@@ -183,6 +200,8 @@ def enhance_video(src: str | Path, dst: str | Path, settings: Settings, pipeline
     dst.parent.mkdir(parents=True, exist_ok=True)
     info = probe(src)
     s = even_settings(settings, info.width, info.height)
+    if s.prescale <= 0:
+        s = Pipeline.resolve(s, sample_frames(src, info))
     ow, oh = s.width, s.height
     frame_bytes = info.width * info.height * 3
     total = info.frames

@@ -11,7 +11,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from . import models
+from . import models, softness
 from .faces import FaceDetector, paste_all, restore_all
 from .imageio import to_uint8
 from .tiling import Cancelled, descriptor_fn, run_tiled
@@ -37,6 +37,7 @@ class Settings:
     face_fidelity: float = 0.7  # CodeFormer only: 0 = most restoration, 1 = closest to input
     sharpen: float = 0.0  # 0..1 unsharp mask amount
     grain: float = 0.0  # 0..1 film grain, stronger in shadows; hides flat "painted" areas and banding
+    prescale: float = 0.0  # shrink before upscaling for soft sources: 0 = detect, 1 = never, else the factor
     tile: int = 0  # input tile size; 0 = automatic (largest that fits in GPU memory)
     device: str = "auto"
 
@@ -137,19 +138,30 @@ class Pipeline:
             self._detector = FaceDetector(models.ensure_file("YuNet", self._dl("YuNet")))
         return self._detector
 
-    def passes_needed(self, s: Settings, w: int, h: int) -> int:
+    def passes_needed(self, s: Settings, w: int, h: int, prescale: float = 1.0) -> int:
         ow, oh = s.output_size(w, h)
-        target = max(ow / w, oh / h)
+        target = max(ow / w, oh / h) / prescale
         native = models.UPSCALERS[s.model].scale
         n = max(1, math.ceil(math.log(max(target, 1.0)) / math.log(native) - 1e-9))
+        if prescale < 1.0 and n > 1 and target / native ** (n - 1) <= 1.5:
+            n -= 1  # a soft source gains nothing from a second AI pass; finish with a small resize
         return min(n, 2)
+
+    @staticmethod
+    def resolve(s: Settings, frames) -> Settings:
+        """Return ``s`` with an automatic prescale (0) replaced by the detected factor."""
+        if s.prescale > 0:
+            return s
+        out = Settings.from_dict(s.to_dict())
+        out.prescale = softness.detect(frames)
+        return out
 
     @staticmethod
     def base_key(s: Settings) -> tuple:
         """Settings that change the AI upscale result; the rest are cheap post-steps."""
         noise = round(s.noise, 2) if models.UPSCALERS[s.model].denoise_blend else 0.0
         den = (s.denoise_model, round(s.denoise_strength, 2)) if s.denoise_model else ("", 0.0)
-        return (s.model, noise, den, s.tile)
+        return (s.model, noise, den, s.tile, round(s.prescale, 3))
 
     def upscale_t(self, x: torch.Tensor, s: Settings, progress: Progress | None = None,
                   cancel: Callable[[], bool] | None = None) -> torch.Tensor:
@@ -159,7 +171,10 @@ class Pipeline:
         if max(ow / w, oh / h) > MAX_SCALE:
             raise ValueError(f"Scale above {MAX_SCALE:g}x is not supported")
         up = models.UPSCALERS[s.model]
-        n_pass = self.passes_needed(s, w, h)
+        if s.prescale <= 0:
+            s = self.resolve(s, [to_numpy(x)])
+        prescale = min(1.0, s.prescale)
+        n_pass = self.passes_needed(s, w, h, prescale)
         weights = {f"upscale{i}": 3.0 for i in range(n_pass)}
         if s.denoise_model:
             weights["denoise"] = 1.0
@@ -180,6 +195,9 @@ class Pipeline:
                             progress=stage_progress("denoise", "Cleaning up"), cancel=cancel, auto_key=key)
             img = img + (den - img) * float(s.denoise_strength)
             done_w += weights["denoise"]
+
+        if prescale < 1.0:
+            img = resize(img, max(8, round(w * prescale)), max(8, round(h * prescale)))
 
         blend = float(s.noise) if up.denoise_blend else 0.0
         desc = self.cache.get(up.files, blend, progress=self._dl(up.label))
@@ -276,6 +294,8 @@ class Pipeline:
         ``cache`` keeps the AI result, so changing only the detail, sharpen or
         face settings re-renders the preview almost instantly.
         """
+        if s.prescale <= 0:
+            s = self.resolve(s, [rgb])
         h, w = rgb.shape[:2]
         ow, oh = s.output_size(w, h)
         sx, sy = ow / w, oh / h

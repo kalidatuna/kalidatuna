@@ -129,6 +129,14 @@ class SettingsPanel(QScrollArea):
         dims.addWidget(QLabel("x"))
         dims.addWidget(self.out_h)
         f.addRow("Size", dims)
+        self.prescale = QComboBox()
+        for v, text in ((0.0, "Auto"), (1.0, "Sharp: no shrink"), (0.5, "Soft: shrink to 50% first"),
+                        (0.4, "Very soft: shrink to 40% first"), (0.33, "Extremely soft: shrink to 33% first")):
+            self.prescale.addItem(text, v)
+        self.prescale.setToolTip("Blurry sources (filters, focus, heavy compression) upscale better when shrunk "
+                                 "first: the AI then re-creates edges and texture instead of keeping the blur. "
+                                 "It is also faster. Auto measures each file.")
+        f.addRow("Source sharpness", self.prescale)
         root.addWidget(g)
 
         # Enhance
@@ -227,7 +235,8 @@ class SettingsPanel(QScrollArea):
             c.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
             c.setMinimumContentsLength(8)
 
-        base = [self.model.currentIndexChanged, self.noise.valueChanged, self.denoise.currentIndexChanged,
+        base = [self.model.currentIndexChanged, self.prescale.currentIndexChanged, self.noise.valueChanged,
+                self.denoise.currentIndexChanged,
                 self.denoise_strength.valueChanged, self.tile.valueChanged, self.device.currentIndexChanged]
         post = [self.recover.valueChanged, self.sharpen.valueChanged, self.grain.valueChanged, self.face_on.toggled,
                 self.face_model.currentIndexChanged, self.face_strength.valueChanged,
@@ -300,6 +309,14 @@ class SettingsPanel(QScrollArea):
         self.fidelity_label.setEnabled(cf)
         self.quality.setEnabled(self.fmt.currentData() in ("jpeg", "webp", "same"))
 
+    def set_detected_prescale(self, factor: float | None):
+        """Show what Auto detected for the current file."""
+        from ..softness import label
+
+        text = "Auto" if factor is None else (
+            f"Auto ({label(factor)}" + (")" if factor >= 1.0 else f": {round(factor * 100)}%)"))
+        self.prescale.setItemText(0, text)
+
     def set_video(self, is_video: bool):
         self.is_video = is_video
         self._sync_enabled()
@@ -338,6 +355,7 @@ class SettingsPanel(QScrollArea):
             face_fidelity=self.face_fidelity.value(),
             sharpen=self.sharpen.value(),
             grain=self.grain.value(),
+            prescale=self.prescale.currentData(),
             tile=self.tile.value(),
             device=self.device.currentData(),
         )
@@ -353,6 +371,8 @@ class SettingsPanel(QScrollArea):
             self.recover.setValue(s.recover_detail)
             self.sharpen.setValue(s.sharpen)
             self.grain.setValue(s.grain)
+            i = self.prescale.findData(s.prescale)
+            self.prescale.setCurrentIndex(i if i >= 0 else 0)
             self.face_on.setChecked(bool(s.face_model))
             if s.face_model:
                 _select(self.face_model, s.face_model)
