@@ -126,12 +126,58 @@ def restore_crop(desc, crop: np.ndarray, kind: str, fidelity: float = 0.5) -> to
     return (out.float().clamp(-1, 1) + 1.0) / 2.0
 
 
-def restore_all(src: np.ndarray, faces: list[Face], desc, kind: str,
-                fidelity: float) -> list[tuple[torch.Tensor, np.ndarray]]:
+def _gaussian(x: torch.Tensor, sigma: float) -> torch.Tensor:
+    r = max(1, int(np.ceil(3 * sigma)))
+    k = torch.exp(-torch.arange(-r, r + 1, dtype=torch.float32, device=x.device) ** 2 / (2 * sigma * sigma))
+    k = k / k.sum()
+    c = x.shape[1]
+    x = F.pad(x, (r, r, r, r), mode="reflect")
+    x = F.conv2d(x, k.view(1, 1, 1, -1).expand(c, 1, 1, -1), groups=c)
+    return F.conv2d(x, k.view(1, 1, -1, 1).expand(c, 1, -1, 1), groups=c)
+
+
+DETAIL_SIGMA = 2.5  # px at 512: finer than this comes from the detail model, coarser from the face model
+DETAIL_INPUT = 128  # the detail model upscales a 128 px aligned crop 4x to 512
+
+
+def face_width(m: np.ndarray) -> float:
+    """Width of the 512 px aligned face crop, measured in source pixels."""
+    return FACE_SIZE / float(np.sqrt(abs(np.linalg.det(m[:, :2]))))
+
+
+def add_detail(restored: torch.Tensor, src: np.ndarray, m: np.ndarray, detail_fn, amount: float) -> torch.Tensor:
+    """Add skin, lash and hair micro-detail from a face upscaler to a restored 512 crop.
+
+    Colours and shading stay those of ``restored`` (so eye colour cannot
+    change); only detail finer than DETAIL_SIGMA comes from the detail model.
+    Large faces take that detail from the source itself; small faces (too few
+    source pixels) from the restored face, blended by face size.
+    """
+    k = DETAIL_INPUT / FACE_SIZE
+    width = face_width(m)
+    w_src = float(np.clip((width - 60.0) / 80.0, 0.0, 1.0))  # 0 below ~60 px, 1 above ~140 px
+    parts = []
+    if w_src > 0:
+        small = cv2.warpAffine(src, m * k, (DETAIL_INPUT, DETAIL_INPUT), flags=cv2.INTER_CUBIC,
+                               borderMode=cv2.BORDER_REFLECT)
+        t = torch.from_numpy(np.ascontiguousarray(small.transpose(2, 0, 1)))[None].to(restored.device)
+        parts.append((w_src, detail_fn(t).clamp(0, 1)))
+    if w_src < 1:
+        t = F.interpolate(restored, size=(DETAIL_INPUT, DETAIL_INPUT), mode="area")
+        parts.append((1.0 - w_src, detail_fn(t).clamp(0, 1)))
+    det = sum(w * d for w, d in parts)
+    det = F.interpolate(det, size=restored.shape[-2:], mode="bicubic", align_corners=False) \
+        if det.shape[-1] != restored.shape[-1] else det
+    return (restored + (det - _gaussian(det, DETAIL_SIGMA)) * float(amount)).clamp(0, 1)
+
+
+def restore_all(src: np.ndarray, faces: list[Face], desc, kind: str, fidelity: float,
+                detail_fn=None, detail: float = 0.0) -> list[tuple[torch.Tensor, np.ndarray]]:
     """Restore every face in ``src``. Returns ``(restored_crop, src_to_crop_matrix)`` pairs.
 
     Faces are cropped from the source image, not from the upscaled result, so
     the face model sees real input detail instead of the upscaler's guesses.
+    With ``detail_fn`` and ``detail`` > 0, fine detail is added (see add_detail).
     """
     out = []
     for f in faces:
@@ -139,7 +185,10 @@ def restore_all(src: np.ndarray, faces: list[Face], desc, kind: str,
             crop, m = crop_face(src, f.landmarks)
         except ValueError:
             continue
-        out.append((restore_crop(desc, crop, kind, fidelity), m))
+        restored = restore_crop(desc, crop, kind, fidelity)
+        if detail_fn is not None and detail > 0:
+            restored = add_detail(restored, src, m, detail_fn, detail)
+        out.append((restored, m))
     return out
 
 

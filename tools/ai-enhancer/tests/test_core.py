@@ -420,3 +420,33 @@ def test_files_passed_to_the_command_open_the_app(monkeypatch, tmp_path):
     seen = []
     monkeypatch.setattr(gui_app, "run", lambda argv=None: seen.append(argv) or 0)
     assert main([str(clip)]) == 0 and seen == [["swanaz", str(clip)]]
+
+
+def test_face_detail_keeps_colours_and_adds_only_fine_detail():
+    from enhancer.faces import FFHQ_TEMPLATE_512, _gaussian, add_detail, align_matrix, face_width
+
+    rng = np.random.default_rng(9)
+    restored = torch.full((1, 3, 512, 512), 0.5)
+    restored[:, 2] = 0.8  # a blue face: the colour must survive
+    calls = []
+
+    def detail_fn(t):  # stand-in detail model: 4x upscale plus fine texture and a colour cast
+        calls.append(t.shape[-1])
+        up = torch.nn.functional.interpolate(t, scale_factor=4, mode="nearest")
+        tex = torch.from_numpy(rng.standard_normal((1, 1, up.shape[-2], up.shape[-1])).astype(np.float32)) * 0.05
+        return (up * torch.tensor([1.2, 1.0, 0.6]).view(1, 3, 1, 1) + tex).clamp(0, 1)
+
+    big = FFHQ_TEMPLATE_512 * 0.4 + np.array([40, 30], np.float32)  # face about 205 px wide
+    m = align_matrix(big)
+    assert 180 < face_width(m) < 230
+    src = np.full((400, 400, 3), 0.5, np.float32)
+    out = add_detail(restored, src, m, detail_fn, 1.0)
+    assert calls == [128]  # large face: detail taken from the source only
+    low = _gaussian(out, 6.0)[..., 64:-64, 64:-64]
+    assert torch.allclose(low, restored[..., 64:-64, 64:-64], atol=0.02)  # colours unchanged
+    assert (out - restored).std() > 0.01  # fine detail added
+    calls.clear()
+    tiny = FFHQ_TEMPLATE_512 * 0.08 + np.array([10, 10], np.float32)  # face about 40 px wide
+    add_detail(restored, src, align_matrix(tiny), detail_fn, 1.0)
+    assert calls == [128]  # small face: detail built on the restored face only
+    assert torch.equal(add_detail(restored, src, m, detail_fn, 0.0), restored)

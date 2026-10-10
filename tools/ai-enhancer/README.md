@@ -22,6 +22,7 @@ An open-source desktop app for AI photo and video enhancement: upscaling, noise 
 | Compression artifact removal | **Clean up before upscaling → Remove compression** | FBCNN |
 | Photo AI Denoise (Normal / Strong) | **Clean up before upscaling → Denoise / Denoise strong** | SCUNet (PSNR and GAN variants) |
 | Face Recovery | **Face recovery** with strength (and fidelity for CodeFormer) | YuNet detector, then GFPGAN v1.4 or CodeFormer |
+| Face detail (pores, lashes) | **Face detail** slider | 4xFaceUpSharpLDAT fine detail added on top of the recovered face; colours unchanged |
 | "Recover original detail" | **Recover original detail** slider | Blends the Lanczos-resized original back in |
 | Sharpen | **Sharpen** slider | Unsharp mask (not an AI deblur model) |
 | Video AI upscaling | Video files in the same queue | Per-frame processing through FFmpeg; audio is kept |
@@ -193,7 +194,7 @@ Models are loaded with [spandrel](https://github.com/chaiNNer-org/spandrel).
 
 ```bash
 pip install -e ".[dev]"
-pytest              # 38 tests, offline; a fake model stands in for real checkpoints
+pytest              # 44 tests, offline; a fake model stands in for real checkpoints
 pyflakes enhancer tests
 ```
 

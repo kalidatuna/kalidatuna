@@ -21,7 +21,7 @@ def _settings_from_args(a):
     else:
         s = Settings.from_dict(json.loads(Path(a.preset).read_text()))
     for name in ("model", "scale", "width", "height", "noise", "denoise_model", "denoise_strength",
-                 "recover_detail", "face_model", "face_strength", "face_fidelity", "sharpen", "grain", "tile",
+                 "recover_detail", "face_model", "face_strength", "face_fidelity", "face_detail", "sharpen", "grain", "tile",
                  "device"):
         v = getattr(a, name, None)
         if v is not None:
@@ -138,6 +138,7 @@ def _add_settings_args(p: argparse.ArgumentParser):
     p.add_argument("--face", dest="face_model", choices=["", *models.FACE_MODELS])
     p.add_argument("--face-strength", type=float)
     p.add_argument("--fidelity", dest="face_fidelity", type=float, help="CodeFormer only, 0..1")
+    p.add_argument("--face-detail", type=float, help="0..1 skin pores, lashes and hair strands on faces")
     p.add_argument("--sharpen", type=float)
     p.add_argument("--grain", type=float, help="0..1 film grain, stronger in shadows")
     p.add_argument("--tile", type=int)
@@ -145,7 +146,7 @@ def _add_settings_args(p: argparse.ArgumentParser):
 
 
 def build_parser() -> argparse.ArgumentParser:
-    ap = argparse.ArgumentParser(prog="ai-enhancer", description="Open-source AI photo and video enhancer.")
+    ap = argparse.ArgumentParser(prog="swanaz", description="Swanaz: free, open-source AI upscaler for photos and videos.")
     sub = ap.add_subparsers(dest="cmd")
     sub.add_parser("gui", help="open the desktop app (default)")
 

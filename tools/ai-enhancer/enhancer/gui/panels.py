@@ -175,6 +175,11 @@ class SettingsPanel(QScrollArea):
         f.addRow("Model", self.face_model)
         self.face_strength = Slider(0.8)
         f.addRow("Strength", self.face_strength)
+        self.face_detail = Slider(0.0)
+        self.face_detail.setToolTip("Adds skin pores, eyelashes and hair strands to recovered faces "
+                                    "(4xFaceUpSharpLDAT). Colours stay those of the face, so eye colour does not change.")
+        self.face_detail_label = QLabel("Face detail (pores, lashes)")
+        f.addRow(self.face_detail_label, self.face_detail)
         self.face_fidelity = Slider(0.7)
         self.fidelity_label = QLabel("Fidelity")
         f.addRow(self.fidelity_label, self.face_fidelity)
@@ -239,7 +244,7 @@ class SettingsPanel(QScrollArea):
                 self.denoise.currentIndexChanged,
                 self.denoise_strength.valueChanged, self.tile.valueChanged, self.device.currentIndexChanged]
         post = [self.recover.valueChanged, self.sharpen.valueChanged, self.grain.valueChanged, self.face_on.toggled,
-                self.face_model.currentIndexChanged, self.face_strength.valueChanged,
+                self.face_model.currentIndexChanged, self.face_strength.valueChanged, self.face_detail.valueChanged,
                 self.face_fidelity.valueChanged]
         out = [self.fmt.currentIndexChanged, self.quality.valueChanged, self.keep16.toggled,
                self.folder.textChanged, self.codec.currentIndexChanged, self.crf.valueChanged,
@@ -302,7 +307,7 @@ class SettingsPanel(QScrollArea):
         self.noise_label.setEnabled(up.denoise_blend)
         self.denoise_strength.setEnabled(bool(self.denoise.currentData()))
         on = self.face_on.isChecked()
-        for w in (self.face_model, self.face_strength):
+        for w in (self.face_model, self.face_strength, self.face_detail, self.face_detail_label):
             w.setEnabled(on)
         cf = on and self.face_model.currentData() == "codeformer"
         self.face_fidelity.setEnabled(cf)
@@ -353,6 +358,7 @@ class SettingsPanel(QScrollArea):
             face_model=self.face_model.currentData() if self.face_on.isChecked() else "",
             face_strength=self.face_strength.value(),
             face_fidelity=self.face_fidelity.value(),
+            face_detail=self.face_detail.value(),
             sharpen=self.sharpen.value(),
             grain=self.grain.value(),
             prescale=self.prescale.currentData(),
@@ -378,6 +384,7 @@ class SettingsPanel(QScrollArea):
                 _select(self.face_model, s.face_model)
             self.face_strength.setValue(s.face_strength)
             self.face_fidelity.setValue(s.face_fidelity)
+            self.face_detail.setValue(s.face_detail)
             self.tile.setValue(s.tile)
             _select(self.device, s.device)
         finally:

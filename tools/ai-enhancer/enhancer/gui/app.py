@@ -129,7 +129,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle(APP)
         self.setAcceptDrops(True)
-        self.store = QSettings("ai-enhancer", "ai-enhancer")
+        self.store = QSettings("swanaz", "swanaz")
         self.items: list[Item] = []
         self.current: Item | None = None
         self.runner = JobRunner()
@@ -196,7 +196,7 @@ class MainWindow(QMainWindow):
         tools.addStretch(1)
         self.auto_preview = QCheckBox("Auto preview")
         self.auto_preview.setChecked(True)
-        self.auto_preview.toggled.connect(lambda on: on and self.schedule_preview())
+        self.auto_preview.toggled.connect(self._auto_preview_toggled)
         tools.addWidget(self.auto_preview)
         self.preview_btn = QPushButton("Preview")
         self.preview_btn.clicked.connect(lambda: self.run_preview(force=True))
@@ -460,6 +460,12 @@ class MainWindow(QMainWindow):
     def _view_changed(self):
         if not self.viewer.dragging:
             self.schedule_preview(delay=400)
+
+    def _auto_preview_toggled(self, on: bool):
+        if on:
+            self.schedule_preview()
+        elif hasattr(self, "_preview_timer"):
+            self._preview_timer.stop()  # a preview scheduled before switching off must not start
 
     def schedule_preview(self, delay: int = 300, refinish: bool = False):
         if not self.auto_preview.isChecked():

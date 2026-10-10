@@ -185,6 +185,14 @@ FILES: dict[str, ModelFile] = {
             "Jiaxi Jiang et al.",
         ),
         ModelFile(
+            "4xFaceUpSharpLDAT",
+            "4xFaceUpSharpLDAT.safetensors",
+            f"{_PH}/4xFaceUpDAT_Series/4xFaceUpSharpLDAT.safetensors",
+            "37a800f85339e83c44c3dc9f7d40641112ef5287189a618984f8ac8585595510",
+            "CC-BY-4.0",
+            "Philip Hofmann",
+        ),
+        ModelFile(
             "YuNet",
             "face_detection_yunet_2023mar.onnx",
             "https://media.githubusercontent.com/media/opencv/opencv_zoo/main/models/"
@@ -308,6 +316,10 @@ FACE_MODELS: dict[str, tuple[str, str]] = {
 }
 
 
+# Adds skin pores, eyelashes and hair strands to recovered faces (see faces.add_detail).
+FACE_DETAIL = "4xFaceUpSharpLDAT"
+
+
 def is_commercial(file_keys) -> bool:
     return all(FILES[k].commercial for k in file_keys)
 
@@ -318,14 +330,16 @@ def credits() -> list[str]:
 
 
 def model_dir() -> Path:
-    env = os.environ.get("ENHANCER_MODEL_DIR")
+    env = os.environ.get("SWANAZ_MODEL_DIR") or os.environ.get("ENHANCER_MODEL_DIR")
     if env:
         return Path(env).expanduser()
     if os.name == "nt":
         base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
     else:
         base = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache"))
-    return base / "ai-enhancer" / "models"
+    new, old = base / "swanaz" / "models", base / "ai-enhancer" / "models"
+    # Reuse models downloaded by earlier versions (named AI Enhancer) instead of downloading 1.7 GB again.
+    return old if old.is_dir() and not new.exists() else new
 
 
 def _sha256(path: Path) -> str:
@@ -450,7 +464,7 @@ HALF_TESTED = {"PLKSR"}
 class ModelCache:
     """Keeps recently used models in memory, keyed by file set and blend."""
 
-    def __init__(self, device, max_items: int = 4):
+    def __init__(self, device, max_items: int = 6):
         self.device = device
         self.max_items = max_items
         self._items: dict[tuple, object] = {}

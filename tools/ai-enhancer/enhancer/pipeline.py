@@ -35,6 +35,7 @@ class Settings:
     face_model: str = ""  # "", "gfpgan" or "codeformer"
     face_strength: float = 0.8  # 0..1 blend of restored faces
     face_fidelity: float = 0.7  # CodeFormer only: 0 = most restoration, 1 = closest to input
+    face_detail: float = 0.0  # 0..1 skin pores, lashes and hair strands added to recovered faces
     sharpen: float = 0.0  # 0..1 unsharp mask amount
     grain: float = 0.0  # 0..1 film grain, stronger in shadows; hides flat "painted" areas and banding
     prescale: float = 0.0  # shrink before upscaling for soft sources: 0 = detect, 1 = never, else the factor
@@ -228,7 +229,8 @@ class Pipeline:
             img = img + (resize(src_t, ow, oh) - img) * float(s.recover_detail)
         img = img.clamp(0, 1)
         if s.face_model and s.face_strength > 0:
-            key = (s.face_model, round(s.face_fidelity, 2) if s.face_model == "codeformer" else 0.0)
+            key = (s.face_model, round(s.face_fidelity, 2) if s.face_model == "codeformer" else 0.0,
+                   round(s.face_detail, 2))
             restored = face_cache.get(key) if face_cache is not None else None
             if restored is None:
                 if faces is None:
@@ -237,7 +239,12 @@ class Pipeline:
                 if faces:
                     _, mkey = models.FACE_MODELS[s.face_model]
                     fdesc = self.cache.get((mkey,), progress=self._dl(mkey))
-                    restored = restore_all(src, faces, fdesc, s.face_model, s.face_fidelity)
+                    detail_fn = None
+                    if s.face_detail > 0:
+                        ddesc = self.cache.get((models.FACE_DETAIL,), progress=self._dl(models.FACE_DETAIL))
+                        detail_fn = descriptor_fn(ddesc)
+                    restored = restore_all(src, faces, fdesc, s.face_model, s.face_fidelity,
+                                           detail_fn, s.face_detail)
                 if face_cache is not None:
                     face_cache[key] = restored
             img = paste_all(img.clone(), src.shape, restored, s.face_strength)

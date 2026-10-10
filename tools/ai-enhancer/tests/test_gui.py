@@ -8,7 +8,7 @@ import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 # Keep the app's saved settings out of the real user config (read once, at first QSettings use).
-os.environ["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="ai-enhancer-test-")
+os.environ["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="swanaz-test-")
 QtWidgets = pytest.importorskip("PySide6.QtWidgets", exc_type=ImportError)
 
 from enhancer.imageio import save_image  # noqa: E402
@@ -24,7 +24,7 @@ def app():
 def window(app, fake_pipeline, monkeypatch, tmp_path):
     from PySide6.QtCore import QSettings
 
-    QSettings("ai-enhancer", "ai-enhancer").clear()
+    QSettings("swanaz", "swanaz").clear()
     from enhancer.gui import app as gui_app
 
     monkeypatch.setattr(gui_app, "Pipeline", lambda device: fake_pipeline)
