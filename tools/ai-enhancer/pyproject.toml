@@ -31,5 +31,8 @@ ai-enhancer-gui = "enhancer.gui.app:run"
 [tool.setuptools.packages.find]
 include = ["enhancer*"]
 
+[tool.setuptools.package-data]
+enhancer = ["assets/*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

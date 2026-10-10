@@ -390,3 +390,33 @@ def test_prescale_keeps_output_size_and_uses_one_pass(fake_pipeline, gradient):
     resolved = fake_pipeline.resolve(Settings(prescale=0.0), [(gradient * 255).astype(np.uint8)])
     assert resolved.prescale in (1.0, 0.5, 0.4, 0.33)
     assert fake_pipeline.resolve(Settings(prescale=0.5), []).prescale == 0.5
+
+
+def test_linux_shortcut_points_at_this_python(monkeypatch, tmp_path):
+    import sys
+
+    from enhancer import shortcut
+
+    monkeypatch.setattr(sys, "platform", "linux")
+    monkeypatch.setattr(shortcut.os, "name", "posix")
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "share"))
+    desk = tmp_path / "Desktop"
+    desk.mkdir()
+    monkeypatch.setattr(shortcut, "desktop_dir", lambda: desk)
+    monkeypatch.setattr(shortcut.shutil, "which", lambda name: None)
+    made = shortcut.create_shortcuts()
+    assert made == [tmp_path / "share" / "applications" / "swanaz.desktop", desk / "swanaz.desktop"]
+    text = made[1].read_text()
+    assert f"Exec=\"{sys.executable}\" \"-m\" \"enhancer\" %F" in text
+    assert "Name=Swanaz" in text and shortcut.ICON_PNG.exists() and f"Icon={shortcut.ICON_PNG}" in text
+    assert made[1].stat().st_mode & 0o111
+
+
+def test_files_passed_to_the_command_open_the_app(monkeypatch, tmp_path):
+    from enhancer.gui import app as gui_app
+
+    clip = tmp_path / "clip.mp4"
+    clip.write_bytes(b"x")
+    seen = []
+    monkeypatch.setattr(gui_app, "run", lambda argv=None: seen.append(argv) or 0)
+    assert main([str(clip)]) == 0 and seen == [["swanaz", str(clip)]]

@@ -25,7 +25,7 @@ from .panels import SettingsPanel
 from .viewer import CompareView, to_qimage
 from .worker import Job, JobRunner
 
-APP = "AI Enhancer"
+APP = "Swanaz"
 SETTINGS_VERSION = "2"
 
 
@@ -827,6 +827,10 @@ class MainWindow(QMainWindow):
 def run(argv: list[str] | None = None) -> int:
     app = QApplication.instance() or QApplication(argv or sys.argv)
     app.setApplicationName(APP)
+    app.setDesktopFileName("swanaz")  # matches the launcher, so the taskbar shows its icon
+    from ..shortcut import ICON_PNG
+
+    app.setWindowIcon(QIcon(str(ICON_PNG)))
     dark_palette(app)
     win = MainWindow()
     win.show()

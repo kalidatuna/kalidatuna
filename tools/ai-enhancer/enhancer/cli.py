@@ -101,6 +101,14 @@ def cmd_match(a) -> int:
     return 0
 
 
+def cmd_shortcut(a) -> int:
+    from .shortcut import create_shortcuts
+
+    for path in create_shortcuts():
+        print(f"Created {path}")
+    return 0
+
+
 def cmd_models(a) -> int:
     print(f"Model folder: {models.model_dir()}")
     for key, f in models.FILES.items():
@@ -171,6 +179,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--device")
     p.set_defaults(func=cmd_match)
 
+    p = sub.add_parser("shortcut", help="add a Swanaz icon to the desktop and the app menu")
+    p.set_defaults(func=cmd_shortcut)
+
     p = sub.add_parser("models", help="list or download model files")
     p.add_argument("--download", nargs="*", help="model keys, or 'all'")
     p.set_defaults(func=cmd_models)
@@ -178,6 +189,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    if argv and not argv[0].startswith("-") and Path(argv[0]).exists():
+        # Files dropped on the app icon: open the app with them.
+        from .gui.app import run
+
+        return run(["swanaz", *argv])
     args = build_parser().parse_args(argv)
     if args.cmd in (None, "gui"):
         from .gui.app import run
