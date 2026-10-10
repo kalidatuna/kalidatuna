@@ -13,6 +13,7 @@
 #include <QLabel>
 #include <QMenu>
 #include <QMimeData>
+#include <QPainter>
 #include <QToolButton>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -216,9 +217,11 @@ void ProjectPanel::rebuild()
             node->setText(2, QString("%1 × %2").arg(c->width).arg(c->height));
             node->setText(3, timecode(c->duration, c->fps));
         } else if (auto *f = dynamic_cast<FootageItem *>(i)) {
-            node->setIcon(0, icon(f->isStill ? "image" : "footage", QColor(0xa9, 0xcb, 0xc7)));
-            node->setText(1, f->isStill ? "Image" : (f->hasAudio ? "Video + Audio" : "Video"));
-            node->setText(2, QString("%1 × %2").arg(f->width).arg(f->height));
+            const bool audioOnly = !f->hasVideo;
+            node->setIcon(0, icon(audioOnly ? "audio" : f->isStill ? "image" : "footage",
+                                  audioOnly ? QColor(0x4a, 0xa4, 0x4c) : QColor(0xa9, 0xcb, 0xc7)));
+            node->setText(1, audioOnly ? "Audio" : f->isStill ? "Image" : (f->hasAudio ? "Video + Audio" : "Video"));
+            node->setText(2, audioOnly ? QString("48 kHz") : QString("%1 × %2").arg(f->width).arg(f->height));
             node->setText(3, f->isStill ? "" : timecode(f->duration, f->fps));
             node->setToolTip(0, f->path);
         } else {
@@ -248,6 +251,7 @@ void ProjectPanel::updatePreview()
 {
     Item *it = ed_->project().item(selectedItemId());
     thumb_->clear();
+    thumb_->setVisible(it != nullptr);
     if (!it) {
         const int n = int(ed_->project().items.size());
         info_->setText(QString("%1 item%2").arg(n).arg(n == 1 ? "" : "s"));
@@ -256,12 +260,28 @@ void ProjectPanel::updatePreview()
     QImage img;
     QString text = "<b style='color:#ddd'>" + it->name.toHtmlEscaped() + "</b><br>";
     if (auto *f = dynamic_cast<FootageItem *>(it)) {
-        img = f->isStill ? MediaCache::instance().still(f->path) : MediaCache::instance().videoFrame(f->path, 0);
-        text += QString("%1 × %2").arg(f->width).arg(f->height);
-        if (!f->isStill)
-            text += QString("<br>Δ %1, %2 fps").arg(timecode(f->duration, f->fps)).arg(f->fps, 0, 'f', 2);
-        if (f->hasAudio)
-            text += "<br>Audio track (not played yet)";
+        if (!f->hasVideo) {
+            // Waveform thumbnail for audio files.
+            img = QImage(96, 64, QImage::Format_ARGB32_Premultiplied);
+            img.fill(QColor(0x11, 0x11, 0x11));
+            if (auto buf = MediaCache::instance().audio(f->path)) {
+                QPainter p(&img);
+                p.setPen(QColor(0x4a, 0xa4, 0x4c));
+                const double d = buf->duration();
+                for (int x = 0; x < 96; ++x) {
+                    const float pk = buf->peakBetween(d * x / 96, d * (x + 1) / 96);
+                    p.drawLine(QPointF(x + 0.5, 32 - pk * 30), QPointF(x + 0.5, 32 + pk * 30));
+                }
+            }
+            text += QString("Audio · 48 kHz stereo<br>Δ %1").arg(timecode(f->duration, 30));
+        } else {
+            img = f->isStill ? MediaCache::instance().still(f->path) : MediaCache::instance().videoFrame(f->path, 0);
+            text += QString("%1 × %2").arg(f->width).arg(f->height);
+            if (!f->isStill)
+                text += QString("<br>Δ %1, %2 fps").arg(timecode(f->duration, f->fps)).arg(f->fps, 0, 'f', 2);
+            if (f->hasAudio)
+                text += "<br>With audio";
+        }
     } else if (auto *c = dynamic_cast<Composition *>(it)) {
         const double s = std::min(96.0 / c->width, 64.0 / c->height);
         img = ed_->renderer().renderFlattened(*c, 0, std::max(0.02, s));

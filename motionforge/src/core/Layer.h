@@ -46,6 +46,7 @@ public:
 
     // Switches
     bool videoOn = true;
+    bool audioOn = true;
     bool solo = false;
     bool locked = false;
     bool shy = false;
@@ -56,6 +57,8 @@ public:
 
     // Source
     int sourceItemId = 0;      // footage item or composition for Footage/Precomp
+    bool hasAudio = false;     // source carries sound (set when the layer is created)
+    bool audioOnly = false;    // source has no picture (e.g. an MP3)
     QColor solidColor = QColor(200, 60, 60);
     int width = 1920;          // solid / adjustment / null dimensions
     int height = 1080;
@@ -76,6 +79,9 @@ public:
     // Transform
     Property anchor, position, scale, rotation, opacity;
 
+    // Audio
+    Property audioLevels;      // dB
+
     // Time remapping (source seconds as a function of comp time)
     bool timeRemapEnabled = false;
     Property timeRemap;
@@ -87,9 +93,10 @@ public:
     bool transformExpanded = true;
     bool contentsExpanded = true;
     bool effectsExpanded = true;
+    bool audioExpanded = true;
 
     bool activeAt(double t) const { return t >= inPoint - 1e-9 && t < outPoint - 1e-9; }
-    bool hasVisual() const { return type != LayerType::Null; }
+    bool hasVisual() const { return type != LayerType::Null && !audioOnly; }
     bool isTwoDimensionalSource() const { return type == LayerType::Footage || type == LayerType::Precomp; }
 
     std::vector<PropGroup> propertyGroups();

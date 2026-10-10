@@ -61,7 +61,7 @@ private:
         int groupId = 0;   // 1 contents, 2 transform, 3 effects
     };
     enum class Drag { None, Cti, WorkStart, WorkEnd, WorkBar, LayerMove, LayerTrimIn, LayerTrimOut, Keys, Marquee,
-                      Scrub, Reorder, Divider };
+                      Scrub, Reorder, Divider, Marker };
     struct ValueHit {
         QRectF rect;
         int dim;
@@ -87,6 +87,10 @@ private:
     void setTimeFromX(double x);
     double snapTime(double t) const;
     int keyAt(const Row &r, QPointF pos) const;
+    int markerAt(QPointF pos) const;
+    // Returns the delta that snaps any of `times` (+ delta) onto a snap target within 10 px.
+    double snapDelta(const std::vector<double> &times, double delta, bool exceptCti = false) const;
+    void paintWaveform(QPainter &p, const Layer &l, int top, int h);
 
     Editor *ed_;
     std::vector<Row> rows_;
@@ -111,6 +115,7 @@ private:
     std::vector<KeyStart> keyStarts_;
     QRectF marquee_;
     int reorderTarget_ = -1;
+    int dragMarker_ = -1;
     QLineEdit *renameEdit_ = nullptr;
 };
 

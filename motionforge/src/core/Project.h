@@ -37,6 +37,7 @@ public:
     int height = 0;
     double fps = 30.0;
     double duration = 0.0;   // seconds (0 for stills)
+    bool hasVideo = true;
     bool hasAudio = false;
 };
 
@@ -56,6 +57,15 @@ public:
     double shutterPhase = -90.0;
     bool hideShyLayers = false;
     std::vector<std::unique_ptr<Layer>> layers;   // index 0 is the top layer
+
+    struct Marker {
+        double time = 0.0;
+        QString comment;
+        bool selected = false;   // editor state only
+    };
+    std::vector<Marker> markers;   // sorted by time
+    void addMarker(double t, const QString &comment = {});
+    void sortMarkers();
 
     double frameDuration() const { return 1.0 / fps; }
     int frameCount() const { return int(duration * fps + 0.5); }

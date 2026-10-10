@@ -5,10 +5,12 @@
 #include "Icons.h"
 #include "ScrubField.h"
 #include "Theme.h"
+#include "media/MediaCache.h"
 
 #include <QColorDialog>
 #include <QContextMenuEvent>
 #include <QHBoxLayout>
+#include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
@@ -28,7 +30,7 @@ static constexpr int kHeaderH = 36;
 static constexpr int kLayerH = 22;
 static constexpr int kPropH = 20;
 static constexpr int kIndent = 14;
-static constexpr int xEye = 0, xSolo = 20, xLock = 40, xLabel = 60, xIndex = 76, xName = 100;
+static constexpr int xEye = 0, xAudio = 20, xSolo = 40, xLock = 60, xLabel = 80, xIndex = 96, xName = 120;
 
 namespace {
 struct Cols {
@@ -198,7 +200,7 @@ void TimelineView::rebuild()
             if (!l->expanded)
                 continue;
             for (auto &g : l->propertyGroups()) {
-                if (g.name == "Transform")
+                if (g.name == "Transform" || g.name == "Audio")
                     continue;
                 if (g.name == "Time Remap") {
                     addProp(l, g.props.front(), 1);
@@ -219,12 +221,15 @@ void TimelineView::rebuild()
                                 addProp(l, &p, 3);
                     }
             }
-            add({Kind::Group, l, nullptr, nullptr, "Transform", 1, 0, 0, 2});
-            if (l->transformExpanded)
-                for (auto &g : l->propertyGroups())
-                    if (g.name == "Transform")
-                        for (Property *p : g.props)
-                            addProp(l, p, 2);
+            for (auto &g : l->propertyGroups()) {
+                if (g.name != "Transform" && g.name != "Audio")
+                    continue;
+                const bool transform = g.name == "Transform";
+                add({Kind::Group, l, nullptr, nullptr, g.name, 1, 0, 0, transform ? 2 : 4});
+                if (transform ? l->transformExpanded : l->audioExpanded)
+                    for (Property *p : g.props)
+                        addProp(l, p, 2);
+            }
         }
     }
     contentHeight_ = y;
@@ -326,6 +331,7 @@ void TimelineView::paintHeader(QPainter &p)
     const int ty = kHeaderH - 18;
     auto ic = [&](const char *name, int x) { icon(name, theme::textDim).paint(&p, QRect(x + 3, ty + 2, 14, 14)); };
     ic("eye", xEye);
+    ic("audio", xAudio);
     ic("solo", xSolo);
     ic("lock", xLock);
     p.drawText(QRect(xIndex, ty, 24, 18), Qt::AlignCenter, "#");
@@ -386,11 +392,29 @@ void TimelineView::paintHeader(QPainter &p)
         const int fr = int(std::round((t - sec) * c->fps));
         const QString label = fr == 0 ? QString("%1s").arg(sec, 2, 10, QChar('0'))
                                       : QString("%1:%2f").arg(sec, 2, 10, QChar('0')).arg(fr, 2, 10, QChar('0'));
-        p.drawText(QRect(x - 40, 15, 80, 12), Qt::AlignCenter, label);
+        p.drawText(QRect(x - 40, 13, 80, 12), Qt::AlignCenter, label);
         // minor ticks
         for (int i = 1; i < 5; ++i) {
             const int mx = timeX(t + step * i / 5.0);
             p.drawLine(mx, kHeaderH - 4, mx, kHeaderH);
+        }
+    }
+    // composition markers
+    for (const auto &m : c->markers) {
+        const int mx = timeX(m.time);
+        QPainterPath mk;
+        mk.moveTo(mx - 4, 25);
+        mk.lineTo(mx + 4, 25);
+        mk.lineTo(mx + 4, 31);
+        mk.lineTo(mx, 35);
+        mk.lineTo(mx - 4, 31);
+        mk.closeSubpath();
+        p.setPen(QPen(QColor(0x10, 0x10, 0x10), 1));
+        p.setBrush(m.selected ? theme::keyframeSelected : QColor(0x8a, 0xc7, 0xa6));
+        p.drawPath(mk);
+        if (!m.comment.isEmpty()) {
+            p.setPen(QColor(0xd0, 0xd0, 0xd0));
+            p.drawText(QRect(mx + 6, 24, 120, 12), Qt::AlignLeft | Qt::AlignVCenter, m.comment);
         }
     }
     // comp end shading
@@ -432,7 +456,8 @@ void TimelineView::paintRow(QPainter &p, const Row &r, int idx)
             if (on)
                 icon(name).paint(&p, QRect(x + 3, top + 4, 14, 14));
         };
-        ic("eye", xEye, l->videoOn && l->type != LayerType::Null && l->type != LayerType::Adjustment ? true : l->videoOn);
+        ic("eye", xEye, l->videoOn && !l->audioOnly);
+        ic("audio", xAudio, l->hasAudio && l->audioOn);
         ic("solo", xSolo, l->solo);
         ic("lock", xLock, l->locked);
         p.fillRect(QRect(xLabel + 3, top + 6, 10, 10), labelColor(l->label));
@@ -486,6 +511,8 @@ void TimelineView::paintRow(QPainter &p, const Row &r, int idx)
         p.setPen(QColor(0, 0, 0, 120));
         p.setBrush(Qt::NoBrush);
         p.drawRect(QRect(x0, top + 3, x1 - x0 - 1, r.h - 7));
+        if (l->hasAudio)
+            paintWaveform(p, *l, top + 3, r.h - 6);
         if (sel) {
             p.fillRect(QRect(x0, top + 3, 3, r.h - 6), QColor(255, 255, 255, 120));
             p.fillRect(QRect(x1 - 3, top + 3, 3, r.h - 6), QColor(255, 255, 255, 120));
@@ -502,6 +529,7 @@ void TimelineView::paintRow(QPainter &p, const Row &r, int idx)
             else
                 open = r.groupId == 1 ? r.layer->contentsExpanded
                        : r.groupId == 2 ? r.layer->transformExpanded
+                       : r.groupId == 4 ? r.layer->audioExpanded
                                         : r.layer->effectsExpanded;
             QPainterPath tri;
             const QPointF tc(x - 6, top + r.h / 2.0);
@@ -546,10 +574,10 @@ void TimelineView::paintRow(QPainter &p, const Row &r, int idx)
             if (animated) {
                 p.setPen(theme::text);
                 p.drawText(QRect(xEye, top, 18, r.h), Qt::AlignCenter, "◀");
-                p.drawText(QRect(xLock, top, 18, r.h), Qt::AlignCenter, "▶");
+                p.drawText(QRect(xSolo, top, 18, r.h), Qt::AlignCenter, "▶");
                 const bool onKey = pr->keyIndexAt(t, 1e-4) >= 0;
                 QPainterPath d;
-                const QPointF dc(xSolo + 10, top + r.h / 2.0);
+                const QPointF dc(xAudio + 10, top + r.h / 2.0);
                 d.moveTo(dc + QPointF(0, -5));
                 d.lineTo(dc + QPointF(5, 0));
                 d.lineTo(dc + QPointF(0, 5));
@@ -635,6 +663,13 @@ void TimelineView::paintEvent(QPaintEvent *)
         p.fillRect(QRect(areaLeft(), kHeaderH, std::max(0, wa0 - areaLeft()), height()), QColor(0, 0, 0, 40));
         if (wa1 < endX)
             p.fillRect(QRect(wa1, kHeaderH, endX - wa1, height()), QColor(0, 0, 0, 40));
+        // Marker guide lines help line cuts up with the beat.
+        p.setPen(QPen(QColor(0x8a, 0xc7, 0xa6, 70), 1, Qt::DashLine));
+        for (const auto &m : c->markers) {
+            const int mx = timeX(m.time);
+            if (mx >= areaLeft())
+                p.drawLine(mx, kHeaderH, mx, height());
+        }
         // CTI line
         const int cx = timeX(ed_->time());
         if (cx >= areaLeft()) {
@@ -709,6 +744,20 @@ void TimelineView::mousePressEvent(QMouseEvent *e)
     if (pos.y() < kHeaderH) {
         if (pos.x() < L)
             return;
+        if (const int mi = markerAt(pos); mi >= 0) {
+            if (ctrl) {
+                ed_->removeMarker(mi);
+                return;
+            }
+            for (auto &m : c->markers)
+                m.selected = false;
+            c->markers[mi].selected = true;
+            drag_ = Drag::Marker;
+            dragMarker_ = mi;
+            dragT0_ = c->markers[mi].time;
+            update();
+            return;
+        }
         const int wa0 = timeX(c->workStart), wa1 = timeX(c->workEnd);
         if (pos.y() < 12) {
             if (std::abs(pos.x() - wa0) < 6)
@@ -751,9 +800,16 @@ void TimelineView::mousePressEvent(QMouseEvent *e)
     if (pos.x() < L) {
         // ---------------- left pane
         if (r.kind == Kind::Layer) {
-            if (pos.x() < xSolo) {
-                l->videoOn = !l->videoOn;
-                ed_->commit("Toggle Video", false);
+            if (pos.x() < xAudio) {
+                if (!l->audioOnly) {
+                    l->videoOn = !l->videoOn;
+                    ed_->commit("Toggle Video", false);
+                }
+            } else if (pos.x() < xSolo) {
+                if (l->hasAudio) {
+                    l->audioOn = !l->audioOn;
+                    ed_->commit("Toggle Audio", false);
+                }
             } else if (pos.x() < xLock) {
                 l->solo = !l->solo;
                 ed_->commit("Toggle Solo", false);
@@ -827,6 +883,8 @@ void TimelineView::mousePressEvent(QMouseEvent *e)
                 l->contentsExpanded = !l->contentsExpanded;
             else if (r.groupId == 2)
                 l->transformExpanded = !l->transformExpanded;
+            else if (r.groupId == 4)
+                l->audioExpanded = !l->audioExpanded;
             else
                 l->effectsExpanded = !l->effectsExpanded;
             if (!ed_->isSelected(l->id))
@@ -836,14 +894,14 @@ void TimelineView::mousePressEvent(QMouseEvent *e)
         }
         if (r.kind == Kind::Prop) {
             Property *pr = r.prop;
-            if (pr->isAnimated() && pos.x() < xLabel) {
-                if (pos.x() < xSolo) {
+            if (pr->isAnimated() && pos.x() < xLock) {
+                if (pos.x() < xAudio) {
                     for (int i = pr->keys.size() - 1; i >= 0; --i)
                         if (pr->keys[i].time < ed_->time() - 1e-6) {
                             ed_->setTime(pr->keys[i].time);
                             break;
                         }
-                } else if (pos.x() < xLock) {
+                } else if (pos.x() < xSolo) {
                     const int k = pr->keyIndexAt(ed_->time(), 1e-4);
                     if (k >= 0) {
                         pr->keys.remove(k);
@@ -1000,7 +1058,34 @@ void TimelineView::mouseMoveEvent(QMouseEvent *e)
         update();
         break;
     case Drag::Cti:
-        setTimeFromX(pos.x());
+        if (e->modifiers() & Qt::ShiftModifier) {
+            // Snap the CTI to markers and keyframes of selected layers.
+            std::vector<double> targets;
+            for (const auto &m : c->markers)
+                targets.push_back(m.time);
+            for (Layer *sl : ed_->selectedLayers()) {
+                auto kt = ed_->keyTimesForLayer(*sl);
+                targets.insert(targets.end(), kt.begin(), kt.end());
+                targets.push_back(sl->inPoint);
+                targets.push_back(sl->outPoint);
+            }
+            double best = t;
+            double bestPx = 10;
+            for (double tt : targets)
+                if (std::abs(tt - t) * pxPerSec_ < bestPx) {
+                    bestPx = std::abs(tt - t) * pxPerSec_;
+                    best = tt;
+                }
+            ed_->setTime(best);
+        } else {
+            setTimeFromX(pos.x());
+        }
+        break;
+    case Drag::Marker:
+        if (dragMarker_ >= 0 && dragMarker_ < int(c->markers.size())) {
+            c->markers[dragMarker_].time = std::clamp(snapTime(dragT0_ + t - xTime(pressPos_.x())), 0.0, c->duration);
+            update();
+        }
         break;
     case Drag::WorkStart:
         c->workStart = std::clamp(snapTime(t), 0.0, c->workEnd - c->frameDuration());
@@ -1024,14 +1109,15 @@ void TimelineView::mouseMoveEvent(QMouseEvent *e)
         if (!moved_)
             break;
         double d = snapTime(t - dragT0_);
-        if (drag_ == Drag::LayerMove && (e->modifiers() & Qt::ShiftModifier)) {
-            // Snap the grabbed layer's edges to the CTI.
+        if (e->modifiers() & Qt::ShiftModifier) {
+            // Snap the grabbed layer's edges to markers, the CTI and the work area.
             const auto &s0 = layerStarts_.front();
-            const double ct = ed_->time();
-            if (std::abs(s0.in + d - ct) * pxPerSec_ < 10)
-                d = ct - s0.in;
-            else if (std::abs(s0.out + d - ct) * pxPerSec_ < 10)
-                d = ct - s0.out;
+            if (drag_ == Drag::LayerMove)
+                d = snapDelta({s0.in, s0.out}, d);
+            else if (drag_ == Drag::LayerTrimIn)
+                d = snapDelta({s0.in}, d);
+            else
+                d = snapDelta({s0.out}, d);
         }
         for (const auto &s : layerStarts_) {
             Layer *l = c->layerById(s.id);
@@ -1067,7 +1153,13 @@ void TimelineView::mouseMoveEvent(QMouseEvent *e)
     case Drag::Keys: {
         if (!moved_)
             break;
-        const double d = snapTime(t - dragT0_);
+        double d = snapTime(t - dragT0_);
+        if ((e->modifiers() & Qt::ShiftModifier) && !keyStarts_.empty()) {
+            std::vector<double> times;
+            for (const auto &k : keyStarts_)
+                times.push_back(k.time);
+            d = snapDelta(times, d);
+        }
         for (const auto &k : keyStarts_)
             if (k.index < k.prop->keys.size())
                 k.prop->keys[k.index].time = k.time + d;
@@ -1193,14 +1285,83 @@ void TimelineView::mouseReleaseEvent(QMouseEvent *e)
         marquee_ = {};
         update();
         break;
+    case Drag::Marker:
+        if (moved_) {
+            c->sortMarkers();
+            ed_->commit("Move Marker", false);
+        } else {
+            ed_->setTime(c->markers[std::clamp(dragMarker_, 0, int(c->markers.size()) - 1)].time);
+        }
+        dragMarker_ = -1;
+        break;
     default:
         break;
     }
     Q_UNUSED(e);
 }
 
+int TimelineView::markerAt(QPointF pos) const
+{
+    Composition *c = ed_->activeComp();
+    if (!c || pos.y() < 23 || pos.y() > kHeaderH)
+        return -1;
+    for (int i = int(c->markers.size()) - 1; i >= 0; --i)
+        if (std::abs(timeX(c->markers[i].time) - pos.x()) <= 6)
+            return i;
+    return -1;
+}
+
+double TimelineView::snapDelta(const std::vector<double> &times, double delta, bool) const
+{
+    const std::vector<double> targets = ed_->snapTimes();
+    double bestPx = 10.0, best = delta;
+    for (double tm : times)
+        for (double target : targets) {
+            const double px = std::abs(tm + delta - target) * pxPerSec_;
+            if (px < bestPx) {
+                bestPx = px;
+                best = target - tm;
+            }
+        }
+    return best;
+}
+
+void TimelineView::paintWaveform(QPainter &p, const Layer &l, int top, int h)
+{
+    Composition *c = ed_->activeComp();
+    if (l.type != LayerType::Footage)
+        return;
+    const FootageItem *f = ed_->project().footage(l.sourceItemId);
+    auto buf = f ? MediaCache::instance().audio(f->path) : nullptr;
+    if (!buf)
+        return;
+    const int x0 = std::max(areaLeft(), timeX(l.inPoint)), x1 = std::min(width(), timeX(l.outPoint));
+    const double mid = top + h / 2.0;
+    p.setPen(QPen(QColor(255, 255, 255, 150), 1));
+    const double gain = dbToGain(l.audioLevels.valueAt(ed_->time()).value(0));
+    for (int x = x0; x < x1; ++x) {
+        const double sa = ed_->renderer().sourceTime(l, *c, xTime(x));
+        const double sb = ed_->renderer().sourceTime(l, *c, xTime(x + 1));
+        const float pk = std::min(1.0f, buf->peakBetween(std::min(sa, sb), std::max(sa, sb)) * float(gain));
+        const double half = std::max(0.5, pk * (h / 2.0 - 1));
+        p.drawLine(QPointF(x + 0.5, mid - half), QPointF(x + 0.5, mid + half));
+    }
+}
+
 void TimelineView::mouseDoubleClickEvent(QMouseEvent *e)
 {
+    if (Composition *c = ed_->activeComp(); c && e->position().y() < kHeaderH) {
+        if (const int mi = markerAt(e->position()); mi >= 0) {
+            bool ok = false;
+            const QString text = QInputDialog::getText(this, "Composition Marker", "Comment:", QLineEdit::Normal,
+                                                       c->markers[mi].comment, &ok);
+            if (ok) {
+                c->markers[mi].comment = text;
+                ed_->commit("Marker Comment", false);
+            }
+        }
+        return;
+    }
     const int ri = rowAt(int(e->position().y()));
     if (ri < 0)
         return;

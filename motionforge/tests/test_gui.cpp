@@ -40,7 +40,9 @@ private slots:
     void sampleLoadsAndPaints()
     {
         QVERIFY(ed->activeComp());
-        QCOMPARE(int(ed->activeComp()->layers.size()), 6);
+        QCOMPARE(int(ed->activeComp()->layers.size()), 7);
+        QVERIFY(ed->mixer().compHasAudio(*ed->activeComp()));
+        QVERIFY(ed->activeComp()->markers.size() >= 10);
         const QImage shot = w->grab().toImage();
         QVERIFY(!shot.isNull());
         QVERIFY(!w->viewer()->currentFrame().isNull());
@@ -196,6 +198,32 @@ private slots:
         w->grab();
     }
 
+    void audioAndMarkers()
+    {
+        Composition *c = ed->activeComp();
+        Layer *music = c->layers.back().get();
+        QVERIFY(music->audioOnly && music->hasAudio);
+        ed->selectLayer(music->id);
+        ed->revealProperties("audioLevels", false);
+        w->grab();   // paints the waveform
+        const size_t before = c->markers.size();
+        ed->setTime(0.25);   // snaps to frame 8 at 30 fps
+        const double markerTime = ed->time();
+        ed->addMarkerAtCurrentTime();
+        QCOMPARE(c->markers.size(), before + 1);
+        ed->setTime(0);
+        ed->gotoKeyframe(true);   // markers are navigation stops too
+        QVERIFY(std::abs(ed->time() - markerTime) < 1e-6);
+        ed->removeMarker(0);
+        QCOMPARE(c->markers.size(), before);
+        // Audio-only layers never draw and can't be hit in the viewer.
+        music->audioOn = false;
+        ed->commit("mute");
+        QVERIFY(!ed->mixer().compHasAudio(*c));
+        ed->undo();
+        QVERIFY(ed->mixer().compHasAudio(*ed->activeComp()));
+    }
+
     void playback()
     {
         ed->setTime(0);
@@ -218,13 +246,14 @@ private slots:
         const MediaInfo mi = probeMedia(out);
         QVERIFY2(mi.ok, qPrintable(mi.error));
         QCOMPARE(mi.width, 1920);
+        QVERIFY(mi.hasAudio);   // the sample's beat is mixed into the export
         QVERIFY(mi.duration > 0.2 && mi.duration < 0.5);
 
         const QString path = dir.filePath("p.mfproj");
         QString err;
         QVERIFY(ed->save(path, &err));
         QVERIFY(ed->load(path, &err));
-        QCOMPARE(int(ed->activeComp()->layers.size()), 6);
+        QCOMPARE(int(ed->activeComp()->layers.size()), 7);
     }
 };
 

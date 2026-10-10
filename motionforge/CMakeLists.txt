@@ -9,10 +9,10 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Widgets Qml Test)
+find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Widgets Qml Multimedia Test)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
-  libavformat libavcodec libavutil libswscale)
+  libavformat libavcodec libavutil libswscale libswresample)
 
 # Core library: everything except the window, so tests can link it headless.
 add_library(mfcore STATIC
@@ -24,6 +24,8 @@ add_library(mfcore STATIC
   src/render/Effects.cpp
   src/render/Renderer.cpp
   src/render/FrameCache.cpp
+  src/media/AudioDecoder.cpp
+  src/render/AudioMixer.cpp
   src/media/VideoDecoder.cpp
   src/media/MediaCache.cpp
   src/media/Exporter.cpp
@@ -49,7 +51,7 @@ add_library(mfui STATIC
   src/ui/Dialogs.cpp
   src/ui/PlaybackController.cpp
 )
-target_link_libraries(mfui PUBLIC mfcore Qt6::Widgets)
+target_link_libraries(mfui PUBLIC mfcore Qt6::Widgets Qt6::Multimedia)
 target_compile_options(mfui PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
 add_executable(motionforge src/main.cpp)

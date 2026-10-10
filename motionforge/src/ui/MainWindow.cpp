@@ -29,11 +29,13 @@
 #include <QMimeData>
 #include <QSettings>
 #include <QStandardPaths>
+#include <QScrollArea>
 #include <QStatusBar>
 #include <QTimer>
 #include <QToolBar>
 #include <QToolButton>
 #include <QUrl>
+#include <cmath>
 
 namespace mf {
 
@@ -111,7 +113,11 @@ void MainWindow::createDocks()
     infoDock_ = mk("Info", info_, "dock.info");
     previewDock_ = mk("Preview", preview_, "dock.preview");
     effectsDock_ = mk("Effects & Presets", effects_, "dock.effects");
-    characterDock_ = mk("Character", character_, "dock.character");
+    auto *charScroll = new QScrollArea;
+    charScroll->setWidget(character_);
+    charScroll->setWidgetResizable(true);
+    charScroll->setFrameShape(QFrame::NoFrame);
+    characterDock_ = mk("Character", charScroll, "dock.character");
 }
 
 void MainWindow::resetWorkspace()
@@ -136,9 +142,12 @@ void MainWindow::resetWorkspace()
     projectDock_->raise();
     timelineDock_->raise();
     effectsDock_->raise();
-    resizeDocks({projectDock_, infoDock_}, {340, 300}, Qt::Horizontal);
-    resizeDocks({timelineDock_}, {360}, Qt::Vertical);
-    resizeDocks({infoDock_, previewDock_, effectsDock_}, {150, 110, 400}, Qt::Vertical);
+    // Dock sizes only stick once the window has its real geometry.
+    QTimer::singleShot(0, this, [this] {
+        resizeDocks({projectDock_, infoDock_}, {340, 300}, Qt::Horizontal);
+        resizeDocks({timelineDock_}, {height() * 42 / 100}, Qt::Vertical);
+        resizeDocks({infoDock_, previewDock_, effectsDock_}, {150, 110, 400}, Qt::Vertical);
+    });
 }
 
 QAction *MainWindow::act(const QString &text, const QKeySequence &key, std::function<void()> fn, QMenu *menu)
@@ -441,6 +450,9 @@ void MainWindow::createActions()
         });
     }
     act("Reveal Effects", QKeySequence(Qt::Key_E), [ed] { ed->revealProperties("effects", false); });
+    act("Reveal Audio Levels", QKeySequence(Qt::Key_L), [ed] { ed->revealProperties("audioLevels", false); });
+    act("Add Marker", QKeySequence(Qt::Key_Asterisk), [ed] { ed->addMarkerAtCurrentTime(); }, anim);
+    act("Add Marker (Numpad)", QKeySequence(Qt::KeypadModifier | Qt::Key_Asterisk), [ed] { ed->addMarkerAtCurrentTime(); });
 
     // Time navigation
     act("Next Frame", QKeySequence(Qt::Key_PageDown), [ed] { ed->stepFrames(1); });
@@ -703,8 +715,10 @@ void MainWindow::importFiles()
 {
     const QStringList files = QFileDialog::getOpenFileNames(
         this, "Import File", QSettings().value("lastImportDir", QDir::homePath()).toString(),
-        "Media (*.mp4 *.mov *.mkv *.webm *.avi *.m4v *.gif *.png *.jpg *.jpeg *.bmp *.tif *.tiff *.webp *.tga);;"
-        "All Files (*)");
+        "Media (*.mp4 *.mov *.mkv *.webm *.avi *.m4v *.gif *.png *.jpg *.jpeg *.bmp *.tif *.tiff *.webp *.tga "
+        "*.mp3 *.wav *.aac *.m4a *.flac *.ogg *.opus);;"
+        "Video (*.mp4 *.mov *.mkv *.webm *.avi *.m4v *.gif);;Images (*.png *.jpg *.jpeg *.bmp *.tif *.tiff *.webp *.tga);;"
+        "Audio (*.mp3 *.wav *.aac *.m4a *.flac *.ogg *.opus);;All Files (*)");
     if (files.isEmpty())
         return;
     QSettings().setValue("lastImportDir", QFileInfo(files.first()).absolutePath());
@@ -892,6 +906,62 @@ void MainWindow::dropEvent(QDropEvent *e)
 
 // ------------------------------------------------------------ sample
 
+// Synthesizes a short 120 BPM drum loop (kick, snare, hats) so the sample has music to sync to.
+static QString writeSampleBeat()
+{
+    const QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/sample";
+    QDir().mkpath(dir);
+    const QString path = dir + "/beat-120bpm.wav";
+    if (QFileInfo::exists(path))
+        return path;
+    const int rate = 48000;
+    const double seconds = 6.0, beat = 0.5;
+    const int n = int(seconds * rate);
+    std::vector<float> mix(size_t(n), 0.f);
+    quint32 noise = 12345;
+    auto rnd = [&] {
+        noise ^= noise << 13;
+        noise ^= noise >> 17;
+        noise ^= noise << 5;
+        return (noise & 0xFFFF) / 32768.f - 1.f;
+    };
+    for (int b = 0; b * beat < seconds; ++b) {
+        const int s0 = int(b * beat * rate);
+        for (int i = 0; i < rate / 3 && s0 + i < n; ++i) {   // kick: pitch-swept sine
+            const double t = double(i) / rate;
+            const double f = 50 + 90 * std::exp(-t * 30);
+            mix[size_t(s0 + i)] += float(std::sin(2 * M_PI * f * t) * std::exp(-t * 9) * 0.9);
+        }
+        if (b % 2 == 1)   // snare on 2 and 4
+            for (int i = 0; i < rate / 5 && s0 + i < n; ++i) {
+                const double t = double(i) / rate;
+                mix[size_t(s0 + i)] += float((rnd() * 0.5 + std::sin(2 * M_PI * 190 * t) * 0.3) * std::exp(-t * 18));
+            }
+        for (int h = 0; h < 2; ++h) {   // eighth-note hats
+            const int hs = s0 + h * int(beat * rate / 2);
+            for (int i = 0; i < rate / 25 && hs + i < n; ++i)
+                mix[size_t(hs + i)] += float(rnd() * 0.18 * std::exp(-double(i) / rate * 90));
+        }
+    }
+    QFile f(path);
+    if (!f.open(QIODevice::WriteOnly))
+        return {};
+    auto u32 = [&](quint32 v) { f.write(reinterpret_cast<const char *>(&v), 4); };
+    auto u16 = [&](quint16 v) { f.write(reinterpret_cast<const char *>(&v), 2); };
+    f.write("RIFF");
+    u32(36 + n * 4);
+    f.write("WAVEfmt ");
+    u32(16); u16(1); u16(2); u32(rate); u32(rate * 4); u16(4); u16(16);
+    f.write("data");
+    u32(n * 4);
+    for (int i = 0; i < n; ++i) {
+        const qint16 v = qint16(std::clamp(mix[size_t(i)], -1.f, 1.f) * 30000);
+        f.write(reinterpret_cast<const char *>(&v), 2);
+        f.write(reinterpret_cast<const char *>(&v), 2);
+    }
+    return path;
+}
+
 void MainWindow::buildSampleProject()
 {
     ed_->newProject();
@@ -989,6 +1059,24 @@ void MainWindow::buildSampleProject()
     ramp->param("end")->staticValue = {960, 1400};
     ramp->param("startColor")->staticValue = {0.12, 0.16, 0.32, 1};
     ramp->param("endColor")->staticValue = {0.01, 0.01, 0.03, 1};
+
+    // Music: a generated drum loop with markers on every beat.
+    if (const QString beat = writeSampleBeat(); !beat.isEmpty()) {
+        QString err;
+        if (FootageItem *f = ed_->importFile(beat, &err)) {
+            auto music = p.makeLayer(LayerType::Footage, *c);
+            music->name = "beat-120bpm.wav";
+            music->sourceItemId = f->id;
+            music->hasAudio = music->audioOnly = true;
+            music->label = 9;
+            music->width = music->height = 0;
+            music->outPoint = std::min(c->duration, f->duration);
+            c->layers.push_back(std::move(music));
+            for (double t = 0.5; t < c->duration; t += 0.5)
+                c->addMarker(t);
+            c->markers[1].comment = "drop";
+        }
+    }
 
     ed_->commit("Sample Project", true);
     ed_->setTime(1.5);

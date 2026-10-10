@@ -456,7 +456,7 @@ QImage Renderer::renderComp(const Composition &comp, double t, double scale, int
         // A layer directly above a matted layer is consumed as its matte.
         if (i + 1 < n && layers[i + 1]->matte != MatteMode::None)
             continue;
-        if (!L.videoOn || (anySolo && !L.solo) || L.type == LayerType::Null)
+        if (!L.videoOn || (anySolo && !L.solo) || L.type == LayerType::Null || L.audioOnly)
             continue;
 
         std::optional<QImage> matte;

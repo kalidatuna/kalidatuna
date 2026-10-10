@@ -47,11 +47,24 @@ MediaInfo probeMedia(const QString &path)
     }
     VideoDecoder d;
     QString err;
-    if (!d.open(path, &err)) {
-        mi.error = err;
-        return mi;
+    if (d.open(path, &err))
+        return d.info();
+    // Audio-only files (music, sound effects).
+    AVFormatContext *fmt = nullptr;
+    if (avformat_open_input(&fmt, path.toUtf8().constData(), nullptr, nullptr) >= 0) {
+        if (avformat_find_stream_info(fmt, nullptr) >= 0 &&
+            av_find_best_stream(fmt, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0) >= 0 &&
+            av_find_best_stream(fmt, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0) < 0) {
+            mi.ok = true;
+            mi.hasAudio = true;
+            mi.hasVideo = false;
+            mi.duration = fmt->duration > 0 ? fmt->duration / double(AV_TIME_BASE) : 0.0;
+        }
+        avformat_close_input(&fmt);
     }
-    return d.info();
+    if (!mi.ok)
+        mi.error = err;
+    return mi;
 }
 
 VideoDecoder::~VideoDecoder()
@@ -90,7 +103,7 @@ bool VideoDecoder::open(const QString &path, QString *error)
     stream_ = av_find_best_stream(fmt_, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
     info_.hasAudio = av_find_best_stream(fmt_, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0) >= 0;
     if (stream_ < 0)
-        return fail(info_.hasAudio ? "Audio-only files are not supported yet." : "No video stream found.");
+        return fail(info_.hasAudio ? "Audio-only file." : "No video or audio stream found.");
     AVStream *st = fmt_->streams[stream_];
     const AVCodec *codec = avcodec_find_decoder(st->codecpar->codec_id);
     if (!codec)

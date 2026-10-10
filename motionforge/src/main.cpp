@@ -1,5 +1,7 @@
 #include "core/Project.h"
 #include "media/Exporter.h"
+#include "media/AudioDecoder.h"
+#include "render/AudioMixer.h"
 #include "render/Effects.h"
 #include "render/Renderer.h"
 #include "ui/MainWindow.h"
@@ -7,6 +9,7 @@
 
 #include <QFile>
 #include <QJsonDocument>
+#include <cmath>
 #include <cstdio>
 
 #include <QApplication>
@@ -54,8 +57,11 @@ static int batchRender(const QString &projectPath, const QString &compName, cons
         fmt = mf::ExportFormat::ProRes4444;
     else if (formatName == "png")
         fmt = mf::ExportFormat::PngSequence;
+    mf::AudioMixer mixer(project, renderer);
+    const bool withAudio = mixer.compHasAudio(*comp);
+    std::vector<float> audio;
     mf::Exporter ex;
-    if (!ex.open(output, fmt, comp->width, comp->height, comp->fps, 80, &err)) {
+    if (!ex.open(output, fmt, comp->width, comp->height, comp->fps, 80, &err, withAudio)) {
         std::fprintf(stderr, "%s\n", qPrintable(err));
         return 1;
     }
@@ -66,6 +72,13 @@ static int batchRender(const QString &projectPath, const QString &compName, cons
         if (!ex.addFrame(img, &err)) {
             std::fprintf(stderr, "%s\n", qPrintable(err));
             return 1;
+        }
+        if (withAudio) {
+            const qint64 a0 = std::llround(i * double(mf::kAudioRate) / comp->fps);
+            const qint64 a1 = std::llround((i + 1) * double(mf::kAudioRate) / comp->fps);
+            audio.resize(size_t(a1 - a0) * 2);
+            mixer.mix(*comp, double(a0) / mf::kAudioRate, int(a1 - a0), audio.data());
+            ex.addAudio(audio.data(), int(a1 - a0), &err);
         }
         std::fprintf(stderr, "\rRendering %s: frame %d/%d", qPrintable(comp->name), i + 1, n);
     }

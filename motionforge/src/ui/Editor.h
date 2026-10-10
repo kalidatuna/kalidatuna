@@ -1,5 +1,6 @@
 #pragma once
 #include "core/Project.h"
+#include "render/AudioMixer.h"
 #include "render/FrameCache.h"
 #include "render/Renderer.h"
 
@@ -29,6 +30,7 @@ public:
 
     Project &project() { return project_; }
     Renderer &renderer() { return renderer_; }
+    AudioMixer &mixer() { return mixer_; }
     FrameCache &cache() { return cache_; }
 
     // ---- composition & time
@@ -134,6 +136,11 @@ public:
     void gotoKeyframe(bool next);
     std::vector<double> keyTimesForLayer(Layer &l) const;
 
+    // ---- composition markers
+    void addMarkerAtCurrentTime();
+    void removeMarker(int index);
+    std::vector<double> snapTimes() const;   // markers, CTI, work area: targets for Shift-snapping
+
     // ---- rendering for viewers
     QImage frameImage(double scale, int *renderMs = nullptr);
     int lastRenderMs() const { return lastRenderMs_; }
@@ -162,6 +169,7 @@ private:
 
     Project project_;
     Renderer renderer_;
+    AudioMixer mixer_;
     FrameCache cache_;
     int activeComp_ = 0;
     QHash<int, double> compTime_;

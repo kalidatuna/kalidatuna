@@ -103,21 +103,32 @@ PreviewPanel::PreviewPanel(Editor *editor, PlaybackController *playback, QWidget
     loop->setCheckable(true);
     loop->setChecked(true);
     connect(loop, &QToolButton::toggled, this, [this](bool on) { pb_->setLoop(on); });
+    auto *audio = mk("audio", "Play audio during preview", [] {});
+    audio->setCheckable(true);
+    audio->setChecked(true);
+    connect(audio, &QToolButton::toggled, this, [this](bool on) { pb_->setAudioEnabled(on); });
     h->addStretch();
     v->addLayout(h);
-    fps_ = new QLabel("Space plays the work area. Frames render once, then play back in real time from cache.");
+    fps_ = new QLabel("Space plays the work area. Frames render once, then play back in real time from cache. "
+                      "Press * while playing to drop a marker on the beat.");
     fps_->setWordWrap(true);
     fps_->setStyleSheet("color:#8a8a8a;");
     v->addWidget(fps_);
     v->addStretch();
     connect(pb_, &PlaybackController::playingChanged, this,
             [this](bool on) { play_->setIcon(icon(on ? "pause" : "play")); });
+    connect(pb_, &PlaybackController::audioStatus, this, [this](const QString &m) {
+        if (!m.isEmpty())
+            fps_->setText(m);
+    });
     connect(pb_, &PlaybackController::fpsMeasured, this, [this](double fps, bool rt) {
         Composition *c = ed_->activeComp();
         fps_->setText(QString("<span style='color:%1'>%2 fps</span> %3")
                           .arg(rt ? "#36b34a" : "#e0a040")
                           .arg(fps, 0, 'f', 1)
-                          .arg(rt ? "(real-time)" : QString("(target %1, caching)").arg(c ? c->fps : 0, 0, 'f', 2)));
+                          .arg(rt ? (pb_->audioActive() ? "(real-time, with audio)" : "(real-time)")
+                                  : pb_->audioActive() ? QString("(target %1, skipping frames to stay in sync)").arg(c ? c->fps : 0, 0, 'f', 2)
+                                                       : QString("(target %1, caching)").arg(c ? c->fps : 0, 0, 'f', 2)));
     });
 }
 

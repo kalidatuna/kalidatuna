@@ -1,6 +1,7 @@
 #pragma once
 #include <QImage>
 #include <QString>
+#include <vector>
 
 struct AVFormatContext;
 struct AVCodecContext;
@@ -27,12 +28,17 @@ public:
 
     // quality: 0 (smallest) .. 100 (best); used for H.264's CRF.
     bool open(const QString &path, ExportFormat format, int width, int height, double fps, int quality,
-              QString *error);
+              QString *error, bool withAudio = false);
     bool addFrame(const QImage &frame, QString *error);
+    // Interleaved stereo float at kAudioRate. Call alongside addFrame with the matching span.
+    bool addAudio(const float *samples, int frames, QString *error);
     bool finish(QString *error);
 
 private:
     bool encode(AVFrame *f, QString *error);
+    bool openAudio(QString *error);
+    bool encodeAudio(bool flush, QString *error);
+    bool writeWav(QString *error);
     void cleanup();
 
     ExportFormat format_ = ExportFormat::H264;
@@ -46,6 +52,13 @@ private:
     AVFrame *frame_ = nullptr;
     AVPacket *pkt_ = nullptr;
     SwsContext *sws_ = nullptr;
+
+    bool withAudio_ = false;
+    AVCodecContext *aenc_ = nullptr;
+    AVStream *astream_ = nullptr;
+    AVFrame *aframe_ = nullptr;
+    std::vector<float> afifo_;   // interleaved stereo waiting to be encoded
+    qint64 audioPts_ = 0;
 };
 
 } // namespace mf

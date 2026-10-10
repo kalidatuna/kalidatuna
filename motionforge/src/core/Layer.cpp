@@ -61,6 +61,9 @@ Layer::Layer(LayerType t) : type(t)
     opacity = Property("opacity", "Opacity", PropType::Percent, {100});
     opacity.limits(0, 100);
 
+    audioLevels = Property("audioLevels", "Audio Levels", PropType::Number, {0});
+    audioLevels.limits(-96, 24).step(0.1);
+
     timeRemap = Property("timeRemap", "Time Remap", PropType::Time, {0});
     timeRemap.limits(0, 1e6).step(1.0 / 30.0);
 
@@ -120,13 +123,16 @@ std::vector<PropGroup> Layer::propertyGroups()
     }
     if (timeRemapEnabled)
         groups.push_back({"Time Remap", {&timeRemap}});
-    groups.push_back({"Transform", {&anchor, &position, &scale, &rotation, &opacity}});
+    if (!audioOnly)
+        groups.push_back({"Transform", {&anchor, &position, &scale, &rotation, &opacity}});
+    if (hasAudio)
+        groups.push_back({"Audio", {&audioLevels}});
     return groups;
 }
 
 std::vector<Property *> Layer::allProperties()
 {
-    return {&anchor, &position, &scale, &rotation, &opacity, &timeRemap,
+    return {&anchor, &position, &scale, &rotation, &opacity, &timeRemap, &audioLevels,
             &fontSize, &fillColor, &strokeColor, &strokeWidth, &tracking, &leading,
             &shapeSize, &shapeRoundness, &shapeOffset, &shapePoints, &shapeInnerRatio,
             &shapeFillOn, &shapeFill, &shapeStrokeOn, &shapeStroke, &shapeStrokeWidth};
@@ -166,6 +172,9 @@ QJsonObject Layer::toJson() const
     o["start"] = startTime;
     o["stretch"] = stretch;
     o["video"] = videoOn;
+    o["audio"] = audioOn;
+    o["hasAudio"] = hasAudio;
+    o["audioOnly"] = audioOnly;
     o["solo"] = solo;
     o["locked"] = locked;
     o["shy"] = shy;
@@ -224,6 +233,9 @@ std::unique_ptr<Layer> Layer::fromJson(const QJsonObject &o,
     l->startTime = o["start"].toDouble();
     l->stretch = o["stretch"].toDouble(100);
     l->videoOn = o["video"].toBool(true);
+    l->audioOn = o["audio"].toBool(true);
+    l->hasAudio = o["hasAudio"].toBool();
+    l->audioOnly = o["audioOnly"].toBool();
     l->solo = o["solo"].toBool();
     l->locked = o["locked"].toBool();
     l->shy = o["shy"].toBool();

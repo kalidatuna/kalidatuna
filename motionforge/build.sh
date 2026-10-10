@@ -9,7 +9,7 @@ cd "$(dirname "$0")"
 if [[ " $* " == *" --deps "* ]]; then
   sudo apt-get update
   sudo apt-get install -y build-essential cmake ninja-build pkg-config \
-    qt6-base-dev qt6-declarative-dev libgl1-mesa-dev \
+    qt6-base-dev qt6-declarative-dev qt6-multimedia-dev libgl1-mesa-dev \
     libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libswresample-dev
 fi
 

@@ -24,6 +24,20 @@ int Composition::indexOf(int lid) const
     return -1;
 }
 
+void Composition::addMarker(double t, const QString &comment)
+{
+    for (auto &m : markers)
+        if (std::abs(m.time - t) < 1e-6)
+            return;
+    markers.push_back({t, comment, false});
+    sortMarkers();
+}
+
+void Composition::sortMarkers()
+{
+    std::stable_sort(markers.begin(), markers.end(), [](const Marker &a, const Marker &b) { return a.time < b.time; });
+}
+
 Project::Project() = default;
 
 Item *Project::item(int iid) const
@@ -163,6 +177,7 @@ QJsonObject Project::toJson() const
             io["fps"] = f->fps;
             io["duration"] = f->duration;
             io["audio"] = f->hasAudio;
+            io["video"] = f->hasVideo;
         } else if (auto *c = dynamic_cast<Composition *>(i.get())) {
             io["kind"] = "comp";
             io["width"] = c->width;
@@ -177,6 +192,17 @@ QJsonObject Project::toJson() const
             io["shutterAngle"] = c->shutterAngle;
             io["shutterPhase"] = c->shutterPhase;
             io["hideShy"] = c->hideShyLayers;
+            if (!c->markers.empty()) {
+                QJsonArray ms;
+                for (const auto &m : c->markers) {
+                    QJsonObject mo;
+                    mo["t"] = m.time;
+                    if (!m.comment.isEmpty())
+                        mo["comment"] = m.comment;
+                    ms.append(mo);
+                }
+                io["markers"] = ms;
+            }
             QJsonArray ls;
             for (const auto &l : c->layers)
                 ls.append(l->toJson());
@@ -215,6 +241,7 @@ bool Project::fromJson(const QJsonObject &o, QString *error)
             f->fps = io["fps"].toDouble(30);
             f->duration = io["duration"].toDouble();
             f->hasAudio = io["audio"].toBool();
+            f->hasVideo = io["video"].toBool(true);
             item = std::move(f);
         } else if (kind == "comp") {
             auto c = std::make_unique<Composition>();
@@ -230,6 +257,9 @@ bool Project::fromJson(const QJsonObject &o, QString *error)
             c->shutterAngle = io["shutterAngle"].toDouble(180);
             c->shutterPhase = io["shutterPhase"].toDouble(-90);
             c->hideShyLayers = io["hideShy"].toBool();
+            for (const auto &mv : io["markers"].toArray())
+                c->markers.push_back({mv.toObject()["t"].toDouble(), mv.toObject()["comment"].toString(), false});
+            c->sortMarkers();
             for (const auto &lv : io["layers"].toArray())
                 c->layers.push_back(Layer::fromJson(lv.toObject(), effectFactory));
             item = std::move(c);

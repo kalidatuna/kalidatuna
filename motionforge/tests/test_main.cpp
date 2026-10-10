@@ -1,12 +1,16 @@
 #include "core/Project.h"
 #include "expr/ExpressionEngine.h"
+#include "media/AudioDecoder.h"
 #include "media/Exporter.h"
+#include "media/MediaCache.h"
+#include "render/AudioMixer.h"
 #include "media/VideoDecoder.h"
 #include "render/Effects.h"
 #include "render/Renderer.h"
 
 #include <QGuiApplication>
 #include <QJsonDocument>
+#include <QFile>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -32,8 +36,160 @@ class CoreTests : public QObject {
         return raw;
     }
 
+    // Writes a 16-bit stereo sine WAV (44.1 kHz, so decoding also exercises resampling).
+    static QString writeSineWav(const QString &path, double seconds, double freq, double amp)
+    {
+        const int rate = 44100;
+        const int n = int(seconds * rate);
+        QFile f(path);
+        f.open(QIODevice::WriteOnly);
+        auto u32 = [&](quint32 v) { f.write(reinterpret_cast<const char *>(&v), 4); };
+        auto u16 = [&](quint16 v) { f.write(reinterpret_cast<const char *>(&v), 2); };
+        f.write("RIFF");
+        u32(36 + n * 4);
+        f.write("WAVEfmt ");
+        u32(16); u16(1); u16(2); u32(rate); u32(rate * 4); u16(4); u16(16);
+        f.write("data");
+        u32(n * 4);
+        for (int i = 0; i < n; ++i) {
+            const qint16 v = qint16(std::sin(2 * M_PI * freq * i / rate) * amp * 32767);
+            f.write(reinterpret_cast<const char *>(&v), 2);
+            f.write(reinterpret_cast<const char *>(&v), 2);
+        }
+        return path;
+    }
+    static double rms(const float *s, int frames)
+    {
+        double acc = 0;
+        for (int i = 0; i < frames * 2; ++i)
+            acc += double(s[i]) * s[i];
+        return std::sqrt(acc / std::max(1, frames * 2));
+    }
+
 private slots:
     void initTestCase() { installEffectFactory(); }
+
+    void audioDecodeMixAndExport()
+    {
+        QTemporaryDir dir;
+        const QString wav = writeSineWav(dir.filePath("tone.wav"), 1.0, 440, 0.5);
+        const MediaInfo mi = probeMedia(wav);
+        QVERIFY2(mi.ok, qPrintable(mi.error));
+        QVERIFY(mi.hasAudio && !mi.hasVideo);
+        QVERIFY(qAbs(mi.duration - 1.0) < 0.02);
+
+        auto buf = decodeAudio(wav);
+        QVERIFY(buf);
+        QVERIFY(qAbs(buf->duration() - 1.0) < 0.01);
+        QVERIFY(qAbs(rms(buf->samples.data(), int(buf->frames())) - 0.5 / std::sqrt(2.0)) < 0.01);
+        QVERIFY(buf->peakBetween(0.2, 0.3) > 0.45);
+
+        Project proj;
+        auto *c = proj.addComposition("A", 64, 64, 30, 2);
+        auto f = std::make_unique<FootageItem>();
+        f->id = proj.newId();
+        f->path = wav;
+        f->hasAudio = true;
+        f->hasVideo = false;
+        f->duration = 1.0;
+        const int fid = f->id;
+        proj.items.push_back(std::move(f));
+        auto l = proj.makeLayer(LayerType::Footage, *c);
+        l->sourceItemId = fid;
+        l->hasAudio = l->audioOnly = true;
+        l->startTime = 0.5;
+        l->inPoint = 0.5;
+        l->outPoint = 1.5;
+        Layer *lr = l.get();
+        c->layers.push_back(std::move(l));
+
+        Renderer r(proj);
+        AudioMixer mixer(proj, r);
+        QVERIFY(mixer.compHasAudio(*c));
+        std::vector<float> out(4800 * 2);
+        mixer.mix(*c, 0.0, 4800, out.data());   // 0.0 - 0.1 s: before the layer starts
+        QCOMPARE(rms(out.data(), 4800), 0.0);
+        mixer.mix(*c, 0.8, 4800, out.data());
+        const double full = rms(out.data(), 4800);
+        QVERIFY(qAbs(full - 0.3536) < 0.01);
+        lr->audioLevels.staticValue = {-6.0206};
+        mixer.mix(*c, 0.8, 4800, out.data());
+        QVERIFY(qAbs(rms(out.data(), 4800) - full / 2) < 0.005);
+        lr->audioOn = false;
+        QVERIFY(!mixer.compHasAudio(*c));
+        lr->audioOn = true;
+        lr->audioLevels.staticValue = {0};
+
+        // Nested: the comp inside another comp still sounds, shifted by the precomp layer's start.
+        auto *outer = proj.addComposition("B", 64, 64, 30, 3);
+        auto pre = proj.makeLayer(LayerType::Precomp, *outer);
+        pre->sourceItemId = c->id;
+        pre->hasAudio = true;
+        pre->startTime = pre->inPoint = 1.0;
+        pre->outPoint = 3.0;
+        outer->layers.push_back(std::move(pre));
+        mixer.mix(*outer, 1.8, 4800, out.data());   // inner time 0.8
+        QVERIFY(qAbs(rms(out.data(), 4800) - full) < 0.01);
+        mixer.mix(*outer, 0.5, 4800, out.data());
+        QCOMPARE(rms(out.data(), 4800), 0.0);
+
+        // Export with audio and read it back.
+        const QString mp4 = dir.filePath("a.mp4");
+        Exporter ex;
+        QString err;
+        QVERIFY2(ex.open(mp4, ExportFormat::H264, 64, 64, 30, 50, &err, true), qPrintable(err));
+        const int perFrame = kAudioRate / 30;
+        std::vector<float> chunk(size_t(perFrame) * 2);
+        for (int i = 0; i < 60; ++i) {
+            QImage img(64, 64, QImage::Format_ARGB32_Premultiplied);
+            img.fill(Qt::black);
+            QVERIFY(ex.addFrame(img, &err));
+            mixer.mix(*c, i / 30.0, perFrame, chunk.data());
+            QVERIFY2(ex.addAudio(chunk.data(), perFrame, &err), qPrintable(err));
+        }
+        QVERIFY2(ex.finish(&err), qPrintable(err));
+        const MediaInfo emi = probeMedia(mp4);
+        QVERIFY(emi.ok && emi.hasAudio && emi.hasVideo);
+        auto back = decodeAudio(mp4);
+        QVERIFY(back);
+        QVERIFY(qAbs(back->duration() - 2.0) < 0.1);
+        float l0, r0;
+        double early = 0, late = 0;
+        for (int i = 0; i < 2000; ++i) {
+            back->sampleAt(0.1 + i / 48000.0, l0, r0);
+            early += std::abs(l0);
+            back->sampleAt(1.0 + i / 48000.0, l0, r0);
+            late += std::abs(l0);
+        }
+        QVERIFY(early / 2000 < 0.01);   // silent before the layer starts
+        QVERIFY(late / 2000 > 0.2);     // tone while it plays
+
+        // ProRes gets PCM audio; PNG sequences get a WAV next to the frames.
+        Exporter png;
+        QVERIFY(png.open(dir.filePath("seq/frame.png"), ExportFormat::PngSequence, 8, 8, 30, 50, &err, true));
+        QImage tiny(8, 8, QImage::Format_ARGB32_Premultiplied);
+        tiny.fill(Qt::transparent);
+        QVERIFY(png.addFrame(tiny, &err));
+        QVERIFY(png.addAudio(chunk.data(), perFrame, &err));
+        QVERIFY(png.finish(&err));
+        QVERIFY(QFile::exists(dir.filePath("seq/frame.wav")));
+        MediaCache::instance().clear();
+    }
+
+    void markersRoundTrip()
+    {
+        Project proj;
+        auto *c = proj.addComposition("M", 10, 10, 30, 2);
+        c->addMarker(1.0, "drop");
+        c->addMarker(0.5);
+        c->addMarker(1.0);   // duplicate ignored
+        QCOMPARE(int(c->markers.size()), 2);
+        QCOMPARE(c->markers[0].time, 0.5);
+        Project copy;
+        QVERIFY(copy.fromJson(proj.toJson()));
+        QCOMPARE(int(copy.comp(c->id)->markers.size()), 2);
+        QCOMPARE(copy.comp(c->id)->markers[1].comment, QString("drop"));
+    }
 
     void linearKeyframes()
     {

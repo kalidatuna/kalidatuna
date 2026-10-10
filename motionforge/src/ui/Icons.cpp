@@ -144,6 +144,18 @@ static QPixmap draw(const QString &name, const QColor &c, int size)
         QPainterPath d;
         d.addEllipse(QPointF(12, 12), 3.2, 3.2);
         fill(d);
+    } else if (name == "audio") {
+        QPainterPath sp;
+        sp.moveTo(3, 9);
+        sp.lineTo(7, 9);
+        sp.lineTo(12, 4);
+        sp.lineTo(12, 20);
+        sp.lineTo(7, 15);
+        sp.lineTo(3, 15);
+        sp.closeSubpath();
+        fill(sp);
+        p.drawArc(QRectF(10, 7, 6, 10), -60 * 16, 120 * 16);
+        p.drawArc(QRectF(10, 3.5, 11, 17), -60 * 16, 120 * 16);
     } else if (name == "solo") {
         QPainterPath d;
         d.addEllipse(QPointF(12, 12), 5, 5);

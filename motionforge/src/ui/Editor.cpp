@@ -21,7 +21,7 @@ namespace mf {
 static const char *kLayersMime = "application/x-motionforge-layers";
 static const char *kKeysMime = "application/x-motionforge-keys";
 
-Editor::Editor() : renderer_(project_)
+Editor::Editor() : renderer_(project_), mixer_(project_, renderer_)
 {
     installEffectFactory();
     newProject();
@@ -390,9 +390,16 @@ FootageItem *Editor::importFile(const QString &path, QString *error)
     f->fps = mi.fps;
     f->duration = mi.duration;
     f->hasAudio = mi.hasAudio;
+    f->hasVideo = mi.hasVideo;
+    if (f->hasAudio) {
+        emit message("Decoding audio: " + f->name);
+        QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+        MediaCache::instance().audio(f->path);   // decode now so playback starts instantly
+    }
     auto *raw = f.get();
     project_.items.push_back(std::move(f));
     commit("Import", true);
+    emit message("Imported " + raw->name);
     return raw;
 }
 
@@ -401,8 +408,10 @@ Composition *Editor::newCompFromItem(int itemId)
     Item *it = project_.item(itemId);
     if (auto *f = dynamic_cast<FootageItem *>(it)) {
         const double dur = f->isStill ? 10.0 : std::max(f->duration, 1.0 / f->fps);
-        Composition *c = project_.addComposition(QFileInfo(f->name).completeBaseName(), f->width, f->height,
-                                                 f->isStill ? 30.0 : f->fps, dur);
+        const bool audioOnly = !f->hasVideo;
+        Composition *c = project_.addComposition(QFileInfo(f->name).completeBaseName(), audioOnly ? 1920 : f->width,
+                                                 audioOnly ? 1080 : f->height,
+                                                 (f->isStill || audioOnly) ? 30.0 : f->fps, dur);
         activeComp_ = c->id;
         selection_.clear();
         addItemLayer(itemId);
@@ -567,6 +576,10 @@ Layer *Editor::addItemLayer(int itemId, std::optional<QPointF> pos)
         l->width = f->width;
         l->height = f->height;
         l->setDefaultAnchor(f->width, f->height);
+        l->hasAudio = f->hasAudio;
+        l->audioOnly = !f->hasVideo;
+        if (l->audioOnly)
+            l->label = 9;
         if (!f->isStill)
             l->outPoint = std::min(c->duration, f->duration);
     } else if (auto *sub = dynamic_cast<Composition *>(it)) {
@@ -579,6 +592,7 @@ Layer *Editor::addItemLayer(int itemId, std::optional<QPointF> pos)
         l->width = sub->width;
         l->height = sub->height;
         l->setDefaultAnchor(sub->width, sub->height);
+        l->hasAudio = mixer_.compHasAudio(*sub);
         l->outPoint = std::min(c->duration, sub->duration);
     } else {
         return nullptr;
@@ -730,6 +744,7 @@ void Editor::precomposeSelected(const QString &name)
     pre->sourceItemId = sub->id;
     pre->name = name;
     pre->setDefaultAnchor(c->width, c->height);
+    pre->hasAudio = mixer_.compHasAudio(*sub);
     const int pid = pre->id;
     ls.insert(ls.begin() + insertAt, std::move(pre));
     selection_ = {pid};
@@ -1253,9 +1268,44 @@ std::vector<double> Editor::keyTimesForLayer(Layer &l) const
     return times;
 }
 
+void Editor::addMarkerAtCurrentTime()
+{
+    Composition *c = activeComp();
+    if (!c)
+        return;
+    c->addMarker(time());
+    commit("Add Marker", false);
+}
+
+void Editor::removeMarker(int index)
+{
+    Composition *c = activeComp();
+    if (!c || index < 0 || index >= int(c->markers.size()))
+        return;
+    c->markers.erase(c->markers.begin() + index);
+    commit("Delete Marker", false);
+}
+
+std::vector<double> Editor::snapTimes() const
+{
+    std::vector<double> r;
+    Composition *c = activeComp();
+    if (!c)
+        return r;
+    r.push_back(time());
+    r.push_back(c->workStart);
+    r.push_back(c->workEnd);
+    for (const auto &m : c->markers)
+        r.push_back(m.time);
+    return r;
+}
+
 void Editor::gotoKeyframe(bool next)
 {
     std::vector<double> times;
+    if (Composition *c = activeComp())
+        for (const auto &m : c->markers)
+            times.push_back(m.time);
     for (Layer *l : selectedLayers()) {
         auto t = keyTimesForLayer(*l);
         times.insert(times.end(), t.begin(), t.end());

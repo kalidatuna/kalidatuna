@@ -199,7 +199,9 @@ bool RenderQueuePanel::renderJob(RenderJob &job, int row)
     const int f1 = job.workAreaOnly ? std::max(f0 + 1, c->frameAt(c->workEnd)) : c->frameCount();
     Exporter ex;
     QString err;
-    if (!ex.open(job.path, job.format, w, h, c->fps, job.quality, &err)) {
+    const bool withAudio = ed_->mixer().compHasAudio(*c);
+    std::vector<float> audio;
+    if (!ex.open(job.path, job.format, w, h, c->fps, job.quality, &err, withAudio)) {
         setStatus("Failed", 0);
         status_->setText(err);
         return false;
@@ -219,6 +221,18 @@ bool RenderQueuePanel::renderJob(RenderJob &job, int row)
             setStatus("Failed", job.progress);
             status_->setText(err);
             return false;
+        }
+        if (withAudio) {
+            // Cumulative sample positions avoid drift at fractional frame rates.
+            const qint64 a0 = std::llround((f - f0) * double(kAudioRate) / c->fps);
+            const qint64 a1 = std::llround((f - f0 + 1) * double(kAudioRate) / c->fps);
+            audio.resize(size_t(a1 - a0) * 2);
+            ed_->mixer().mix(*c, c->timeOfFrame(f0) + double(a0) / kAudioRate, int(a1 - a0), audio.data());
+            if (!ex.addAudio(audio.data(), int(a1 - a0), &err)) {
+                setStatus("Failed", job.progress);
+                status_->setText(err);
+                return false;
+            }
         }
         const int prog = int(100.0 * (f - f0 + 1) / (f1 - f0));
         const double perFrame = timer.elapsed() / 1000.0 / (f - f0 + 1);

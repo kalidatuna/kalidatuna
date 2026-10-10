@@ -9,7 +9,7 @@ affiliated with, derived from, or endorsed by Adobe. It does not use any Adobe c
 
 ![MotionForge main window](docs/screenshot.png)
 
-## What works today (milestone 1)
+## What works today (milestones 1–2)
 
 **Workspace**
 - AE-style dockable panels: Project, Composition viewer, Timeline, Effect Controls,
@@ -46,6 +46,16 @@ Gaussian Blur, Fast Box Blur, Directional Blur, Radial Blur (spin/zoom), Sharpen
 Brightness & Contrast, Hue/Saturation, Tint, Exposure, Levels, Fill, Gradient Ramp, Invert,
 Color Key, Drop Shadow, Noise, Vignette, Motion Tile (with mirror edges), RGB Split, Strobe Light.
 
+**Audio & music sync**
+- Import music and sound effects (MP3, WAV, AAC/M4A, FLAC, OGG, Opus) or use the audio inside videos.
+- Waveforms on timeline layer bars, speaker switch, and keyframeable **Audio Levels** (dB) with `L` to reveal.
+- Audio plays during preview and drives the clock, so the picture stays in sync with the music.
+- Audio follows layer timing, time stretch, time remapping and nested precomps, and is mixed into exports
+  (AAC in MP4, PCM in ProRes MOV, a WAV next to PNG sequences).
+- **Composition markers**: press `*` while previewing to tap markers on the beat. Drag markers,
+  double-click to name them, and Ctrl+click to delete. J/K jumps between them, and holding Shift
+  while dragging layers, keyframes or the time indicator snaps them to markers.
+
 **Preview & output**
 - Real-time preview: frames render once, then play from a RAM cache (shown as a green bar in the
   timeline ruler). Preview resolution can be Auto, Full, Half, Third or Quarter.
@@ -61,8 +71,7 @@ Color Key, Drop Shadow, Noise, Vignette, Motion Tile (with mirror edges), RGB Sp
 
 | Area | Status |
 | --- | --- |
-| Audio (waveforms, playback, export) | Next milestone |
-| Graph editor (speed/value curves) | Planned |
+| Graph editor (speed/value curves) | Next milestone |
 | Masks and Pen tool, Bezier shape paths | Planned |
 | Per-character text animators | Planned |
 | 3D layers, cameras and lights | Planned |
@@ -86,24 +95,24 @@ suites that ship OFX versions) can be used.
 ./build.sh --deb      # optional: build a .deb  →  sudo apt install ./build/motionforge-*.deb
 ```
 
-Requirements: CMake ≥ 3.21, a C++20 compiler, Qt ≥ 6.4 (Core, Gui, Widgets, Qml),
-FFmpeg (libavformat, libavcodec, libavutil, libswscale).
+Requirements: CMake ≥ 3.21, a C++20 compiler, Qt ≥ 6.4 (Core, Gui, Widgets, Qml, Multimedia),
+FFmpeg (libavformat, libavcodec, libavutil, libswscale, libswresample).
 
 ## Shortcuts
 
 *Help ▸ Keyboard Shortcuts* (Ctrl+/) lists them all. The most used ones match After Effects:
 Space (preview), Ctrl+N (new comp), Ctrl+K (comp settings), Ctrl+Y (solid), Ctrl+Alt+Y (adjustment layer),
 Ctrl+D (duplicate), Ctrl+Shift+D (split), Ctrl+Shift+C (pre-compose), Ctrl+M (render queue),
-P/S/R/T/A/U/E (reveal), J/K (keyframes), B/N (work area), [ ] and Alt+[ ] (move/trim to time),
-F9 (Easy Ease), Ctrl+Alt+T (time remap).
+P/S/R/T/A/U/E/L (reveal), J/K (keyframes & markers), `*` (marker), B/N (work area),
+[ ] and Alt+[ ] (move/trim to time), F9 (Easy Ease), Ctrl+Alt+T (time remap).
 
 ## Project layout
 
 ```
 src/core     data model: project, compositions, layers, animatable properties, keyframes
 src/expr     JavaScript expression engine (QJSEngine)
-src/render   CPU compositor, effects, frame cache
-src/media    FFmpeg decoding and encoding
+src/render   CPU compositor, effects, audio mixer, frame cache
+src/media    FFmpeg video/audio decoding and encoding
 src/ui       the application: panels, viewer, timeline, dialogs
 tests        engine tests and GUI smoke tests (run with ctest)
 ```

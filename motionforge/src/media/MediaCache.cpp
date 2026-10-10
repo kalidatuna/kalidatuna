@@ -41,8 +41,25 @@ QImage MediaCache::videoFrame(const QString &path, double seconds)
     return (*it)->frameAt(seconds);
 }
 
+std::shared_ptr<AudioBuffer> MediaCache::audio(const QString &path)
+{
+    if (auto it = audio_.find(path); it != audio_.end())
+        return *it;
+    if (noAudio_.contains(path))
+        return nullptr;
+    auto buf = decodeAudio(path);
+    if (!buf) {
+        noAudio_.insert(path);
+        return nullptr;
+    }
+    audio_.insert(path, buf);
+    return buf;
+}
+
 void MediaCache::clear()
 {
+    audio_.clear();
+    noAudio_.clear();
     stills_.clear();
     decoders_.clear();
     decoderLru_.clear();
