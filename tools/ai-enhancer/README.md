@@ -28,7 +28,7 @@ An open-source desktop app for AI photo and video enhancement: upscaling, noise 
 
 App features:
 
-- **Presets** for TikTok edits (fast, balanced, best quality) and photos. Every built-in preset uses only models that allow commercial use.
+- **Presets** for TikTok edits (balanced, low light, best quality, fast draft) and photos. Every built-in preset uses only models that allow commercial use.
 - A queue for images, folders, and videos, with drag and drop.
 - A before/after viewer with split, side-by-side, before-only and after-only modes, wheel zoom, and drag to pan.
 - **Live preview** of the visible area. It reruns automatically when settings change. Detail, sharpen, and face settings reuse the cached AI result, so they update almost instantly.
@@ -70,13 +70,18 @@ ai-enhancer            # or: ai-enhancer-gui, or: python -m enhancer
 
 ## TikTok edits
 
-Downloaded TikTok clips are small and heavily compressed. The **TikTok edit** presets first remove the compression blocks (FBCNN), then upscale 2x with a model trained on re-compressed web footage, then recover faces with GFPGAN at medium strength. A 1080x1920 clip comes out at 2160x3840 (4K vertical).
+Downloaded TikTok clips are small and heavily compressed. The **TikTok edit** presets first reduce the compression blocks (FBCNN), then upscale 2x with a model trained on re-compressed web footage, then recover faces with GFPGAN at medium strength. A 1080x1920 clip comes out at 2160x3840 (4K vertical).
 
 | Preset | Upscaler | Use it for |
 | --- | --- | --- |
-| TikTok edit: fast | Fast Video 2x | Long clips; the upscaler is about 15x faster than the one in *balanced* |
-| TikTok edit: balanced | Social Media (fast) | Short clips; sharper detail |
-| TikTok edit: best quality | Social Media HD | Stills and very short clips; the most natural faces, but slow |
+| TikTok edit: balanced (recommended) | Social Media (fast) | Most clips. Re-creates hair, fur and fabric texture; light film grain |
+| TikTok edit: low light | Social Media (fast) | Dark clips. More grain, slightly softer face recovery so the face matches the background |
+| TikTok edit: best quality | Social Media HD | Stills and very short clips; the most natural texture, but slow |
+| TikTok edit: fast draft | Fast Video 2x | Checking timing and framing only. About 11x faster, but hair and backgrounds look smooth and "painted" |
+
+**Why backgrounds can look "painted".** TikTok's compression removes most fine detail, especially in dark areas, so no model can bring back the original hair or fur. It has to re-create believable texture. In a side-by-side test on dark, compressed fur, Social Media HD and Social Media (fast) re-created strand texture, while Fast Video 2x and Anime Video produced smooth paint-like areas. GFPGAN rebuilds faces in much more detail than any upscaler does for the rest of the frame. Keeping face strength around 0.5 and adding a little **film grain** makes the face and background look like they belong to the same shot. Grain is stronger in shadows, changes every frame like real film grain, and also hides banding in dark gradients.
+
+Anime Video is for cartoons only: it flattens real-world texture.
 
 For **Alight Motion**, export as H.264 or H.265. For **After Effects**, ProRes 422 HQ keeps the most quality for further editing. On an NVIDIA card, choose *H.264/H.265, NVIDIA GPU encoder* (NVENC): encoding then runs on the GPU. If NVENC is not available, the app falls back to the software encoder and says so. During video export the status bar shows frames per second and the time left.
 
@@ -149,12 +154,12 @@ Measured on a 4-core CPU (no GPU), for one 270x480 frame:
 
 | Preset | Before these changes | Now |
 | --- | --- | --- |
-| TikTok edit: fast | 6.5 s | 4.5 s |
+| TikTok edit: fast draft | 6.5 s | 4.5 s |
 | TikTok edit: balanced | 23.9 s | 10.2 s |
 
 The output stayed visually identical: 62 dB and 45 dB PSNR against the old version. GPU timings have not been measured yet. If you run out of GPU memory, set a fixed **Tile size** under *Performance*.
 
-Relative cost of the TikTok presets on the same frame: *best* is about 23 times slower than *fast*, and *balanced* about 4 times. Use *fast* for long clips.
+Relative cost of the TikTok presets on the same frame: *best* is about 23 times slower than *fast draft*, and *balanced* about 4 times. Use *balanced* for final exports and *fast draft* only to check timing and framing.
 
 ## Limitations
 
@@ -188,7 +193,7 @@ Models are loaded with [spandrel](https://github.com/chaiNNer-org/spandrel).
 
 ```bash
 pip install -e ".[dev]"
-pytest              # 36 tests, offline; a fake model stands in for real checkpoints
+pytest              # 38 tests, offline; a fake model stands in for real checkpoints
 pyflakes enhancer tests
 ```
 
@@ -199,7 +204,7 @@ GUI tests run headless (`QT_QPA_PLATFORM=offscreen`). On a minimal Linux system 
 | `enhancer/models.py` | Model registry, verified downloads, loading, weight interpolation |
 | `enhancer/tiling.py` | Tiled inference on the GPU with blended seams, automatic tile size, fp16 NaN guard |
 | `enhancer/pipeline.py` | Clean-up, upscale, recover detail, faces, sharpen; cached region preview |
-| `enhancer/presets.py` | Built-in presets (TikTok edits, photo) |
+| `enhancer/presets.py` | Built-in presets (TikTok edits incl. low light, photo) |
 | `enhancer/faces.py` | Face detection, FFHQ alignment, restoration, feathered paste-back |
 | `enhancer/video.py` | Threaded FFmpeg decode/encode, repeated-frame reuse, NVENC with fallback, audio passthrough, ETA |
 | `enhancer/compare.py` | SSIM, PSNR, ΔE, and the settings search |

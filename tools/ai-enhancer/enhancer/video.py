@@ -274,7 +274,7 @@ def enhance_video(src: str | Path, dst: str | Path, settings: Settings, pipeline
                 reused += 1
                 frame_progress("", 1.0)
             else:
-                last_out = pipeline.process_frame(frame, s, progress=frame_progress, cancel=cancel).tobytes()
+                last_out = pipeline.process_frame(frame, s, progress=frame_progress, cancel=cancel, index=n).tobytes()
                 last_src = frame
             _put(q_out, last_out, stop)
             n += 1

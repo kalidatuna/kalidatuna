@@ -223,7 +223,8 @@ UPSCALERS: dict[str, UpscaleModel] = {
             "social-fast",
             "Social Media (fast)",
             "Trained on real photos with noise, lens blur, and JPEG/WebP re-compression. "
-            "Sharper and about 8x faster than Social Media HD.",
+            "Re-creates hair, fur and fabric texture. The best choice for TikTok videos; "
+            "about 8x faster than Social Media HD.",
             ("4xNomosWebPhoto_RealPLKSR",),
             4,
             speed="medium",
@@ -231,8 +232,9 @@ UPSCALERS: dict[str, UpscaleModel] = {
         UpscaleModel(
             "video-2x",
             "Fast Video 2x",
-            "Very fast 2x model trained on heavy JPEG compression. Made for long "
-            "videos: pair it with Remove compression for TikTok downloads.",
+            "Very fast 2x model trained on heavy JPEG compression. Good for drafts: "
+            "backgrounds, hair and fur come out smooth and \"painted\". Use Social Media "
+            "(fast) for final exports.",
             ("2xNomosUni_span_multijpg",),
             2,
             speed="fastest",
@@ -283,8 +285,9 @@ UPSCALERS: dict[str, UpscaleModel] = {
         ),
         UpscaleModel(
             "anime-video",
-            "Anime Video",
-            "Real-ESRGAN's small anime model built for video. Very fast.",
+            "Anime Video (cartoons only)",
+            "Real-ESRGAN's small anime model built for video. Very fast, but it flattens "
+            "real-world texture: use it only for anime and cartoons.",
             ("realesr-animevideov3",),
             4,
             speed="fastest",
@@ -385,7 +388,7 @@ def _loader():
     if not _spandrel_ready:
         import spandrel_extra_arches
 
-        spandrel_extra_arches.install()
+        spandrel_extra_arches.install(ignore_duplicates=True)
         _spandrel_ready = True
     return spandrel.ModelLoader()
 

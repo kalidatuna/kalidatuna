@@ -36,6 +36,7 @@ class Settings:
     face_strength: float = 0.8  # 0..1 blend of restored faces
     face_fidelity: float = 0.7  # CodeFormer only: 0 = most restoration, 1 = closest to input
     sharpen: float = 0.0  # 0..1 unsharp mask amount
+    grain: float = 0.0  # 0..1 film grain, stronger in shadows; hides flat "painted" areas and banding
     tile: int = 0  # input tile size; 0 = automatic (largest that fits in GPU memory)
     device: str = "auto"
 
@@ -94,6 +95,22 @@ def gaussian_blur(x: torch.Tensor, sigma: float) -> torch.Tensor:
     x = F.pad(x, (r, r, r, r), mode="reflect")
     x = F.conv2d(x, k.view(1, 1, 1, -1).expand(c, 1, 1, -1), groups=c)
     return F.conv2d(x, k.view(1, 1, -1, 1).expand(c, 1, -1, 1), groups=c)
+
+
+def add_grain(x: torch.Tensor, amount: float, seed: int = 0, size: float = 0.7) -> torch.Tensor:
+    """Luminance film grain. ``amount`` 1.0 is a standard deviation of 4% in the shadows.
+
+    Video frames pass their frame number as ``seed`` so the grain moves like
+    film; previews use a fixed seed so they do not flicker.
+    """
+    if amount <= 0:
+        return x
+    gen = torch.Generator(device=x.device).manual_seed(int(seed))
+    g = torch.randn((1, 1, *x.shape[-2:]), generator=gen, device=x.device)
+    g = gaussian_blur(g, size)
+    g = g / g.std().clamp_min(1e-6)
+    lum = 0.299 * x[:, 0:1] + 0.587 * x[:, 1:2] + 0.114 * x[:, 2:3]
+    return x + g * (0.6 + 0.4 * (1.0 - lum)) * (amount * 0.04)
 
 
 def unsharp(x: torch.Tensor, amount: float, radius: float = 1.2) -> torch.Tensor:
@@ -177,7 +194,8 @@ class Pipeline:
         return resize(img, ow, oh)
 
     def finish_t(self, base: torch.Tensor, src: np.ndarray, s: Settings, faces=None,
-                 face_cache: dict | None = None, src_t: torch.Tensor | None = None) -> torch.Tensor:
+                 face_cache: dict | None = None, src_t: torch.Tensor | None = None,
+                 seed: int = 0) -> torch.Tensor:
         """Recover detail, restore faces, and sharpen an upscaled image, on the device.
 
         ``src`` is the source as an HxWx3 float32 array (faces are cropped from
@@ -205,7 +223,7 @@ class Pipeline:
                 if face_cache is not None:
                     face_cache[key] = restored
             img = paste_all(img.clone(), src.shape, restored, s.face_strength)
-        return unsharp(img, s.sharpen).clamp(0, 1)
+        return add_grain(unsharp(img, s.sharpen), s.grain, seed).clamp(0, 1)
 
     @torch.inference_mode()
     def upscale(self, rgb: np.ndarray, s: Settings, progress: Progress | None = None,
@@ -240,13 +258,13 @@ class Pipeline:
 
     @torch.inference_mode()
     def process_frame(self, frame: np.ndarray, s: Settings, progress: Progress | None = None,
-                      cancel: Callable[[], bool] | None = None) -> np.ndarray:
+                      cancel: Callable[[], bool] | None = None, index: int = 0) -> np.ndarray:
         """Enhance one HxWx3 uint8 video frame and return a uint8 frame. Stays on the device."""
         x = to_tensor(frame, self.device)
         base = self.upscale_t(x, s, progress, cancel)
         faces = self.detector().detect(frame) if s.face_model and s.face_strength > 0 else None
         src = frame.astype(np.float32) / 255.0 if faces else frame
-        return to_uint8_array(self.finish_t(base, src, s, faces=faces or [], src_t=x))
+        return to_uint8_array(self.finish_t(base, src, s, faces=faces or [], src_t=x, seed=index))
 
     def preview(self, rgb: np.ndarray, s: Settings, rect: tuple[int, int, int, int],
                 progress: Progress | None = None, cancel: Callable[[], bool] | None = None,

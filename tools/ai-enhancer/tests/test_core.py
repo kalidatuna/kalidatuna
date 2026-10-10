@@ -311,3 +311,24 @@ def test_video_reuses_repeats_and_limits_duration(fake_pipeline, tmp_path):
     n = subprocess.run(["ffprobe", "-v", "error", "-count_frames", "-show_entries", "stream=nb_read_frames",
                         "-of", "csv=p=0", str(short)], capture_output=True, text=True).stdout.strip()
     assert int(n) == 30 and len(calls) == 30
+
+
+def test_grain_is_seeded_and_shadow_weighted():
+    from enhancer.pipeline import add_grain
+
+    x = torch.cat([torch.full((1, 3, 64, 64), 0.1), torch.full((1, 3, 64, 64), 0.9)], dim=-1)
+    assert torch.equal(add_grain(x, 0.0), x)
+    a, b, c = add_grain(x, 1.0, seed=1), add_grain(x, 1.0, seed=1), add_grain(x, 1.0, seed=2)
+    assert torch.equal(a, b) and not torch.equal(a, c)
+    dark, bright = (a - x)[..., :64], (a - x)[..., 64:]
+    assert dark.std() > bright.std() * 1.2  # stronger in shadows
+    assert abs(float((a - x).mean())) < 0.005  # does not shift brightness
+    assert torch.equal((a - x)[:, 0], (a - x)[:, 2])  # luminance only, no colour noise
+
+
+def test_video_grain_changes_per_frame(fake_pipeline):
+    frame = np.full((32, 32, 3), 60, np.uint8)
+    s = Settings(model="video-2x", scale=2, grain=0.5)
+    f0 = fake_pipeline.process_frame(frame, s, index=0)
+    assert np.array_equal(f0, fake_pipeline.process_frame(frame, s, index=0))
+    assert not np.array_equal(f0, fake_pipeline.process_frame(frame, s, index=1))

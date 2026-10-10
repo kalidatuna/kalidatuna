@@ -141,6 +141,10 @@ class SettingsPanel(QScrollArea):
         f.addRow("Recover original detail", self.recover)
         self.sharpen = Slider(0.0)
         f.addRow("Sharpen", self.sharpen)
+        self.grain = Slider(0.0)
+        self.grain.setToolTip("Film grain, stronger in shadows. Makes smooth backgrounds and dark areas "
+                              "look natural next to sharp faces, and hides banding.")
+        f.addRow("Film grain", self.grain)
         root.addWidget(g)
 
         # Clean-up pre-pass
@@ -225,7 +229,7 @@ class SettingsPanel(QScrollArea):
 
         base = [self.model.currentIndexChanged, self.noise.valueChanged, self.denoise.currentIndexChanged,
                 self.denoise_strength.valueChanged, self.tile.valueChanged, self.device.currentIndexChanged]
-        post = [self.recover.valueChanged, self.sharpen.valueChanged, self.face_on.toggled,
+        post = [self.recover.valueChanged, self.sharpen.valueChanged, self.grain.valueChanged, self.face_on.toggled,
                 self.face_model.currentIndexChanged, self.face_strength.valueChanged,
                 self.face_fidelity.valueChanged]
         out = [self.fmt.currentIndexChanged, self.quality.valueChanged, self.keep16.toggled,
@@ -283,8 +287,8 @@ class SettingsPanel(QScrollArea):
         slow = self.is_video and up.speed in ("slow", "very slow")
         self.video_warning.setVisible(slow)
         if slow:
-            self.video_warning.setText(f"⚠ {up.label} is {up.speed} for video. For long clips, use the preset "
-                                       "\u201cTikTok edit: fast\u201d. Try Test 3 s first to see the time.")
+            self.video_warning.setText(f"⚠ {up.label} is {up.speed} for video. For TikTok clips, use the preset "
+                                       "\u201cTikTok edit: balanced\u201d. Try Test 3 s first to see the time.")
         self.noise.setEnabled(up.denoise_blend)
         self.noise_label.setEnabled(up.denoise_blend)
         self.denoise_strength.setEnabled(bool(self.denoise.currentData()))
@@ -333,6 +337,7 @@ class SettingsPanel(QScrollArea):
             face_strength=self.face_strength.value(),
             face_fidelity=self.face_fidelity.value(),
             sharpen=self.sharpen.value(),
+            grain=self.grain.value(),
             tile=self.tile.value(),
             device=self.device.currentData(),
         )
@@ -347,6 +352,7 @@ class SettingsPanel(QScrollArea):
             self.denoise_strength.setValue(s.denoise_strength)
             self.recover.setValue(s.recover_detail)
             self.sharpen.setValue(s.sharpen)
+            self.grain.setValue(s.grain)
             self.face_on.setChecked(bool(s.face_model))
             if s.face_model:
                 _select(self.face_model, s.face_model)

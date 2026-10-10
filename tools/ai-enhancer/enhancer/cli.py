@@ -21,7 +21,8 @@ def _settings_from_args(a):
     else:
         s = Settings.from_dict(json.loads(Path(a.preset).read_text()))
     for name in ("model", "scale", "width", "height", "noise", "denoise_model", "denoise_strength",
-                 "recover_detail", "face_model", "face_strength", "face_fidelity", "sharpen", "tile", "device"):
+                 "recover_detail", "face_model", "face_strength", "face_fidelity", "sharpen", "grain", "tile",
+                 "device"):
         v = getattr(a, name, None)
         if v is not None:
             setattr(s, name, v)
@@ -130,6 +131,7 @@ def _add_settings_args(p: argparse.ArgumentParser):
     p.add_argument("--face-strength", type=float)
     p.add_argument("--fidelity", dest="face_fidelity", type=float, help="CodeFormer only, 0..1")
     p.add_argument("--sharpen", type=float)
+    p.add_argument("--grain", type=float, help="0..1 film grain, stronger in shadows")
     p.add_argument("--tile", type=int)
     p.add_argument("--device", help="auto, cpu, cuda, cuda:1, mps")
 
