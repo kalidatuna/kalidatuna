@@ -32,8 +32,7 @@ target_include_directories(mfcore PUBLIC src)
 target_link_libraries(mfcore PUBLIC Qt6::Core Qt6::Gui Qt6::Qml PkgConfig::FFMPEG)
 target_compile_options(mfcore PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
-add_executable(motionforge
-  src/main.cpp
+add_library(mfui STATIC
   src/ui/Editor.cpp
   src/ui/Theme.cpp
   src/ui/Icons.cpp
@@ -50,14 +49,20 @@ add_executable(motionforge
   src/ui/Dialogs.cpp
   src/ui/PlaybackController.cpp
 )
-target_link_libraries(motionforge PRIVATE mfcore Qt6::Widgets)
-target_compile_options(motionforge PRIVATE -Wall -Wextra -Wno-unused-parameter)
+target_link_libraries(mfui PUBLIC mfcore Qt6::Widgets)
+target_compile_options(mfui PRIVATE -Wall -Wextra -Wno-unused-parameter)
+
+add_executable(motionforge src/main.cpp)
+target_link_libraries(motionforge PRIVATE mfui)
 
 enable_testing()
 add_executable(mftests tests/test_main.cpp)
 target_link_libraries(mftests PRIVATE mfcore Qt6::Test)
 add_test(NAME mftests COMMAND mftests)
-set_tests_properties(mftests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+add_executable(mfguitests tests/test_gui.cpp)
+target_link_libraries(mfguitests PRIVATE mfui Qt6::Test)
+add_test(NAME mfguitests COMMAND mfguitests)
+set_tests_properties(mftests mfguitests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 install(TARGETS motionforge RUNTIME DESTINATION bin)
 install(FILES packaging/motionforge.desktop DESTINATION share/applications)

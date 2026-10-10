@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b2a4a"/>
+      <stop offset="1" stop-color="#0b0f1c"/>
+    </linearGradient>
+    <linearGradient id="mf" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3d9df2"/>
+      <stop offset="1" stop-color="#8fd3ff"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="52" fill="url(#bg)"/>
+  <rect x="8" y="8" width="240" height="240" rx="52" fill="none" stroke="#3d9df2" stroke-opacity=".5" stroke-width="4"/>
+  <!-- keyframe path -->
+  <path d="M44 184 C 92 184, 108 72, 164 72 S 212 120, 212 120" fill="none" stroke="#f2c43d" stroke-width="7" stroke-linecap="round" stroke-dasharray="2 14"/>
+  <path d="M44 184 l14 -14 l14 14 l-14 14z" fill="#f2c43d"/>
+  <path d="M150 72 l14 -14 l14 14 l-14 14z" fill="#f2c43d"/>
+  <!-- M F monogram -->
+  <path d="M60 156 V100 l26 32 l26 -32 v56" fill="none" stroke="url(#mf)" stroke-width="14" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M136 156 V100 h44 M136 128 h34" fill="none" stroke="url(#mf)" stroke-width="14" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

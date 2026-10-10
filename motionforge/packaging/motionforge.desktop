@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=MotionForge
+GenericName=Motion Graphics & Compositing
+Comment=Animate, composite and render motion graphics with an After Effects-style workflow
+Exec=motionforge %f
+Icon=motionforge
+Terminal=false
+Categories=AudioVideo;Video;Graphics;2DGraphics;
+MimeType=application/x-motionforge-project;
+Keywords=motion;graphics;compositing;animation;keyframe;video;edit;effects;
