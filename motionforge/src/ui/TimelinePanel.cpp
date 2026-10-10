@@ -188,7 +188,8 @@ void TimelineView::rebuild()
                         add({Kind::Effect, l, nullptr, e.get(), e->name, 1});
                         if (e->expanded)
                             for (auto &p : e->params)
-                                addProp(l, &p, 2);
+                                if (!p.hidden)
+                                    addProp(l, &p, 2);
                     }
                 }
                 for (auto &e : l->effects)
@@ -218,7 +219,8 @@ void TimelineView::rebuild()
                         add({Kind::Effect, l, nullptr, e.get(), e->name, 2});
                         if (e->expanded)
                             for (auto &p : e->params)
-                                addProp(l, &p, 3);
+                                if (!p.hidden)
+                                    addProp(l, &p, 3);
                     }
             }
             for (auto &g : l->propertyGroups()) {
@@ -265,6 +267,7 @@ QString TimelineView::valueText(const Property &p, const Value &v, int dim) cons
         return timecode(d, c ? c->fps : 30);
     }
     case PropType::Color: return {};
+    case PropType::String: return p.text.isEmpty() ? QString("(empty)") : p.text.left(60);
     default: return QString::number(d, 'f', std::abs(p.dragStep) < 0.1 ? 2 : 1);
     }
 }
@@ -277,7 +280,8 @@ std::vector<TimelineView::ValueHit> TimelineView::valueRects(const Row &r, const
     const int top = kHeaderH + r.y - scrollY_;
     double x = cols.sw + 6;
     const int dims = (r.prop->type == PropType::Color || r.prop->type == PropType::Angle ||
-                      r.prop->type == PropType::Checkbox || r.prop->type == PropType::Choice)
+                      r.prop->type == PropType::Checkbox || r.prop->type == PropType::Choice ||
+                      r.prop->type == PropType::String)
                          ? 1
                          : r.prop->dims();
     for (int d = 0; d < dims; ++d) {
@@ -930,7 +934,8 @@ void TimelineView::mousePressEvent(QMouseEvent *e)
             const Value v = currentValue(r);
             for (const ValueHit &vh : valueRects(r, v)) {
                 if (vh.rect.adjusted(-2, 0, 2, 0).contains(pos)) {
-                    if (pr->type == PropType::Color || pr->type == PropType::Checkbox || pr->type == PropType::Choice) {
+                    if (pr->type == PropType::Color || pr->type == PropType::Checkbox || pr->type == PropType::Choice ||
+                        pr->type == PropType::String) {
                         editValue(r, vh.dim, vh.rect);
                         return;
                     }
@@ -1637,6 +1642,15 @@ void TimelineView::editValue(const Row &r, int dim, QRectF rect)
         v[0] = v[0] > 0.5 ? 0.0 : 1.0;
         pr->setValue(t, v);
         ed_->commit("Toggle " + pr->name, false);
+        return;
+    }
+    if (pr->type == PropType::String) {
+        bool ok = false;
+        const QString text = QInputDialog::getText(this, pr->name, pr->name + ":", QLineEdit::Normal, pr->text, &ok);
+        if (Property *p = ed_->resolve({lid, key}); ok && p && p->text != text) {
+            p->text = text;
+            ed_->commit("Change " + p->name, false);
+        }
         return;
     }
     if (pr->type == PropType::Choice) {

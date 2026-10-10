@@ -19,6 +19,8 @@ const Property *Effect::param(const QString &id) const
 
 QJsonObject Effect::toJson() const
 {
+    if (isMissing())
+        return missingJson;
     QJsonObject o;
     o["type"] = typeId;
     o["uid"] = uid;

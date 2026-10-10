@@ -55,6 +55,7 @@ EffectsPresetsPanel::EffectsPresetsPanel(Editor *editor, QWidget *parent) : QWid
 
 void EffectsPresetsPanel::populate(const QString &filter)
 {
+    filter_ = filter;
     tree_->clear();
     auto *presets = new QTreeWidgetItem(tree_, {"* Animation Presets"});
     presets->setIcon(0, icon("folder", QColor(0xe4, 0xd8, 0x4c)));
@@ -76,7 +77,10 @@ void EffectsPresetsPanel::populate(const QString &filter)
                 continue;
             auto *it = new QTreeWidgetItem(catItem, {d.name});
             it->setData(0, Qt::UserRole, d.id);
-            it->setIcon(0, icon("fx"));
+            it->setIcon(0, icon("fx", d.external ? QColor(0x8a, 0xc7, 0xa6) : QColor(0xc8, 0xc8, 0xc8)));
+            if (d.external)
+                it->setToolTip(0, (d.description.isEmpty() ? QString() : d.description.left(400) + "\n\n") +
+                                      "OpenFX plugin");
         }
         if (catItem->childCount() == 0)
             delete catItem;

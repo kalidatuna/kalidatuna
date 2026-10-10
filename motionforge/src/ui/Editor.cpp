@@ -2,6 +2,7 @@
 
 #include "media/MediaCache.h"
 #include "media/VideoDecoder.h"
+#include "ofx/OfxHost.h"
 #include "render/Effects.h"
 
 #include <QApplication>
@@ -24,6 +25,15 @@ static const char *kKeysMime = "application/x-motionforge-keys";
 Editor::Editor() : renderer_(project_), mixer_(project_, renderer_)
 {
     installEffectFactory();
+    // Plugin instances live as long as their effect: drop them when effects go away (delete, undo…).
+    connect(this, &Editor::projectChanged, this, [this] {
+        QSet<int> live;
+        for (Composition *c : project_.compositions())
+            for (const auto &l : c->layers)
+                for (const auto &e : l->effects)
+                    live.insert(e->uid);
+        ofx::Manager::instance().pruneInstances(live);
+    });
     newProject();
 }
 

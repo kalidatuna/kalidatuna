@@ -21,7 +21,7 @@ class GuiTests : public QObject {
 private slots:
     void init()
     {
-        w = new MainWindow;
+        w = new MainWindow(false);   // don't scan for OpenFX plugins in tests
         w->resize(1600, 960);
         w->show();
         QVERIFY(QTest::qWaitForWindowExposed(w));

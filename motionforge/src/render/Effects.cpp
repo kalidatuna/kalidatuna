@@ -789,10 +789,10 @@ static void applyStrobe(QImage &img, const ParamMap &m, const EffectContext &c)
 
 static int blurPad(double sigma) { return int(std::ceil(sigma * 3.0)); }
 
-const std::vector<EffectDef> &EffectRegistry::all()
+static std::deque<EffectDef> &registry()
 {
-    static const std::vector<EffectDef> defs = [] {
-        std::vector<EffectDef> d;
+    static std::deque<EffectDef> defs = [] {
+        std::deque<EffectDef> d;
         const QStringList dims{"Horizontal and Vertical", "Horizontal", "Vertical"};
         d.push_back({"mf.gaussianBlur", "Gaussian Blur", "Blur & Sharpen",
                      [dims](const QRectF &) {
@@ -964,6 +964,21 @@ const std::vector<EffectDef> &EffectRegistry::all()
         return d;
     }();
     return defs;
+}
+
+const std::deque<EffectDef> &EffectRegistry::all()
+{
+    return registry();
+}
+
+void EffectRegistry::registerEffect(EffectDef def)
+{
+    for (auto &d : registry())
+        if (d.id == def.id) {
+            d = std::move(def);
+            return;
+        }
+    registry().push_back(std::move(def));
 }
 
 const EffectDef *EffectRegistry::find(const QString &id)

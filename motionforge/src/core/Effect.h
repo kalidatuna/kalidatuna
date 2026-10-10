@@ -17,6 +17,9 @@ public:
     bool enabled = true;
     bool expanded = true;   // twirl state in Effect Controls
     std::vector<Property> params;
+    // Set when the effect's plugin isn't installed: the saved data is kept and written back unchanged.
+    QJsonObject missingJson;
+    bool isMissing() const { return !missingJson.isEmpty(); }
 
     Property *param(const QString &id);
     const Property *param(const QString &id) const;

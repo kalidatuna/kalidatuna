@@ -183,8 +183,13 @@ bool Exporter::openAudio(QString *error)
     aenc_ = avcodec_alloc_context3(codec);
     aenc_->sample_rate = kAudioRate;
     aenc_->sample_fmt = mp4 ? AV_SAMPLE_FMT_FLTP : AV_SAMPLE_FMT_S16;
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(57, 28, 100)
     AVChannelLayout stereo = AV_CHANNEL_LAYOUT_STEREO;
     av_channel_layout_copy(&aenc_->ch_layout, &stereo);
+#else
+    aenc_->channel_layout = AV_CH_LAYOUT_STEREO;
+    aenc_->channels = 2;
+#endif
     aenc_->time_base = AVRational{1, kAudioRate};
     if (mp4)
         aenc_->bit_rate = 320000;
@@ -200,7 +205,12 @@ bool Exporter::openAudio(QString *error)
     astream_->time_base = aenc_->time_base;
     aframe_ = av_frame_alloc();
     aframe_->format = aenc_->sample_fmt;
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(57, 28, 100)
     av_channel_layout_copy(&aframe_->ch_layout, &aenc_->ch_layout);
+#else
+    aframe_->channel_layout = AV_CH_LAYOUT_STEREO;
+    aframe_->channels = 2;
+#endif
     aframe_->sample_rate = kAudioRate;
     aframe_->nb_samples = aenc_->frame_size > 0 ? aenc_->frame_size : 1024;
     av_frame_get_buffer(aframe_, 0);

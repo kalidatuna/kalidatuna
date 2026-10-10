@@ -10,6 +10,7 @@
 #include <QComboBox>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMenu>
 #include <QScrollArea>
 #include <QToolButton>
@@ -158,6 +159,24 @@ QWidget *EffectControlsPanel::paramRow(Layer *l, Effect *e, Property *p)
         });
         break;
     }
+    case PropType::String: {
+        auto *le = new QLineEdit(p->text);
+        le->setMinimumWidth(160);
+        connect(le, &QLineEdit::editingFinished, this, [ed, ref, le] {
+            Property *pp = ed->resolve(ref);
+            if (pp && pp->text != le->text()) {
+                pp->text = le->text();
+                ed->commit("Change " + pp->name, false);
+            }
+        });
+        h->addWidget(le, 1);
+        refreshers_.push_back([le, ed, ref] {
+            Property *pp = ed->resolve(ref);
+            if (pp && !le->hasFocus() && le->text() != pp->text)
+                le->setText(pp->text);
+        });
+        break;
+    }
     case PropType::Choice: {
         auto *cb = new QComboBox;
         cb->setFocusPolicy(Qt::NoFocus);
@@ -288,9 +307,18 @@ void EffectControlsPanel::rebuild()
                 m.addAction("Remove Effect", [this, lid, uid] { ed_->removeEffect(lid, uid); });
                 m.exec(menuBtn->mapToGlobal(QPoint(0, menuBtn->height())));
             });
-            if (fx->expanded)
+            if (fx->isMissing()) {
+                auto *lbl = new QLabel(QString("The plugin “%1” isn't installed. Its settings are kept in the "
+                                               "project and come back when the plugin is available.")
+                                           .arg(fx->typeId.startsWith("ofx:") ? fx->typeId.mid(4) : fx->typeId));
+                lbl->setWordWrap(true);
+                lbl->setStyleSheet("color:#e0a040; padding:4px 22px;");
+                v->addWidget(lbl);
+            } else if (fx->expanded) {
                 for (auto &p : fx->params)
-                    v->addWidget(paramRow(l, fx, &p));
+                    if (!p.hidden)
+                        v->addWidget(paramRow(l, fx, &p));
+            }
             auto *gap = new QWidget;
             gap->setFixedHeight(4);
             v->addWidget(gap);

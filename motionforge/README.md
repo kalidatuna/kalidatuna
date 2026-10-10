@@ -9,7 +9,7 @@ affiliated with, derived from, or endorsed by Adobe. It does not use any Adobe c
 
 ![MotionForge main window](docs/screenshot.png)
 
-## What works today (milestones 1–2)
+## What works today (milestones 1–3)
 
 **Workspace**
 - AE-style dockable panels: Project, Composition viewer, Timeline, Effect Controls,
@@ -56,6 +56,28 @@ Color Key, Drop Shadow, Noise, Vignette, Motion Tile (with mirror edges), RGB Sp
   double-click to name them, and Ctrl+click to delete. J/K jumps between them, and holding Shift
   while dragging layers, keyframes or the time indicator snaps them to markers.
 
+**Plugins (OpenFX)**
+- MotionForge is an **OpenFX plugin host**. OpenFX is the open plugin standard used by Natron,
+  DaVinci Resolve, Nuke, Vegas and others. Linux OFX plugins show up in the Effect menu and in
+  Effects & Presets under *OpenFX: …* categories.
+- Plugin parameters are normal MotionForge properties: keyframes, expressions, Effect Controls,
+  timeline twirl-downs, copy/paste and project files all work with them. Point parameters are
+  draggable layer coordinates, like built-in effects.
+- Supported: filter, general and generator plugins; 8-bit and float pixels; render scale (half/quarter
+  resolution previews); plugins that grow the frame (glows, shadows); **temporal access**, so time
+  effects such as Time Blur, Frame Hold, Retime and Time Offset can read other frames; multithreaded
+  plugins.
+- **Crash protection:** new plugins are test-loaded in a separate process before MotionForge loads them.
+  If a plugin crashes while rendering, MotionForge catches the crash, disables that plugin for the
+  session and keeps running, so your project isn't lost.
+- Projects remember effects whose plugin isn't installed and keep their settings until it is.
+- *Effect ▸ Manage OpenFX Plugins…* shows every plugin found, what loaded and why anything didn't, and
+  lets you add plugin folders. `motionforge --ofx-list` prints the same report in a terminal.
+- Tested with Natron's free **openfx-misc** collection: 137 of the 148 plugins load and render.
+  `./scripts/install-natron-plugins.sh` builds and installs them for you.
+
+![OpenFX plugin in Effect Controls](docs/openfx-plugins.png)
+
 **Preview & output**
 - Real-time preview: frames render once, then play from a RAM cache (shown as a green bar in the
   timeline ruler). Preview resolution can be Auto, Full, Half, Third or Quarter.
@@ -72,31 +94,45 @@ Color Key, Drop Shadow, Noise, Vignette, Motion Tile (with mirror edges), RGB Sp
 | Area | Status |
 | --- | --- |
 | Graph editor (speed/value curves) | Next milestone |
+| OpenFX curve (parametric) parameters, stereo views, Natron multi-plane extensions | Planned (11 openfx-misc plugins need these) |
+| On-screen plugin overlays (interacts) and GPU render suites | Planned. Plugins render on the CPU |
 | Masks and Pen tool, Bezier shape paths | Planned |
 | Per-character text animators | Planned |
 | 3D layers, cameras and lights | Planned |
 | Motion tracking, Roto Brush-like tools | Planned |
 | GPU (OpenGL/Vulkan) rendering | Planned. Rendering is currently multi-threaded CPU |
-| **OpenFX plugin host** | Planned: loads OFX plugins built for Linux (e.g. those used by Natron/Resolve) |
 
 ### About After Effects plugins
 
-Plugins sold for After Effects (`.aex` / `.plugin`, e.g. Red Giant, Video Copilot, Sapphire for AE)
-are compiled Windows/macOS binaries that only run inside Adobe hosts, usually with vendor
-licensing checks. No Linux application can load them. MotionForge will instead host
-**OpenFX**, the open plugin standard, so Linux builds of plugins (including several commercial
-suites that ship OFX versions) can be used.
+Plugins sold for After Effects (`.aex` / `.plugin`, e.g. Red Giant, Video Copilot Element 3D,
+Sapphire *for AE*) are closed-source Windows/macOS binaries written against Adobe's private plugin
+interface, and most check a license tied to Adobe hosts. Nobody but their vendors can recompile them,
+and no Linux application can load them. That includes MotionForge.
+
+What you *can* use on Linux is the **OpenFX** version of a plugin, where the vendor makes one.
+Several commercial suites ship Linux OpenFX builds for Resolve and Nuke (for example Boris FX
+Sapphire/Continuum and RE:Vision Effects). They are built for the same standard MotionForge hosts,
+but they haven't been tested here. Some commercial plugins only license themselves to specific hosts
+or require GPU render suites, so try the vendor's trial first. Free collections such as Natron's work
+today.
 
 ## Build (Ubuntu / Linux Mint / Debian)
 
+Works on Ubuntu 22.04 and newer, Linux Mint 21 and newer, Pop!_OS 22.04+, and Debian 12+.
+
 ```bash
-./build.sh --deps     # installs Qt6 + FFmpeg dev packages with apt, builds, runs tests
+git clone -b claude/nice-wright-sz074e https://github.com/kalidatuna/kalidatuna.git ~/motionforge-src
+cd ~/motionforge-src/motionforge
+./build.sh --deps --plugins   # installs Qt6 + FFmpeg dev packages, builds, runs the tests,
+                              # then builds + installs Natron's free OpenFX plugins (~3 min)
 ./build/motionforge --sample
-./build.sh --deb      # optional: build a .deb  →  sudo apt install ./build/motionforge-*.deb
+./build.sh --deb              # optional: build a .deb  →  sudo apt install ./build/motionforge-*.deb
 ```
 
-Requirements: CMake ≥ 3.21, a C++20 compiler, Qt ≥ 6.4 (Core, Gui, Widgets, Qml, Multimedia),
-FFmpeg (libavformat, libavcodec, libavutil, libswscale, libswresample).
+If `git clone` says the destination already exists, pick another folder name (the last argument).
+
+Requirements: CMake ≥ 3.21, GCC 11+ (C++20), Qt ≥ 6.2 (Core, Gui, Widgets, Qml, Multimedia),
+FFmpeg ≥ 4.4 (libavformat, libavcodec, libavutil, libswscale, libswresample).
 
 ## Shortcuts
 
@@ -113,9 +149,20 @@ src/core     data model: project, compositions, layers, animatable properties, k
 src/expr     JavaScript expression engine (QJSEngine)
 src/render   CPU compositor, effects, audio mixer, frame cache
 src/media    FFmpeg video/audio decoding and encoding
+src/ofx      OpenFX plugin host (property/param/image-effect/thread/memory/message suites)
 src/ui       the application: panels, viewer, timeline, dialogs
-tests        engine tests and GUI smoke tests (run with ctest)
+tests        engine tests, GUI smoke tests, and OpenFX test plugins (run with ctest)
+third_party  OpenFX SDK headers (BSD-3-Clause)
+scripts      helper scripts (e.g. installing Natron's OpenFX plugins)
 ```
+
+## Troubleshooting plugins
+
+- `motionforge --ofx-list` shows which plugins loaded and why others didn't.
+- `MF_OFX_TRACE=1 motionforge` prints every plugin call to the terminal.
+- `motionforge --no-plugins` starts without loading any plugins.
+- Results of the out-of-process plugin test are cached. They're re-checked automatically when a
+  plugin file changes.
 
 ## License
 

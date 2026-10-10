@@ -9,7 +9,7 @@ namespace mf {
 Property::Property(QString id_, QString name_, PropType type_, Value def)
     : id(std::move(id_)), name(std::move(name_)), type(type_), defaultValue(def), staticValue(def)
 {
-    if (type == PropType::Checkbox || type == PropType::Choice)
+    if (type == PropType::Checkbox || type == PropType::Choice || type == PropType::String)
         animatable = type == PropType::Checkbox;
     if (type == PropType::Percent)
         dragStep = 1.0;
@@ -19,7 +19,7 @@ Property::Property(QString id_, QString name_, PropType type_, Value def)
 
 bool Property::isModified() const
 {
-    return isAnimated() || hasExpression() || staticValue != defaultValue;
+    return isAnimated() || hasExpression() || staticValue != defaultValue || text != defaultText;
 }
 
 static double bezier1(double p1, double p2, double s)
@@ -146,6 +146,7 @@ void Property::reset()
 {
     keys.clear();
     staticValue = defaultValue;
+    text = defaultText;
 }
 
 QColor Property::toColor(const Value &v)
@@ -187,6 +188,8 @@ QString Property::formatValue(const Value &v) const
         return toColor(v).name();
     case PropType::Time:
         return num(v.value(0), 3) + "s";
+    case PropType::String:
+        return text;
     default: {
         QStringList parts;
         for (double d : v)
@@ -248,6 +251,8 @@ QJsonObject Property::toJson() const
         o["expr"] = expression;
         o["exprOn"] = expressionEnabled;
     }
+    if (type == PropType::String)
+        o["text"] = text;
     return o;
 }
 
@@ -269,6 +274,8 @@ void Property::fromJson(const QJsonObject &o)
     sortKeys();
     expression = o["expr"].toString();
     expressionEnabled = o["exprOn"].toBool(true);
+    if (type == PropType::String)
+        text = o["text"].toString(defaultText);
 }
 
 } // namespace mf

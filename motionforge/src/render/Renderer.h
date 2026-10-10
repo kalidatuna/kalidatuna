@@ -38,7 +38,8 @@ private:
 
     QImage renderComp(const Composition &comp, double t, double scale, int depth);
     Source renderSource(const Layer &layer, const Composition &comp, double t, double factor, int depth);
-    void applyEffects(Source &src, const Layer &layer, const Composition &comp, double t) const;
+    void applyEffects(Source &src, const Layer &layer, const Composition &comp, double t, int depth,
+                      size_t upTo = SIZE_MAX);
     QImage layerBuffer(const Layer &layer, const Composition &comp, double t, double scale, int depth);
     void drawLayerSample(QImage &buf, const Layer &layer, const Composition &comp, double t, double scale, int depth);
     void applyAdjustment(QImage &accum, const Layer &layer, const Composition &comp, double t, double scale,
@@ -47,6 +48,10 @@ private:
     bool isVectorSource(const Layer &layer) const;
 
     const Project &project_;
+
+public:
+    // Last error reported by an effect (e.g. a plugin failing to render).
+    mutable QString lastEffectError;
 };
 
 } // namespace mf

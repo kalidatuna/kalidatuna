@@ -25,7 +25,7 @@ class PlaybackController;
 class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
-    MainWindow();
+    explicit MainWindow(bool loadPlugins = true);
     bool openProject(const QString &path);
     void buildSampleProject();
     Editor *editor() const { return ed_; }
@@ -66,6 +66,9 @@ private:
     void saveFrameAs();
     void precompose();
     void autosave();
+    void loadPlugins();
+    void rebuildEffectMenu();
+    void showPluginsDialog();
 
     QAction *act(const QString &text, const QKeySequence &key, std::function<void()> fn, QMenu *menu = nullptr);
 
@@ -89,6 +92,8 @@ private:
     QLabel *statusTime_;
     QTimer *autosaveTimer_;
     int shapeToolIndex_ = 0;
+    QMenu *effectMenu_ = nullptr;
+    QList<QMenu *> effectCategoryMenus_;
 };
 
 } // namespace mf

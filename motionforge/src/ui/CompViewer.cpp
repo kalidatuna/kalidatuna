@@ -3,6 +3,7 @@
 #include "Dialogs.h"
 #include "Icons.h"
 #include "Theme.h"
+#include "ofx/OfxHost.h"
 
 #include <QComboBox>
 #include <QFileInfo>
@@ -11,6 +12,7 @@
 #include <QMimeData>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QTimer>
 #include <QToolButton>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -184,6 +186,13 @@ void CompViewer::paintEvent(QPaintEvent *)
         dirty_ = false;
         if (ms > 0)
             emit renderTimeChanged(ms);
+        QString err = ed_->renderer().lastEffectError;
+        ed_->renderer().lastEffectError.clear();
+        const QString pluginMsgs = ofx::Manager::instance().takeMessages();
+        if (!pluginMsgs.isEmpty())
+            err = err.isEmpty() ? pluginMsgs.section('\n', -1) : err;
+        if (!err.isEmpty())
+            QTimer::singleShot(0, ed_, [ed = ed_, err] { emit ed->message(err); });
     }
     const QTransform view = viewTransform();
     const QRectF compRect = view.mapRect(QRectF(0, 0, c->width, c->height));

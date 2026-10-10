@@ -10,7 +10,7 @@ namespace mf {
 
 using Value = QVector<double>;
 
-enum class PropType { Number, Percent, Angle, Point, Color, Checkbox, Choice, Time };
+enum class PropType { Number, Percent, Angle, Point, Color, Checkbox, Choice, Time, String };
 enum class Interp { Linear, Bezier, Hold };
 
 struct Keyframe {
@@ -42,6 +42,9 @@ public:
     double maxValue = 1e9;
     double dragStep = 1.0;          // value change per pixel when scrubbing
     QStringList choices;
+    QString text;              // value of String properties (not animatable)
+    QString defaultText;
+    bool hidden = false;       // kept and saved, but not shown (e.g. a plugin's internal state)
     bool animatable = true;
     mutable QString expressionError;
 

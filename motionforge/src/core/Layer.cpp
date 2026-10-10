@@ -271,9 +271,17 @@ std::unique_ptr<Layer> Layer::fromJson(const QJsonObject &o,
     }
     for (const auto &fv : o["effects"].toArray()) {
         const auto fo = fv.toObject();
-        auto e = effectFactory(fo["type"].toString());
-        if (!e)
+        auto e = effectFactory ? effectFactory(fo["type"].toString()) : nullptr;
+        if (!e) {
+            e = std::make_unique<Effect>();
+            e->typeId = fo["type"].toString();
+            e->name = "Missing: " + fo["name"].toString(e->typeId);
+            e->uid = fo["uid"].toInt();
+            e->enabled = false;
+            e->missingJson = fo;
+            l->effects.push_back(std::move(e));
             continue;
+        }
         e->applyJson(fo);
         e->uid = fo["uid"].toInt(e->uid);
         l->effects.push_back(std::move(e));

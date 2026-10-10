@@ -266,10 +266,13 @@ Renderer::Source Renderer::renderSource(const Layer &layer, const Composition &c
     return s;
 }
 
-void Renderer::applyEffects(Source &src, const Layer &layer, const Composition &comp, double t) const
+void Renderer::applyEffects(Source &src, const Layer &layer, const Composition &comp, double t, int depth,
+                            size_t upTo)
 {
     const QRectF bounds = layerBounds(layer, comp, t);
-    for (const auto &e : layer.effects) {
+    const double factor = src.fx;
+    for (size_t idx = 0; idx < layer.effects.size() && idx < upTo; ++idx) {
+        const auto &e = layer.effects[idx];
         if (!e->enabled || src.img.isNull())
             continue;
         const EffectDef *def = EffectRegistry::find(e->typeId);
@@ -283,13 +286,31 @@ void Renderer::applyEffects(Source &src, const Layer &layer, const Composition &
             src.img = padImage(src.img, pad);
             src.origin -= QPointF(pad / src.fx, pad / src.fy);
         }
+        // Effects write rows from several threads: the image must not be shared (e.g. with the media
+        // cache), or every thread would trigger copy-on-write at once.
+        if (!src.img.isDetached())
+            src.img = src.img.copy();
         EffectContext ctx;
         ctx.time = t;
         ctx.pixelScale = src.fx;
         ctx.origin = src.origin;
         ctx.layerRect = bounds;
         ctx.seed = hashSeed(e->typeId, layer.id * 131 + e->uid);
+        ctx.effect = e.get();
+        ctx.layer = &layer;
+        ctx.comp = &comp;
+        ctx.evalAt = [this, &layer, &comp](const Property &p, double tt) { return eval(p, tt, layer, comp); };
+        ctx.inputAt = [this, &layer, &comp, factor, depth, idx](double tt, QPointF *origin) {
+            Source other = renderSource(layer, comp, tt, factor, depth);
+            applyEffects(other, layer, comp, tt, depth, idx);
+            if (origin)
+                *origin = other.origin;
+            return other.img;
+        };
         def->apply(src.img, m, ctx);
+        src.origin += ctx.originShift;
+        if (!ctx.error.isEmpty())
+            lastEffectError = QString("%1 on “%2”: %3").arg(e->name, layer.name, ctx.error);
     }
 }
 
@@ -303,7 +324,7 @@ void Renderer::drawLayerSample(QImage &buf, const Layer &layer, const Compositio
     Source src = renderSource(layer, comp, t, factor, depth);
     if (src.img.isNull())
         return;
-    applyEffects(src, layer, comp, t);
+    applyEffects(src, layer, comp, t, depth);
     const QTransform imgToLayer = QTransform::fromScale(1.0 / src.fx, 1.0 / src.fy) *
                                   QTransform::fromTranslate(src.origin.x(), src.origin.y());
     QPainter p(&buf);
@@ -419,7 +440,21 @@ void Renderer::applyAdjustment(QImage &accum, const Layer &layer, const Composit
         ctx.pixelScale = scale;
         ctx.layerRect = bounds;
         ctx.seed = hashSeed(e->typeId, layer.id * 131 + e->uid);
+        ctx.effect = e.get();
+        ctx.layer = &layer;
+        ctx.comp = &comp;
+        ctx.evalAt = [this, &layer, &comp](const Property &p, double tt) { return eval(p, tt, layer, comp); };
+        const QSize beforeSize = src.img.size();
+        if (!src.img.isDetached())
+            src.img = src.img.copy();
         def->apply(src.img, m, ctx);
+        // Adjustment layers can't grow the frame: crop back to the comp if an effect padded it.
+        if (src.img.size() != beforeSize) {
+            const QPoint off((ctx.originShift * scale).toPoint());
+            src.img = src.img.copy(QRect(-off, beforeSize));
+        }
+        if (!ctx.error.isEmpty())
+            lastEffectError = QString("%1 on “%2”: %3").arg(e->name, layer.name, ctx.error);
     }
     const double op = eval(layer.opacity, t, layer, comp).value(0) / 100.0;
     const int w = accum.width();

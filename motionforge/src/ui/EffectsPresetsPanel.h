@@ -20,8 +20,10 @@ class EffectsPresetsPanel : public QWidget {
     Q_OBJECT
 public:
     explicit EffectsPresetsPanel(Editor *editor, QWidget *parent = nullptr);
+    void refresh() { populate(filter_); }
 
 private:
+    QString filter_;
     void populate(const QString &filter);
     Editor *ed_;
     EffectsTree *tree_;

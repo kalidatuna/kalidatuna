@@ -6,6 +6,8 @@
 #include "EffectsPresetsPanel.h"
 #include "Icons.h"
 #include "InfoPreviewPanel.h"
+#include "PluginsDialog.h"
+#include "ofx/OfxHost.h"
 #include "PlaybackController.h"
 #include "ProjectPanel.h"
 #include "RenderQueuePanel.h"
@@ -39,7 +41,7 @@
 
 namespace mf {
 
-MainWindow::MainWindow()
+MainWindow::MainWindow(bool loadPluginsAtStart)
 {
     ed_ = new Editor;
     ed_->setParent(this);
@@ -79,6 +81,54 @@ MainWindow::MainWindow()
         resetWorkspace();
     updateTitle();
     updateActions();
+    if (loadPluginsAtStart)
+        QTimer::singleShot(0, this, &MainWindow::loadPlugins);
+}
+
+void MainWindow::loadPlugins()
+{
+    statusBar()->showMessage("Loading OpenFX plugins…");
+    QApplication::setOverrideCursor(Qt::BusyCursor);
+    const PluginScanSummary r = scanOpenFxPlugins();
+    QApplication::restoreOverrideCursor();
+    rebuildEffectMenu();
+    effects_->refresh();
+    if (r.plugins || r.failed)
+        statusBar()->showMessage(QString("Loaded %1 OpenFX plugins%2").arg(r.plugins)
+                                     .arg(r.failed ? QString(" (%1 bundles couldn't be loaded; see Effect ▸ Manage OpenFX Plugins)").arg(r.failed) : QString()),
+                                 8000);
+    else
+        statusBar()->clearMessage();
+}
+
+void MainWindow::showPluginsDialog()
+{
+    PluginsDialog dlg(this);
+    dlg.onRescanned = [this] {
+        rebuildEffectMenu();
+        effects_->refresh();
+    };
+    dlg.exec();
+}
+
+void MainWindow::rebuildEffectMenu()
+{
+    for (QMenu *m : effectCategoryMenus_)
+        delete m;
+    effectCategoryMenus_.clear();
+    Editor *ed = ed_;
+    for (const QString &cat : EffectRegistry::categories()) {
+        QMenu *cm = effectMenu_->addMenu(cat);
+        effectCategoryMenus_ << cm;
+        for (const auto &d : EffectRegistry::all())
+            if (d.category == cat) {
+                const QString id = d.id;
+                QAction *a = cm->addAction(d.name, [ed, id] { ed->addEffect(id); });
+                if (!d.description.isEmpty())
+                    a->setToolTip(d.description.left(400));
+            }
+        cm->setToolTipsVisible(true);
+    }
 }
 
 // ------------------------------------------------------------ layout
@@ -393,15 +443,10 @@ void MainWindow::createActions()
         effectControlsDock_->raise();
     }, effect);
     act("Remove All", QKeySequence("Ctrl+Shift+E"), [ed] { ed->removeAllEffects(); }, effect);
+    act("Manage OpenFX Plugins…", {}, [this] { showPluginsDialog(); }, effect);
     effect->addSeparator();
-    for (const QString &cat : EffectRegistry::categories()) {
-        QMenu *cm = effect->addMenu(cat);
-        for (const auto &d : EffectRegistry::all())
-            if (d.category == cat) {
-                const QString id = d.id;
-                act(d.name, {}, [ed, id] { ed->addEffect(id); }, cm);
-            }
-    }
+    effectMenu_ = effect;
+    rebuildEffectMenu();
 
     // Animation
     QMenu *anim = mb->addMenu("&Animation");
@@ -555,6 +600,7 @@ void MainWindow::fillLayerMenu(QMenu &m)
         m.addAction("Edit Text…", [this, l] { showTextEditor(this, ed_, l->id); });
     m.addSeparator();
     QMenu *fx = m.addMenu("Effect");
+    fx->setToolTipsVisible(true);
     for (const QString &cat : EffectRegistry::categories()) {
         QMenu *cm = fx->addMenu(cat);
         for (const auto &d : EffectRegistry::all())

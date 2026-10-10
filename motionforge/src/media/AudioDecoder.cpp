@@ -70,21 +70,28 @@ std::shared_ptr<AudioBuffer> decodeAudio(const QString &path, QString *error)
         return fail("Cannot open audio decoder");
     }
     SwrContext *swr = nullptr;
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(57, 28, 100)   // FFmpeg 5.1+ channel layout API
     AVChannelLayout outLayout = AV_CHANNEL_LAYOUT_STEREO;
     AVChannelLayout inLayout;
     if (dec->ch_layout.nb_channels > 0)
         av_channel_layout_copy(&inLayout, &dec->ch_layout);
     else
         av_channel_layout_default(&inLayout, 2);
-    if (swr_alloc_set_opts2(&swr, &outLayout, AV_SAMPLE_FMT_FLT, kAudioRate, &inLayout, dec->sample_fmt,
-                            dec->sample_rate, 0, nullptr) < 0 ||
-        swr_init(swr) < 0) {
-        av_channel_layout_uninit(&inLayout);
+    const bool swrOk = swr_alloc_set_opts2(&swr, &outLayout, AV_SAMPLE_FMT_FLT, kAudioRate, &inLayout,
+                                           dec->sample_fmt, dec->sample_rate, 0, nullptr) >= 0;
+    av_channel_layout_uninit(&inLayout);
+#else   // FFmpeg 4.x (Ubuntu 22.04, Linux Mint 21)
+    const int64_t inLayout = dec->channel_layout ? int64_t(dec->channel_layout)
+                                                 : av_get_default_channel_layout(std::max(1, dec->channels));
+    swr = swr_alloc_set_opts(nullptr, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_FLT, kAudioRate, inLayout,
+                             dec->sample_fmt, dec->sample_rate, 0, nullptr);
+    const bool swrOk = swr != nullptr;
+#endif
+    if (!swrOk || swr_init(swr) < 0) {
         swr_free(&swr);
         avcodec_free_context(&dec);
         return fail("Cannot set up audio resampler");
     }
-    av_channel_layout_uninit(&inLayout);
 
     auto buf = std::make_shared<AudioBuffer>();
     if (fmt->duration > 0)

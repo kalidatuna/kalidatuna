@@ -5,12 +5,14 @@
 #include "media/MediaCache.h"
 #include "render/AudioMixer.h"
 #include "media/VideoDecoder.h"
+#include "ofx/OfxHost.h"
 #include "render/Effects.h"
 #include "render/Renderer.h"
 
 #include <QGuiApplication>
 #include <QJsonDocument>
 #include <QFile>
+#include <QJsonArray>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -174,6 +176,121 @@ private slots:
         QVERIFY(png.finish(&err));
         QVERIFY(QFile::exists(dir.filePath("seq/frame.wav")));
         MediaCache::instance().clear();
+    }
+
+    void openFxPlugins()
+    {
+        auto &m = ofx::Manager::instance();
+        const QStringList bundles = ofx::Manager::findBundles({MF_TEST_OFX_DIR});
+        QCOMPARE(bundles.size(), 4);
+        const ofx::ScanResult r = m.scan({MF_TEST_OFX_DIR});
+        QVERIFY2(r.failed.isEmpty(), qPrintable(r.failed.join("\n")));
+        QCOMPARE(r.plugins, 5);
+        const EffectDef *inv = EffectRegistry::find("ofx:uk.co.thefoundry.OfxInvertExample");
+        const EffectDef *gain = EffectRegistry::find("ofx:uk.co.thefoundry.BasicGainPlugin");
+        const EffectDef *rect = EffectRegistry::find("ofx:uk.co.thefoundry.GeneratorExample");
+        QStringList ids;
+        for (const auto &d : EffectRegistry::all())
+            if (d.external)
+                ids << d.id + " (" + d.name + ")";
+        QVERIFY2(inv && gain && rect, qPrintable(ids.join(", ")));
+        QVERIFY(inv->category.startsWith("OpenFX"));
+
+        Project proj;
+        auto *c = makeComp(proj, 100, 100);
+        auto *l = addSolid(proj, c, QColor(255, 64, 0), 100, 100);
+        Renderer r2(proj);
+
+        // Invert (8-bit plugin). The SDK example inverts alpha too, so an opaque solid turns transparent.
+        l->effects.push_back(EffectRegistry::create(inv->id, proj.newId(), QRectF(0, 0, 100, 100)));
+        QImage img = r2.render(*c, 0, 1.0);
+        QVERIFY2(qAlpha(img.pixel(50, 50)) == 0, qPrintable(r2.lastEffectError));
+        l->effects.back()->enabled = false;
+        QCOMPARE(qAlpha(r2.render(*c, 0, 1.0).pixel(50, 50)), 255);
+        l->effects.back()->enabled = true;
+        QCOMPARE(qAlpha(r2.render(*c, 0, 0.5).pixel(25, 25)), 0);   // half-resolution render
+
+        // Gain (float plugin, keyframed parameter through the normal property system)
+        l->effects.clear();
+        l->effects.push_back(EffectRegistry::create(gain->id, proj.newId(), QRectF(0, 0, 100, 100)));
+        Property *scale = l->effects.back()->param("scale");
+        QVERIFY(scale);
+        scale->addKey(0, {1.0});
+        scale->addKey(1, {0.5});
+        // The SDK gain example scales alpha too; check premultiplied values.
+        QVERIFY(qAbs(qRed(r2.render(*c, 0, 1.0).pixel(50, 50)) - 255) <= 1);
+        const QRgb half = r2.render(*c, 1, 1.0).pixel(50, 50);
+        QVERIFY2(qAbs(qRed(half) - 128) <= 2 && qAbs(qAlpha(half) - 128) <= 2,
+                 qPrintable(QString("%1 %2").arg(qRed(half)).arg(qAlpha(half))));
+        scale->expression = "0.25";
+        QVERIFY(qAbs(qRed(r2.render(*c, 0, 1.0).pixel(50, 50)) - 64) <= 2);
+
+        // Rectangle: XY position params map to layer coordinates (OFX is y-up).
+        l->effects.clear();
+        l->effects.push_back(EffectRegistry::create(rect->id, proj.newId(), QRectF(0, 0, 100, 100)));
+        Property *c1 = l->effects.back()->param("corner1");
+        Property *c2 = l->effects.back()->param("corner2");
+        QVERIFY(c1 && c2 && c1->type == PropType::Point);
+        QCOMPARE(c1->staticValue, (Value{40, 60}));   // normalised 0.4,0.4 -> layer x 40, y 100-40
+        c1->staticValue = {10, 30};    // top-left in layer space
+        c2->staticValue = {40, 50};
+        img = r2.render(*c, 0, 1.0);
+        QCOMPARE(QColor(img.pixel(20, 40)).red(), 0);     // inside the black rectangle
+        QCOMPARE(QColor(img.pixel(80, 80)).red(), 255);   // outside: the solid
+        QCOMPARE(QColor(img.pixel(20, 80)).red(), 255);   // below it (checks the y flip)
+
+        // Projects keep effects whose plugin is missing, and save them back unchanged.
+        QJsonObject fx;
+        fx["type"] = "ofx:com.example.notInstalled";
+        fx["name"] = "Fancy Glow";
+        fx["uid"] = 999;
+        fx["params"] = QJsonObject{{"amount", QJsonObject{{"value", QJsonArray{3}}}}};
+        QJsonObject lo = l->toJson();
+        lo["effects"] = QJsonArray{fx};
+        auto back = Layer::fromJson(lo, Project::effectFactory);
+        QCOMPARE(back->effects.size(), size_t(1));
+        QVERIFY(back->effects[0]->isMissing());
+        QCOMPARE(back->toJson()["effects"].toArray()[0].toObject(), fx);
+
+        // Temporal access: the plugin reads its input 5 frames earlier. Inside a precomp the
+        // content moves, so the output must show where the square was 5 frames ago.
+        {
+            auto *inner = proj.addComposition("Inner", 100, 100, 30, 2);
+            auto *sq = addSolid(proj, inner, Qt::white, 10, 10);
+            sq->position.addKey(0, {5, 50});
+            sq->position.addKey(1, {95, 50});   // 3 px per frame
+            auto *outer = proj.addComposition("Outer", 100, 100, 30, 2);
+            auto pre = proj.makeLayer(LayerType::Precomp, *outer);
+            pre->sourceItemId = inner->id;
+            pre->setDefaultAnchor(100, 100);
+            pre->effects.push_back(EffectRegistry::create("ofx:org.motionforge.test.TimeOffset", proj.newId(),
+                                                          QRectF(0, 0, 100, 100)));
+            outer->layers.push_back(std::move(pre));
+            const QImage now = r2.render(*inner, 0.5, 1.0);
+            const QImage shifted = r2.render(*outer, 0.5, 1.0);
+            QCOMPARE(qAlpha(now.pixel(50, 50)), 255);        // square at x=50 now
+            QCOMPARE(qAlpha(shifted.pixel(50, 50)), 0);      // ...but 5 frames ago it was at x=35
+            QCOMPARE(qAlpha(shifted.pixel(35, 50)), 255);
+        }
+
+        // A crashing plugin is caught, disabled, reported, and doesn't take the app down.
+        l->effects.clear();
+        l->effects.push_back(EffectRegistry::create("ofx:org.motionforge.test.Crasher", proj.newId(),
+                                                    QRectF(0, 0, 100, 100)));
+        r2.lastEffectError.clear();
+        img = r2.render(*c, 0, 1.0);
+        QVERIFY2(r2.lastEffectError.contains("crashed"), qPrintable(r2.lastEffectError));
+        QCOMPARE(QColor(img.pixel(50, 50)).red(), 255);   // layer rendered without the effect
+        bool reported = false;
+        for (const auto &info : m.plugins())
+            reported |= info.identifier == "org.motionforge.test.Crasher" && info.error.contains("crashed");
+        QVERIFY(reported);
+        // Other plugins keep working afterwards.
+        l->effects.clear();
+        l->effects.push_back(EffectRegistry::create(inv->id, proj.newId(), QRectF(0, 0, 100, 100)));
+        QCOMPARE(qAlpha(r2.render(*c, 0, 1.0).pixel(50, 50)), 0);
+
+        ofx::Manager::instance().destroyAllInstances();
     }
 
     void markersRoundTrip()

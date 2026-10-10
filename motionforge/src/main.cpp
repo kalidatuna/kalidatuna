@@ -4,13 +4,16 @@
 #include "render/AudioMixer.h"
 #include "render/Effects.h"
 #include "render/Renderer.h"
+#include "ofx/OfxHost.h"
 #include "ui/MainWindow.h"
+#include "ui/PluginsDialog.h"
 #include "ui/Theme.h"
 
 #include <QFile>
 #include <QJsonDocument>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
 
 #include <QApplication>
 #include <QCommandLineParser>
@@ -88,6 +91,11 @@ static int batchRender(const QString &projectPath, const QString &compName, cons
 
 int main(int argc, char **argv)
 {
+    // Command-line modes work without a display (e.g. over SSH or on a render box).
+    for (int i = 1; i < argc; ++i)
+        for (const char *opt : {"--render", "--ofx-probe", "--ofx-list", "--save-sample"})
+            if (std::strcmp(argv[i], opt) == 0 && qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM"))
+                qputenv("QT_QPA_PLATFORM", "offscreen");
     QApplication app(argc, argv);
     QApplication::setApplicationName("MotionForge");
     QApplication::setOrganizationName("MotionForge");
@@ -109,15 +117,36 @@ int main(int argc, char **argv)
     QCommandLineOption fmtOpt("format", "h264 (default), prores, prores4444 or png", "format", "h264");
     QCommandLineOption frameOpt("frame", "Render a single frame at <seconds> instead of a movie", "seconds");
     QCommandLineOption saveSample("save-sample", "Write the sample project to <file> and quit", "file");
-    parser.addOptions({render, compOpt, outOpt, fmtOpt, frameOpt, saveSample});
+    QCommandLineOption probe("ofx-probe", "Internal: test-load an OpenFX plugin binary", "binary");
+    QCommandLineOption list("ofx-list", "List the OpenFX plugins MotionForge can load, and why others can't");
+    QCommandLineOption noPlugins("no-plugins", "Start without loading OpenFX plugins");
+    parser.addOptions({render, compOpt, outOpt, fmtOpt, frameOpt, saveSample, probe, list, noPlugins});
     parser.addPositionalArgument("project", "A .mfproj project to open");
     parser.process(app);
 
-    if (parser.isSet(render))
+    if (parser.isSet(probe))
+        return mf::ofx::Manager::probeMain(parser.value(probe));
+    if (parser.isSet(list)) {
+        mf::scanOpenFxPlugins();
+        for (const QString &p : mf::openFxSearchPaths())
+            std::printf("search path: %s%s\n", qPrintable(p), QFileInfo(p).isDir() ? "" : "  (missing)");
+        int ok = 0;
+        for (const auto &p : mf::ofx::Manager::instance().plugins()) {
+            ok += p.loaded;
+            std::printf("%-8s %-40s %s\n", p.loaded ? "OK" : "SKIP", qPrintable(p.identifier),
+                        qPrintable(p.loaded ? p.grouping + " / " + p.label : p.error));
+        }
+        std::printf("%d plugins available\n", ok);
+        return 0;
+    }
+    if (parser.isSet(render)) {
+        if (!parser.isSet(noPlugins))
+            mf::scanOpenFxPlugins();
         return batchRender(parser.value(render), parser.value(compOpt), parser.value(outOpt), parser.value(fmtOpt),
                            parser.isSet(frameOpt) ? parser.value(frameOpt).toDouble() : -1.0);
+    }
 
-    mf::MainWindow w;
+    mf::MainWindow w(!parser.isSet(noPlugins) && !parser.isSet(saveSample));
     if (parser.isSet(saveSample)) {
         w.buildSampleProject();
         return w.saveProjectTo(parser.value(saveSample)) ? 0 : 1;
