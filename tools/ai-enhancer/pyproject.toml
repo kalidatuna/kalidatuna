@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-enhancer"
+version = "0.1.0"
+description = "Open-source AI photo and video enhancer with a desktop GUI: upscaling, denoising, and face recovery."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "torch>=2.1",
+    "spandrel>=0.4",
+    "spandrel_extra_arches>=0.2",
+    "numpy>=1.24",
+    "opencv-python-headless>=4.8",
+    "pillow>=10",
+    "PySide6>=6.6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "pyflakes"]
+
+[project.scripts]
+ai-enhancer = "enhancer.cli:main"
+
+[project.gui-scripts]
+ai-enhancer-gui = "enhancer.gui.app:run"
+
+[tool.setuptools.packages.find]
+include = ["enhancer*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
