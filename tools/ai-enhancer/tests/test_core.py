@@ -332,3 +332,29 @@ def test_video_grain_changes_per_frame(fake_pipeline):
     f0 = fake_pipeline.process_frame(frame, s, index=0)
     assert np.array_equal(f0, fake_pipeline.process_frame(frame, s, index=0))
     assert not np.array_equal(f0, fake_pipeline.process_frame(frame, s, index=1))
+
+
+def test_to_half_uses_tested_override_without_spandrel_refusal():
+    from enhancer.models import to_half
+
+    class Refuses(Exception):
+        pass
+
+    class Desc:  # mimics spandrel: .half() refuses when supports_half is False
+        def __init__(self, arch, supports_half):
+            self.architecture = type("A", (), {"id": arch})()
+            self.supports_half = supports_half
+            self.model = torch.nn.Conv2d(3, 3, 1)
+
+        def half(self):
+            if not self.supports_half:
+                raise Refuses("does not support half precision (fp16)")
+            self.model.half()
+
+    dtype = lambda d: next(d.model.parameters()).dtype
+    plksr = Desc("PLKSR", False)
+    assert to_half(plksr) and dtype(plksr) == torch.float16
+    dat = Desc("DAT", False)
+    assert not to_half(dat) and dtype(dat) == torch.float32
+    span = Desc("SPAN", True)
+    assert to_half(span) and dtype(span) == torch.float16

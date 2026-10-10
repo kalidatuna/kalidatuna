@@ -96,6 +96,7 @@ def test_preview_and_export(window, app, tmp_path):
 
 def test_zoom_and_pan_reuse_rendered_areas(window, app, tmp_path):
     src = save_image(tmp_path / "big.png", np.random.default_rng(1).random((300, 400, 3)).astype(np.float32))
+    window.auto_preview.setChecked(False)  # the test triggers every preview itself
     window.panel.set_settings(Settings(scale=2, tile=0, device="cpu"))
     window.add_paths([str(src)])
     submitted = []

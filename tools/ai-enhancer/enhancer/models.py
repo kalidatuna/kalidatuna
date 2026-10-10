@@ -416,9 +416,28 @@ def load_descriptor(file_keys: tuple[str, ...], device, blend: float = 0.0, prog
         mixed = {k: (1.0 - blend) * a[k] + blend * b[k] for k in a}
         desc = loader.load_from_state_dict(mixed)
     desc.to(device).eval()
-    if device.type == "cuda" and (desc.supports_half or desc.architecture.id in HALF_TESTED):
-        desc.half()
+    if device.type == "cuda":
+        to_half(desc)
     return desc
+
+
+def to_half(desc) -> bool:
+    """Switch a model to fp16 when that is known to be safe. Returns True if it did.
+
+    spandrel refuses ``desc.half()`` for architectures it does not mark as
+    fp16-safe, so the ones in HALF_TESTED are cast through ``desc.model``,
+    as spandrel's documentation suggests. Any failure leaves the model in fp32.
+    """
+    try:
+        if desc.supports_half:
+            desc.half()
+            return True
+        if desc.architecture.id in HALF_TESTED:
+            desc.model.half()
+            return True
+    except Exception:
+        desc.model.float()
+    return False
 
 
 # Architectures spandrel does not mark as fp16-safe, but whose fp16 output we
