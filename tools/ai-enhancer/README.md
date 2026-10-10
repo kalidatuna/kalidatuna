@@ -100,6 +100,9 @@ ai-enhancer enhance clip.mp4 --scale 2 --codec h265 --crf 18 -o out/
 # A TikTok clip with the built-in preset, encoded on an NVIDIA GPU for Alight Motion
 ai-enhancer enhance clip.mp4 --preset tiktok-fast --codec hevc_nvenc -o out/
 
+# Try the settings on the first 3 seconds only
+ai-enhancer enhance clip.mp4 --preset tiktok-balanced --test-seconds 3 -o out/
+
 # Use a saved preset, overriding one value
 ai-enhancer enhance photo.jpg --preset best.json --sharpen 0.1
 ```
@@ -132,18 +135,26 @@ In testing, `match` recovered hidden settings exactly: model, *Recover* 0.2 and 
 
 ## Speed
 
-Measured on a 4-core CPU with no GPU, upscaling a 128x128 image to 512x512:
+What the app does to keep video exports fast:
 
-| Setting | Time |
-| --- | --- |
-| Standard | 1.2 s |
-| Low Resolution | 3.1 s |
-| Standard + GFPGAN | 4.0 s |
-| Standard + CodeFormer | 3.8 s |
+- **Everything stays on the GPU.** Tiling, blending, detail recovery, sharpening, and face pasting run on the graphics card. Frames are converted to 8-bit on the GPU before they are copied back.
+- **Automatic tile size.** With *Tile size: Auto* (the default), the app processes each frame in one piece when it fits in GPU memory. After an out-of-memory error it tries smaller tiles and remembers the size that worked.
+- **Half precision (fp16)** on NVIDIA GPUs for every model that stays accurate in it. Social Media (fast) was checked against full precision (at most 1.6/255 apart). Social Media HD gives NaN in fp16, so it stays in fp32. If any model ever produces NaN in fp16, that frame is redone in fp32 and the model stays in fp32.
+- **Parallel stages.** Decoding, AI processing, and encoding run in separate threads, so the GPU does not wait for FFmpeg.
+- **Repeated frames are reused.** Frames with no visible change from the last processed frame reuse its result. The check works on 16x16 blocks, so a blink still counts as motion. It is strict: in a heavily compressed test clip it caught about half of the true repeats and none of the real motion. You can turn it off under *Export*.
+- **Test 3 s** exports only the first 3 seconds of the selected video, so you can check the look and the time before a full export.
+- Picking a slow model for a video shows a warning that suggests a faster preset. The status bar shows whether the AI runs on the GPU or the CPU.
 
-On the same CPU, the AI upscale of a 192x192 compressed image to 2x took 0.6 s with *TikTok edit: fast* (including compression removal) and 2.0 s with *balanced*. Face recovery added about 1.5 s. These are CPU numbers; GPU timings have not been measured yet.
+Measured on a 4-core CPU (no GPU), for one 270x480 frame:
 
-Time grows with output pixel count. High Fidelity (SwinIR-L) and Social Media HD (DAT-2) are several times slower than the others. Use a CUDA or Apple GPU for large photos and video. If you run out of GPU memory, lower the **Tile size** under *Performance*.
+| Preset | Before these changes | Now |
+| --- | --- | --- |
+| TikTok edit: fast | 6.5 s | 4.5 s |
+| TikTok edit: balanced | 23.9 s | 10.2 s |
+
+The output stayed visually identical: 62 dB and 45 dB PSNR against the old version. GPU timings have not been measured yet. If you run out of GPU memory, set a fixed **Tile size** under *Performance*.
+
+Relative cost of the TikTok presets on the same frame: *best* is about 23 times slower than *fast*, and *balanced* about 4 times. Use *fast* for long clips.
 
 ## Limitations
 
@@ -177,7 +188,7 @@ Models are loaded with [spandrel](https://github.com/chaiNNer-org/spandrel).
 
 ```bash
 pip install -e ".[dev]"
-pytest              # 32 tests, offline; a fake model stands in for real checkpoints
+pytest              # 36 tests, offline; a fake model stands in for real checkpoints
 pyflakes enhancer tests
 ```
 
@@ -186,10 +197,10 @@ GUI tests run headless (`QT_QPA_PLATFORM=offscreen`). On a minimal Linux system 
 | Module | Role |
 | --- | --- |
 | `enhancer/models.py` | Model registry, verified downloads, loading, weight interpolation |
-| `enhancer/tiling.py` | Tiled inference with blended seams |
+| `enhancer/tiling.py` | Tiled inference on the GPU with blended seams, automatic tile size, fp16 NaN guard |
 | `enhancer/pipeline.py` | Clean-up, upscale, recover detail, faces, sharpen; cached region preview |
 | `enhancer/presets.py` | Built-in presets (TikTok edits, photo) |
 | `enhancer/faces.py` | Face detection, FFHQ alignment, restoration, feathered paste-back |
-| `enhancer/video.py` | FFmpeg decode and encode pipes, NVENC with fallback, audio passthrough, ETA |
+| `enhancer/video.py` | Threaded FFmpeg decode/encode, repeated-frame reuse, NVENC with fallback, audio passthrough, ETA |
 | `enhancer/compare.py` | SSIM, PSNR, ΔE, and the settings search |
 | `enhancer/gui/` | PySide6 app: main window, viewer, settings panel, background jobs |

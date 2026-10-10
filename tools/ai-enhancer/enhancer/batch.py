@@ -18,6 +18,7 @@ class OutputOptions:
     keep_16bit: bool = True
     video_codec: str = "h264"
     video_crf: int = 16
+    video_skip_repeats: bool = True  # reuse the result for repeated frames
     overwrite: bool = False
 
 
@@ -31,7 +32,7 @@ def collect_inputs(paths: list[str | Path]) -> list[Path]:
     return out
 
 
-def output_path(src: Path, s: Settings, opts: OutputOptions, size: tuple[int, int]) -> Path:
+def output_path(src: Path, s: Settings, opts: OutputOptions, size: tuple[int, int], suffix: str = "") -> Path:
     folder = Path(opts.folder) if opts.folder else src.parent
     if is_video(src):
         ext = ".mov" if opts.video_codec == "prores" else src.suffix if src.suffix.lower() in (".mp4", ".mov", ".mkv") else ".mp4"
@@ -39,7 +40,7 @@ def output_path(src: Path, s: Settings, opts: OutputOptions, size: tuple[int, in
         ext = src.suffix if src.suffix.lower() in IMAGE_EXTS else ".png"
     else:
         ext = OUTPUT_FORMATS[opts.fmt]
-    base = folder / f"{src.stem}-enhanced-{s.model}-{size[0]}x{size[1]}"
+    base = folder / f"{src.stem}-enhanced-{s.model}-{size[0]}x{size[1]}{suffix}"
     path = base.with_suffix(ext)
     n = 1
     while path.exists() and not opts.overwrite:
@@ -54,16 +55,20 @@ def _fmt_for(path: Path) -> str:
 
 
 def enhance_file(src: str | Path, s: Settings, opts: OutputOptions, pipeline: Pipeline,
-                 progress: Progress | None = None, cancel: Callable[[], bool] | None = None) -> Path:
+                 progress: Progress | None = None, cancel: Callable[[], bool] | None = None,
+                 test_seconds: float | None = None) -> Path:
+    """Enhance one image or video. ``test_seconds`` exports only the start of a video."""
     src = Path(src)
     if is_video(src):
         from .video import enhance_video, even_settings, probe
 
         info = probe(src)
         es = even_settings(s, info.width, info.height)
-        dst = output_path(src, s, opts, (es.width, es.height))
+        suffix = f"-test{test_seconds:g}s" if test_seconds else ""
+        dst = output_path(src, s, opts, (es.width, es.height), suffix)
         return enhance_video(src, dst, s, pipeline, codec=opts.video_codec, crf=opts.video_crf,
-                             progress=progress, cancel=cancel)
+                             progress=progress, cancel=cancel, skip_repeats=opts.video_skip_repeats,
+                             max_seconds=test_seconds)
     img = load_image(src)
     out, alpha = pipeline.process(img.rgb, s, alpha=img.alpha, progress=progress, cancel=cancel)
     dst = output_path(src, s, opts, (out.shape[1], out.shape[0]))

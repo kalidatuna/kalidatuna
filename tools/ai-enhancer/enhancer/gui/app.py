@@ -26,6 +26,7 @@ from .viewer import CompareView, to_qimage
 from .worker import Job, JobRunner
 
 APP = "AI Enhancer"
+SETTINGS_VERSION = "2"
 
 
 @dataclass
@@ -41,6 +42,16 @@ class Item:
     @property
     def video(self) -> bool:
         return is_video(self.path)
+
+
+def device_name(device) -> str:
+    if device.type == "cuda":
+        import torch
+
+        return f"GPU: {torch.cuda.get_device_name(device)}"
+    if device.type == "mps":
+        return "GPU: Apple"
+    return "CPU only (slow)"
 
 
 def dark_palette(app: QApplication):
@@ -66,6 +77,7 @@ def dark_palette(app: QApplication):
         QGroupBox { font-weight: 600; border: 1px solid #3a3a40; border-radius: 6px; margin-top: 14px; padding-top: 6px; }
         QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 4px; }
         QLabel#hint { color: #9a9aa4; }
+        QLabel#warning { color: #f0b429; }
         QPushButton#primary { background: #3478f6; color: white; font-weight: 600; padding: 7px 16px; border-radius: 5px; }
         QPushButton#primary:disabled { background: #2a3a5a; color: #8890a0; }
         QListWidget::item { padding: 4px; }
@@ -203,7 +215,12 @@ class MainWindow(QMainWindow):
         self.export_btn.clicked.connect(self.export_all)
         self.export_sel_btn = QPushButton("Export selected")
         self.export_sel_btn.clicked.connect(self.export_selected)
+        self.test_btn = QPushButton("Test 3 s")
+        self.test_btn.setToolTip("Export only the first 3 seconds of the selected video, to check the look and speed")
+        self.test_btn.clicked.connect(self.export_test)
+        self.test_btn.setEnabled(False)
         row = QHBoxLayout()
+        row.addWidget(self.test_btn)
         row.addWidget(self.export_sel_btn)
         row.addWidget(self.export_btn, 1)
         rl.addLayout(row)
@@ -228,6 +245,9 @@ class MainWindow(QMainWindow):
         self.cancel_btn.clicked.connect(self.cancel)
         sb = self.statusBar()
         sb.addWidget(self.status, 1)
+        self.device_label = QLabel()
+        self.device_label.setObjectName("hint")
+        sb.addPermanentWidget(self.device_label)
         sb.addPermanentWidget(self.progress)
         sb.addPermanentWidget(self.cancel_btn)
 
@@ -274,7 +294,12 @@ class MainWindow(QMainWindow):
         self.noncommercial_act.setChecked(show)
         self.panel.set_show_noncommercial(show)
         try:
-            self.panel.set_settings(Settings.from_dict(json.loads(self.store.value("settings", "{}"))))
+            saved = Settings.from_dict(json.loads(self.store.value("settings", "{}")))
+            if str(self.store.value("settings_version", "1")) != SETTINGS_VERSION:
+                saved.tile = 0  # version 2: tile size became automatic
+                self.store.setValue("settings_version", SETTINGS_VERSION)
+            self.panel.set_settings(saved)
+            self.pipeline(saved.device)
             out = json.loads(self.store.value("output", "{}"))
             self.panel.set_output(OutputOptions(**{k: v for k, v in out.items() if k in OutputOptions.__annotations__}))
         except Exception:
@@ -376,6 +401,8 @@ class MainWindow(QMainWindow):
             return
         w, h = it.image.size
         self.panel.set_input_size(w, h)
+        self.panel.set_video(it.video)
+        self.test_btn.setEnabled(it.video)
         self.viewer.set_message("")
         self.viewer.set_images(to_qimage(it.image.rgb), self._out_size())
         self._left_source_changed()
@@ -395,7 +422,9 @@ class MainWindow(QMainWindow):
     def pipeline(self, device: str) -> Pipeline:
         if device not in self.pipelines:
             self.pipelines[device] = Pipeline(device)
-        return self.pipelines[device]
+        pipe = self.pipelines[device]
+        self.device_label.setText(device_name(pipe.device))
+        return pipe
 
     def _settings_changed(self, kind: str):
         if kind == "output" or self.current is None or self.current.image is None:
@@ -569,7 +598,11 @@ class MainWindow(QMainWindow):
         rows = sorted({i.row() for i in self.queue.selectedIndexes()})
         self._export([self.items[r] for r in rows] or ([self.current] if self.current else []))
 
-    def _export(self, items: list[Item]):
+    def export_test(self):
+        if self.current and self.current.video:
+            self._export([self.current], test_seconds=3.0)
+
+    def _export(self, items: list[Item], test_seconds: float | None = None):
         if not items:
             QMessageBox.information(self, APP, "Add some images or videos first.")
             return
@@ -585,7 +618,8 @@ class MainWindow(QMainWindow):
 
             def work(progress, cancel, it=it):
                 pipe.download_progress = lambda name, d, t: progress(f"Downloading {name}", d / t if t else 0.0)
-                return enhance_file(it.path, s, opts, pipe, progress=progress, cancel=cancel)
+                return enhance_file(it.path, s, opts, pipe, progress=progress, cancel=cancel,
+                                    test_seconds=test_seconds)
 
             job = Job(work)
             job.signals.setProperty("kind", "export")

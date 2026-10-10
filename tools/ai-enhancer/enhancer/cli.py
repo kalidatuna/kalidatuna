@@ -44,7 +44,7 @@ def cmd_enhance(a) -> int:
 
     s = _settings_from_args(a)
     opts = OutputOptions(folder=a.output or "", fmt=a.format, quality=a.quality, video_codec=a.codec,
-                         video_crf=a.crf, overwrite=a.overwrite)
+                         video_crf=a.crf, video_skip_repeats=not a.no_skip_repeats, overwrite=a.overwrite)
     files = collect_inputs(a.inputs)
     if not files:
         print("No input images or videos found.", file=sys.stderr)
@@ -56,7 +56,7 @@ def cmd_enhance(a) -> int:
     for f in files:
         print(f"{f}", file=sys.stderr)
         try:
-            dst = enhance_file(f, s, opts, pipe, progress=_bar)
+            dst = enhance_file(f, s, opts, pipe, progress=_bar, test_seconds=a.test_seconds)
             sys.stderr.write("\n")
             print(dst)
         except Exception as e:  # keep going with the rest of the batch
@@ -147,6 +147,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--codec", default="h264", choices=["h264", "h265", "h264_nvenc", "hevc_nvenc", "prores"])
     p.add_argument("--crf", type=int, default=16)
     p.add_argument("--overwrite", action="store_true")
+    p.add_argument("--test-seconds", type=float, help="videos: export only the first N seconds, to try settings")
+    p.add_argument("--no-skip-repeats", action="store_true",
+                   help="videos: process every frame, even exact repeats of the previous one")
     _add_settings_args(p)
     p.set_defaults(func=cmd_enhance)
 

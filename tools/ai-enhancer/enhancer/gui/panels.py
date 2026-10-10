@@ -94,6 +94,12 @@ class SettingsPanel(QScrollArea):
         self.model_desc.setObjectName("hint")
         f.addRow(self.model)
         f.addRow(self.model_desc)
+        self.video_warning = QLabel()
+        self.video_warning.setWordWrap(True)
+        self.video_warning.setObjectName("warning")
+        self.video_warning.hide()
+        f.addRow(self.video_warning)
+        self.is_video = False
         root.addWidget(g)
 
         # Size
@@ -190,6 +196,10 @@ class SettingsPanel(QScrollArea):
         self.crf.setRange(0, 40)
         self.crf.setToolTip("Lower is higher quality and larger files")
         f.addRow("Video quality (CRF)", self.crf)
+        self.skip_repeats = QCheckBox("Reuse repeated video frames (faster)")
+        self.skip_repeats.setToolTip("Frames with no visible change from the previous one reuse its result. "
+                                     "Any visible change, even a blink, is processed normally.")
+        f.addRow(self.skip_repeats)
         root.addWidget(g)
 
         # Advanced
@@ -201,8 +211,9 @@ class SettingsPanel(QScrollArea):
         self.tile = QSpinBox()
         self.tile.setRange(0, 2048)
         self.tile.setSingleStep(64)
-        self.tile.setSpecialValueText("No tiling")
-        self.tile.setToolTip("Smaller tiles use less memory. Lower this if you run out of GPU memory.")
+        self.tile.setSpecialValueText("Auto")
+        self.tile.setToolTip("Auto uses the largest tile that fits in GPU memory, which is fastest. "
+                             "Set a size only if you see out-of-memory errors.")
         f.addRow("Tile size", self.tile)
         root.addWidget(g)
         root.addStretch(1)
@@ -218,7 +229,8 @@ class SettingsPanel(QScrollArea):
                 self.face_model.currentIndexChanged, self.face_strength.valueChanged,
                 self.face_fidelity.valueChanged]
         out = [self.fmt.currentIndexChanged, self.quality.valueChanged, self.keep16.toggled,
-               self.folder.textChanged, self.codec.currentIndexChanged, self.crf.valueChanged]
+               self.folder.textChanged, self.codec.currentIndexChanged, self.crf.valueChanged,
+               self.skip_repeats.toggled]
         for s in base:
             s.connect(lambda *_: self._emit("base"))
         for s in post:
@@ -267,7 +279,12 @@ class SettingsPanel(QScrollArea):
 
     def _sync_enabled(self):
         up = models.UPSCALERS[self.model.currentData()]
-        self.model_desc.setText(up.description)
+        self.model_desc.setText(f"{up.description} Speed: {up.speed}.")
+        slow = self.is_video and up.speed in ("slow", "very slow")
+        self.video_warning.setVisible(slow)
+        if slow:
+            self.video_warning.setText(f"⚠ {up.label} is {up.speed} for video. For long clips, use the preset "
+                                       "\u201cTikTok edit: fast\u201d. Try Test 3 s first to see the time.")
         self.noise.setEnabled(up.denoise_blend)
         self.noise_label.setEnabled(up.denoise_blend)
         self.denoise_strength.setEnabled(bool(self.denoise.currentData()))
@@ -278,6 +295,10 @@ class SettingsPanel(QScrollArea):
         self.face_fidelity.setEnabled(cf)
         self.fidelity_label.setEnabled(cf)
         self.quality.setEnabled(self.fmt.currentData() in ("jpeg", "webp", "same"))
+
+    def set_video(self, is_video: bool):
+        self.is_video = is_video
+        self._sync_enabled()
 
     def set_input_size(self, w: int, h: int):
         self.in_size = (w, h)
@@ -342,7 +363,8 @@ class SettingsPanel(QScrollArea):
     def output(self) -> OutputOptions:
         return OutputOptions(folder=self.folder.text().strip(), fmt=self.fmt.currentData(),
                              quality=self.quality.value(), keep_16bit=self.keep16.isChecked(),
-                             video_codec=self.codec.currentData(), video_crf=self.crf.value())
+                             video_codec=self.codec.currentData(), video_crf=self.crf.value(),
+                             video_skip_repeats=self.skip_repeats.isChecked())
 
     def set_output(self, o: OutputOptions):
         self._loading = True
@@ -353,6 +375,7 @@ class SettingsPanel(QScrollArea):
             self.folder.setText(o.folder)
             _select(self.codec, o.video_codec)
             self.crf.setValue(o.video_crf)
+            self.skip_repeats.setChecked(o.video_skip_repeats)
         finally:
             self._loading = False
         self._sync_enabled()

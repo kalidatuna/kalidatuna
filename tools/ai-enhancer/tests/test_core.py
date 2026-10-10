@@ -1,8 +1,10 @@
 import json
+import shutil
 
 import cv2
 import numpy as np
 import pytest
+import torch
 
 from enhancer import compare, models
 from enhancer.batch import OutputOptions, output_path
@@ -61,10 +63,12 @@ def test_pipeline_sizes_and_alpha(fake_pipeline, gradient):
 
 
 def test_recover_detail_blends_towards_resized_original(fake_pipeline, gradient):
+    from enhancer.pipeline import resize, to_numpy, to_tensor
+
     s = Settings(scale=4, recover_detail=1.0)
     out, _ = fake_pipeline.process(gradient, s)
-    lanczos = np.clip(cv2.resize(gradient, (256, 192), interpolation=cv2.INTER_LANCZOS4), 0, 1)
-    np.testing.assert_allclose(out, lanczos, atol=1e-5)
+    expected = np.clip(to_numpy(resize(to_tensor(gradient, "cpu"), 256, 192)), 0, 1)
+    np.testing.assert_allclose(out, expected, atol=1e-5)
 
 
 def test_preview_patch_matches_full_render(fake_pipeline, gradient):
@@ -89,9 +93,13 @@ def test_face_crop_and_paste_roundtrip():
     assert crop.shape == (FACE_SIZE, FACE_SIZE, 3)
     np.testing.assert_allclose(m[:, :2], np.eye(2) / 0.4, atol=1e-3)
     # Pasting the unmodified crop back into a 2x upscale leaves it nearly unchanged.
-    up = cv2.resize(img, (600, 600), interpolation=cv2.INTER_LINEAR)
-    out = paste_all(up.copy(), img.shape, [(crop, m)], strength=1.0)
-    assert np.abs(out - up).mean() < 0.01
+    up = torch.from_numpy(cv2.resize(img, (600, 600), interpolation=cv2.INTER_LINEAR).transpose(2, 0, 1))[None]
+    crop_t = torch.from_numpy(crop.transpose(2, 0, 1).copy())[None]
+    out = paste_all(up.clone(), img.shape, [(crop_t, m)], strength=1.0)
+    assert (out - up).abs().mean() < 0.01
+    # Only the face's bounding box changes; the far corner is untouched.
+    blank = paste_all(torch.zeros_like(up), img.shape, [(torch.ones_like(crop_t), m)], strength=1.0)
+    assert blank[..., 590:, 590:].abs().max() == 0 and blank[..., 300, 300].min() > 0.99
 
 
 def test_image_io_roundtrip(tmp_path):
@@ -212,3 +220,94 @@ def test_registry_is_consistent():
         assert key in models.FILES
     for f in models.FILES.values():
         assert len(f.sha256) == 64 and f.url.startswith("https://")
+
+
+def test_auto_tile_falls_back_after_out_of_memory(monkeypatch):
+    from enhancer import tiling
+
+    monkeypatch.setattr(tiling, "_is_gpu", lambda x: True)
+    monkeypatch.setattr(tiling, "_auto_tile", {})
+    tried = []
+
+    def fn(t):
+        tried.append(max(t.shape[-2:]))
+        if max(t.shape[-2:]) > 256:
+            raise RuntimeError("CUDA out of memory. Tried to allocate 2.00 GiB")
+        return torch.nn.functional.interpolate(t, scale_factor=2, mode="nearest")
+
+    x = torch.rand(1, 3, 300, 400)
+    out = tiling.run_tiled(fn, x, 2, tile=0, auto_key="m")
+    assert torch.allclose(out, torch.nn.functional.interpolate(x, scale_factor=2, mode="nearest"), atol=1e-6)
+    assert tiling._auto_tile[("m", (300, 400))] == 256
+    # The working size is remembered: the next call does not retry the sizes that failed.
+    tried.clear()
+    tiling.run_tiled(fn, x, 2, tile=0, auto_key="m")
+    assert max(tried) <= 256
+    # Other errors are not swallowed.
+    with pytest.raises(ValueError):
+        tiling.run_tiled(lambda t: (_ for _ in ()).throw(ValueError("bad")), x, 2, tile=0, auto_key="n")
+
+
+def test_half_precision_nan_falls_back_to_full(monkeypatch):
+    from enhancer.tiling import descriptor_fn
+
+    class HalfNaN:
+        def __init__(self):
+            self.model = torch.nn.Conv2d(3, 3, 1).half()
+
+        def __call__(self, t):
+            return t * float("nan") if t.dtype == torch.float16 else t * 2
+
+        def float(self):
+            self.model.float()
+
+    desc = HalfNaN()
+    out = descriptor_fn(desc)(torch.ones(1, 3, 4, 4))
+    assert torch.equal(out, torch.full((1, 3, 4, 4), 2.0))
+    assert next(desc.model.parameters()).dtype == torch.float32
+
+
+def test_is_repeat_keeps_local_motion():
+    from enhancer.video import is_repeat
+
+    rng = np.random.default_rng(6)
+    a = rng.integers(0, 256, (192, 108, 3), dtype=np.uint8)
+    noisy = np.clip(a.astype(int) + rng.integers(-1, 2, a.shape), 0, 255).astype(np.uint8)
+    blink = a.copy()
+    blink[80:88, 40:60] = (blink[80:88, 40:60] * 0.5).astype(np.uint8)
+    assert is_repeat(a, a.copy()) and is_repeat(a, noisy)
+    assert not is_repeat(a, blink)
+    assert not is_repeat(None, a)
+
+
+@pytest.mark.skipif(not shutil.which("ffmpeg"), reason="needs FFmpeg")
+def test_video_reuses_repeats_and_limits_duration(fake_pipeline, tmp_path):
+    import subprocess
+
+    from enhancer.video import enhance_video
+
+    src = tmp_path / "rep.mp4"
+    # 20 different frames at 10 fps, each shown 3 times at 30 fps (lossless, so repeats are exact).
+    rng = np.random.default_rng(7)
+    for i in range(20):
+        cv2.imwrite(str(tmp_path / f"f{i:02d}.png"), rng.integers(0, 256, (48, 64, 3), dtype=np.uint8))
+    subprocess.run(["ffmpeg", "-v", "error", "-framerate", "10", "-i", str(tmp_path / "f%02d.png"),
+                    "-vf", "fps=30", "-c:v", "libx264", "-qp", "0", "-pix_fmt", "yuv444p", str(src)], check=True)
+    calls = []
+    real = fake_pipeline.process_frame
+    fake_pipeline.process_frame = lambda f, *a, **k: (calls.append(1), real(f, *a, **k))[1]
+    msgs = []
+    out = enhance_video(src, tmp_path / "out.mp4", Settings(model="video-2x", scale=2), fake_pipeline,
+                        progress=lambda label, f: msgs.append(label))
+    probe = subprocess.run(["ffprobe", "-v", "error", "-count_frames", "-show_entries",
+                            "stream=width,height,nb_read_frames", "-of", "csv=p=0", str(out)],
+                           capture_output=True, text=True).stdout.split(",")
+    assert probe[:2] == ["128", "96"] and int(probe[2]) == 60
+    assert len(calls) == 20 and "40 repeated frames reused" in msgs[-1]
+
+    calls.clear()
+    short = enhance_video(src, tmp_path / "short.mp4", Settings(model="video-2x", scale=2), fake_pipeline,
+                          skip_repeats=False, max_seconds=1.0)
+    n = subprocess.run(["ffprobe", "-v", "error", "-count_frames", "-show_entries", "stream=nb_read_frames",
+                        "-of", "csv=p=0", str(short)], capture_output=True, text=True).stdout.strip()
+    assert int(n) == 30 and len(calls) == 30

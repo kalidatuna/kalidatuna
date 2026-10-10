@@ -43,6 +43,8 @@ class UpscaleModel:
     files: tuple[str, ...]
     scale: int
     denoise_blend: bool = False
+    # Relative speed, measured on the same frame: "fastest", "fast", "medium", "slow", "very slow".
+    speed: str = "fast"
 
 
 _RE = "https://github.com/xinntao/Real-ESRGAN/releases/download"
@@ -205,6 +207,7 @@ UPSCALERS: dict[str, UpscaleModel] = {
             ("realesr-general-x4v3", "realesr-general-wdn-x4v3"),
             4,
             denoise_blend=True,
+            speed="fast",
         ),
         UpscaleModel(
             "social-hd",
@@ -214,6 +217,7 @@ UPSCALERS: dict[str, UpscaleModel] = {
             "footage. Slow: best for stills and short clips.",
             ("4xRealWebPhoto_v4_dat2",),
             4,
+            speed="very slow",
         ),
         UpscaleModel(
             "social-fast",
@@ -222,6 +226,7 @@ UPSCALERS: dict[str, UpscaleModel] = {
             "Sharper and about 8x faster than Social Media HD.",
             ("4xNomosWebPhoto_RealPLKSR",),
             4,
+            speed="medium",
         ),
         UpscaleModel(
             "video-2x",
@@ -230,6 +235,7 @@ UPSCALERS: dict[str, UpscaleModel] = {
             "videos: pair it with Remove compression for TikTok downloads.",
             ("2xNomosUni_span_multijpg",),
             2,
+            speed="fastest",
         ),
         UpscaleModel(
             "high-fidelity",
@@ -238,6 +244,7 @@ UPSCALERS: dict[str, UpscaleModel] = {
             "sources. Slowest option.",
             ("SwinIR-L-realSR-x4",),
             4,
+            speed="very slow",
         ),
         UpscaleModel(
             "high-fidelity-2x",
@@ -246,6 +253,7 @@ UPSCALERS: dict[str, UpscaleModel] = {
             "inventing much detail.",
             ("SwinIR-M-realSR-x2",),
             2,
+            speed="slow",
         ),
         UpscaleModel(
             "low-resolution",
@@ -254,6 +262,7 @@ UPSCALERS: dict[str, UpscaleModel] = {
             "compressed images. Removes artifacts aggressively.",
             ("RealESRGAN_x4plus",),
             4,
+            speed="medium",
         ),
         UpscaleModel(
             "standard-2x",
@@ -261,6 +270,7 @@ UPSCALERS: dict[str, UpscaleModel] = {
             "Real-ESRGAN x2plus. Gentler than the 4x models for 2x enlargements.",
             ("RealESRGAN_x2plus",),
             2,
+            speed="fast",
         ),
         UpscaleModel(
             "art-cg",
@@ -269,6 +279,7 @@ UPSCALERS: dict[str, UpscaleModel] = {
             "and clean lines.",
             ("RealESRGAN_x4plus_anime_6B",),
             4,
+            speed="fast",
         ),
         UpscaleModel(
             "anime-video",
@@ -276,6 +287,7 @@ UPSCALERS: dict[str, UpscaleModel] = {
             "Real-ESRGAN's small anime model built for video. Very fast.",
             ("realesr-animevideov3",),
             4,
+            speed="fastest",
         ),
     ]
 }
@@ -401,9 +413,16 @@ def load_descriptor(file_keys: tuple[str, ...], device, blend: float = 0.0, prog
         mixed = {k: (1.0 - blend) * a[k] + blend * b[k] for k in a}
         desc = loader.load_from_state_dict(mixed)
     desc.to(device).eval()
-    if device.type == "cuda" and desc.supports_half:
+    if device.type == "cuda" and (desc.supports_half or desc.architecture.id in HALF_TESTED):
         desc.half()
     return desc
+
+
+# Architectures spandrel does not mark as fp16-safe, but whose fp16 output we
+# compared against fp32 (RealPLKSR: at most 1.6/255 apart). DAT produced NaN
+# in fp16, so it stays in fp32. A NaN guard in tiling.descriptor_fn switches
+# any model back to fp32 if fp16 ever fails.
+HALF_TESTED = {"PLKSR"}
 
 
 class ModelCache:
