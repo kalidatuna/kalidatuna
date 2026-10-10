@@ -20,7 +20,7 @@ from .. import __version__, models
 from ..batch import OutputOptions, collect_inputs, enhance_file
 from ..compare import match, metrics
 from ..imageio import IMAGE_EXTS, VIDEO_EXTS, LoadedImage, from_array, is_video, load_image
-from ..pipeline import Pipeline, Settings
+from ..pipeline import PREVIEW_CACHE_ITEMS, Pipeline, Settings
 from .panels import SettingsPanel
 from .viewer import CompareView, to_qimage
 from .worker import Job, JobRunner
@@ -125,6 +125,9 @@ class MainWindow(QMainWindow):
         self.pipelines: dict[str, Pipeline] = {}
         self.preview_cache: dict = {}
         self.preview_job: Job | None = None
+        self.preview_inflight: tuple[str, list, bool] | None = None  # (settings signature, rects, refinish)
+        self._reset_cover()
+        self.done_rects: list[tuple[int, int, int, int]] = []  # previewed with the current AI settings
         self.export_jobs: list[Job] = []
         self._build()
         self._restore()
@@ -184,7 +187,7 @@ class MainWindow(QMainWindow):
         self.auto_preview.toggled.connect(lambda on: on and self.schedule_preview())
         tools.addWidget(self.auto_preview)
         self.preview_btn = QPushButton("Preview")
-        self.preview_btn.clicked.connect(self.run_preview)
+        self.preview_btn.clicked.connect(lambda: self.run_preview(force=True))
         tools.addWidget(self.preview_btn)
         cl.addLayout(tools)
 
@@ -352,6 +355,8 @@ class MainWindow(QMainWindow):
         it = self.items[row]
         self.current = it
         self.preview_cache.clear()
+        self.done_rects = []
+        self._reset_cover()
         try:
             if it.image is None:
                 if it.video:
@@ -390,27 +395,81 @@ class MainWindow(QMainWindow):
     def _settings_changed(self, kind: str):
         if kind == "output" or self.current is None or self.current.image is None:
             return
+        self._reset_cover()
         if kind == "base":
+            self.done_rects = []
             size = self._out_size()
             if size != (self.viewer.out_w, self.viewer.out_h):
                 self.viewer.set_images(self.viewer.left.toImage() if self.viewer.left else None, size, keep_view=True)
                 self._left_source_changed()
             else:
                 self.viewer.clear_result()
-        self.schedule_preview(delay=150 if kind == "post" else 400)
+            self.schedule_preview(delay=400)
+        else:
+            # Detail, sharpen and face settings reuse the cached AI result, so
+            # every area previewed so far is re-rendered, not just the visible one.
+            if self.viewer.right is not None:
+                self.viewer.set_result(None)
+            self.schedule_preview(delay=150, refinish=True)
 
     def _view_changed(self):
         if not self.viewer.dragging:
-            self.schedule_preview(delay=500)
+            self.schedule_preview(delay=400)
 
-    def schedule_preview(self, delay: int = 300):
+    def schedule_preview(self, delay: int = 300, refinish: bool = False):
         if not self.auto_preview.isChecked():
             return
         if not hasattr(self, "_preview_timer"):
             self._preview_timer = QTimer(self)
             self._preview_timer.setSingleShot(True)
-            self._preview_timer.timeout.connect(self.run_preview)
+            self._preview_timer.timeout.connect(lambda: self.run_preview(refinish=self._refinish_pending))
+            self._refinish_pending = False
+        self._refinish_pending = self._refinish_pending or refinish
         self._preview_timer.start(delay)
+
+    # Rendered areas, for the current settings. An area counts as covered if
+    # it lies inside one rendered rect, or if every grid cell it touches lies
+    # fully inside rendered rects (for views spanning several patches).
+    COVER_CELL = 8
+
+    def _reset_cover(self):
+        self.cover = None
+        self.cover_rects: list[tuple[int, int, int, int]] = []
+        self.cover_sig = ""
+
+    def _cell_range(self, a: int, b: int, n: int, inner: bool) -> slice:
+        g = self.COVER_CELL
+        if inner:  # cells fully inside [a, b); the image edge counts as inside
+            return slice(-(-a // g), -(-b // g) if b >= n else b // g)
+        return slice(a // g, -(-b // g))  # cells touching [a, b)
+
+    def _cells(self, rect, inner: bool) -> tuple[slice, slice]:
+        x, y, w, h = rect
+        iw, ih = self.current.image.size
+        return self._cell_range(y, y + h, ih, inner), self._cell_range(x, x + w, iw, inner)
+
+    def _mark_covered(self, rect, sig: str):
+        if self.cover is None or self.cover_sig != sig:
+            iw, ih = self.current.image.size
+            g = self.COVER_CELL
+            self.cover = np.zeros((-(-ih // g), -(-iw // g)), bool)
+            self.cover_rects = []
+            self.cover_sig = sig
+        self.cover[self._cells(rect, inner=True)] = True
+        self.cover_rects.append(rect)
+
+    def _is_covered(self, rect, sig: str) -> bool:
+        if self.cover is None or self.cover_sig != sig:
+            return False
+        if any(self._contains(r, rect) for r in self.cover_rects):
+            return True
+        return bool(self.cover[self._cells(rect, inner=False)].all())
+
+    @staticmethod
+    def _contains(outer, inner) -> bool:
+        ox, oy, ow, oh = outer
+        x, y, w, h = inner
+        return ox <= x and oy <= y and x + w <= ox + ow and y + h <= oy + oh
 
     def _preview_rect(self) -> tuple[int, int, int, int] | None:
         it = self.current
@@ -426,13 +485,28 @@ class MainWindow(QMainWindow):
         cx, cy = vis.center().x() * k, vis.center().y() * k
         rw, rh = min(vis.width() * k, limit), min(vis.height() * k, limit)
         x, y = int(max(0, cx - rw / 2)), int(max(0, cy - rh / 2))
-        return x, y, max(8, int(rw)), max(8, int(rh))
+        rw, rh = max(8, int(rw)), max(8, int(rh))
+        return x, y, min(rw, w - x), min(rh, h - y)
 
-    def run_preview(self):
+    def run_preview(self, force: bool = False, refinish: bool = False):
+        self._refinish_pending = False
         it = self.current
         rect = self._preview_rect()
         if rect is None or (self.export_jobs and self.runner.current in self.export_jobs):
             return
+        if self.viewer.right is not None and not force:
+            return  # the full exported result is already on screen
+        sig = self._settings_sig()
+        # A re-render interrupted by a new request must still happen.
+        refinish = refinish or bool(self.preview_inflight and self.preview_inflight[2])
+        rects = [r for r in self.done_rects[-PREVIEW_CACHE_ITEMS:] if r != rect] if refinish else []
+        if not rects and not force:
+            if self._is_covered(rect, sig):
+                return  # zooming or panning inside an area that is already rendered
+            if self.preview_inflight and self.preview_inflight[0] == sig and any(
+                    self._contains(r, rect) for r in self.preview_inflight[1]):
+                return  # the running preview already covers this area
+        rects.append(rect)
         s = self.panel.settings()
         pipe = self.pipeline(s.device)
         cache = self.preview_cache
@@ -443,23 +517,41 @@ class MainWindow(QMainWindow):
 
         def work(progress, cancel):
             pipe.download_progress = lambda name, d, t: progress(f"Downloading {name}", d / t if t else 0.0)
-            return pipe.preview(rgb, s, rect, progress=progress, cancel=cancel, cache=cache)
+            out = []
+            for i, r in enumerate(rects):
+                step = (lambda label, f, i=i: progress(label, (i + f) / len(rects)))
+                out.append(pipe.preview(rgb, s, r, progress=step, cancel=cancel, cache=cache) + (r,))
+            return out
 
         job = Job(work)
         job.signals.setProperty("kind", "preview")
         job.signals.progress.connect(self._progress)
-        job.signals.finished.connect(lambda res, it=it: self._preview_done(it, res))
+        job.signals.finished.connect(lambda res, it=it, sig=sig: self._preview_done(it, res, sig, refinish))
         job.signals.failed.connect(self._failed)
         job.signals.cancelled.connect(lambda: self.status.setText("Preview cancelled"))
+        for sig_ in (job.signals.finished, job.signals.failed, job.signals.cancelled):
+            sig_.connect(lambda *_, j=job: self._preview_ended(j))
         self.preview_job = job
+        self.preview_inflight = (sig, rects, refinish)
         self.runner.submit(job)
 
-    def _preview_done(self, it: Item, res):
-        if it is not self.current:
+    def _preview_ended(self, job: Job):
+        if job is self.preview_job:
+            self.preview_job = None
+            self.preview_inflight = None
+
+    def _preview_done(self, it: Item, results, sig: str, refinish: bool):
+        if it is not self.current or sig != self._settings_sig():
             return
-        patch, (x, y, w, h) = res
-        self.viewer.add_patch(to_qimage(patch), QRect(x, y, w, h))
-        it.extra["last_patch"] = (patch, (x, y, w, h))
+        if refinish:
+            self.viewer.patches = []
+        for patch, (x, y, w, h), rect in results:
+            self.viewer.add_patch(to_qimage(patch), QRect(x, y, w, h))
+            it.extra["last_patch"] = (patch, (x, y, w, h))
+            self._mark_covered(rect, sig)
+            if rect in self.done_rects:
+                self.done_rects.remove(rect)
+            self.done_rects.append(rect)
         self.status.setText("Preview ready. Drag the divider to compare; pan or zoom to preview another area.")
         self.progress.setValue(0)
 

@@ -72,3 +72,43 @@ def test_preview_and_export(window, app, tmp_path):
     item = window.items[0]
     assert item.output and item.output.exists(), item.status
     assert window.viewer.right is not None
+
+
+def test_zoom_and_pan_reuse_rendered_areas(window, app, tmp_path):
+    src = save_image(tmp_path / "big.png", np.random.default_rng(1).random((300, 400, 3)).astype(np.float32))
+    window.panel.set_settings(Settings(scale=2, tile=0, device="cpu"))
+    window.add_paths([str(src)])
+    submitted = []
+    real_submit = window.runner.submit
+    window.runner.submit = lambda job: (submitted.append(job.signals.property("kind")), real_submit(job))[1]
+    v = window.viewer
+
+    window.run_preview()
+    wait_idle(app, window)
+    assert submitted == ["preview"] and len(v.patches) == 1
+
+    # Zooming in and back out over the rendered area does no new AI work.
+    v.set_zoom(v.zoom * 3)
+    window.run_preview()
+    v.fit()
+    window.run_preview()
+    wait_idle(app, window)
+    assert submitted == ["preview"]
+
+    # Moving to an area that has not been rendered does.
+    v.set_zoom(4.0)
+    v.center = v.center.__class__(780, 580)
+    window.run_preview()
+    wait_idle(app, window)
+    assert submitted == ["preview", "preview"] and len(v.patches) == 2
+
+    # A detail or sharpen change re-renders every previewed area in one job.
+    window.panel.sharpen.setValue(0.5)
+    window.run_preview(refinish=True)
+    wait_idle(app, window)
+    assert submitted[-1] == "preview" and len(submitted) == 3 and len(v.patches) == 2
+
+    # The Preview button always renders.
+    window.run_preview(force=True)
+    wait_idle(app, window)
+    assert len(submitted) == 4

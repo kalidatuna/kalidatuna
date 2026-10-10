@@ -17,6 +17,7 @@ from .tiling import Cancelled, descriptor_fn, run_model
 Progress = Callable[[str, float], None]
 
 MAX_SCALE = 16.0
+PREVIEW_CACHE_ITEMS = 8  # AI results kept for region previews
 
 
 @dataclass
@@ -211,12 +212,13 @@ class Pipeline:
         cs.width = max(1, round((x1 - x0) * sx))
         cs.height = max(1, round((y1 - y0) * sy))
         key = (self.base_key(cs), (x0, y0, x1, y1), (cs.width, cs.height))
-        entry = cache.get(key) if cache is not None else None
+        entry = cache.pop(key, None) if cache is not None else None
         if entry is None:
             entry = {"base": self.upscale(crop, cs, progress, cancel), "faces": {}}
-            if cache is not None:
-                cache.clear()
-                cache[key] = entry
+        if cache is not None:
+            cache[key] = entry  # most recently used last
+            while len(cache) > PREVIEW_CACHE_ITEMS:
+                cache.pop(next(iter(cache)))
         if progress:
             progress("Finishing", 0.99)
         out = self.finish(entry["base"], crop, cs, face_cache=entry["faces"])
