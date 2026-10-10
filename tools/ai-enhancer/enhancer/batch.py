@@ -41,7 +41,8 @@ def output_path(src: Path, s: Settings, opts: OutputOptions, size: tuple[int, in
     else:
         ext = OUTPUT_FORMATS[opts.fmt]
     base = folder / f"{src.stem}-enhanced-{s.model}-{size[0]}x{size[1]}{suffix}"
-    path = base.with_suffix(ext)
+    # Not with_suffix(): it would cut names containing dots, such as "-test0.5s".
+    path = Path(f"{base}{ext}")
     n = 1
     while path.exists() and not opts.overwrite:
         path = Path(f"{base}-{n}{ext}")

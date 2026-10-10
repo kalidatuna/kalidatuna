@@ -173,6 +173,9 @@ def test_output_path_naming(tmp_path):
     p2 = output_path(src, Settings(model="standard"), OutputOptions(fmt="png"), (200, 100))
     assert p2.name == "photo-enhanced-standard-200x100-1.png"
     assert output_path(src, Settings(), OutputOptions(fmt="same"), (1, 1)).suffix == ".jpeg"
+    clip = tmp_path / "my.clip.mp4"
+    assert output_path(clip, Settings(model="video-2x"), OutputOptions(), (2, 4), "-test0.5s").name == \
+        "my.clip-enhanced-video-2x-2x4-test0.5s.mp4"
 
 
 def test_cli_enhance_and_preset(fake_pipeline, tmp_path, capsys):
