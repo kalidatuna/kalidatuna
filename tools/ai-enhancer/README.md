@@ -14,7 +14,13 @@ An open-source desktop app for AI photo and video enhancement: upscaling, noise 
 | Gigapixel "High Fidelity" | **High Fidelity** | SwinIR-L (real-world SR, GAN) |
 | Gigapixel "Low Resolution" / "Recovery" | **Low Resolution / Heavy Recovery** | Real-ESRGAN x4plus |
 | Gigapixel "Art & CG" | **Art & CG** | Real-ESRGAN x4plus anime 6B |
-| Photo AI Denoise (Normal / Strong) | **Denoise before upscaling** | SCUNet (PSNR and GAN variants) |
+| — | **Social Media HD (best)**: re-compressed TikTok/Instagram footage of people | 4xRealWebPhoto v4 (DAT-2) |
+| — | **Social Media (fast)** | 4xNomosWebPhoto (RealPLKSR) |
+| Video AI "Proteus"-style fast upscaling | **Fast Video 2x** | 2xNomosUni SPAN (JPEG-trained) |
+| — | **High Fidelity 2x** | SwinIR-M real-world x2 |
+| Video AI anime | **Anime Video** | Real-ESRGAN anime video v3 |
+| Compression artifact removal | **Clean up before upscaling → Remove compression** | FBCNN |
+| Photo AI Denoise (Normal / Strong) | **Clean up before upscaling → Denoise / Denoise strong** | SCUNet (PSNR and GAN variants) |
 | Face Recovery | **Face recovery** with strength (and fidelity for CodeFormer) | YuNet detector, then GFPGAN v1.4 or CodeFormer |
 | "Recover original detail" | **Recover original detail** slider | Blends the Lanczos-resized original back in |
 | Sharpen | **Sharpen** slider | Unsharp mask (not an AI deblur model) |
@@ -22,6 +28,7 @@ An open-source desktop app for AI photo and video enhancement: upscaling, noise 
 
 App features:
 
+- **Presets** for TikTok edits (fast, balanced, best quality) and photos. Every built-in preset uses only models that allow commercial use.
 - A queue for images, folders, and videos, with drag and drop.
 - A before/after viewer with split, side-by-side, before-only and after-only modes, wheel zoom, and drag to pan.
 - **Live preview** of the visible area. It reruns automatically when settings change. Detail, sharpen, and face settings reuse the cached AI result, so they update almost instantly.
@@ -44,7 +51,7 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -e .
 ```
 
-Models download automatically on first use, from each project's official release page. Each download is checked against a pinned SHA-256 hash. Files are stored in `~/.cache/ai-enhancer/models` (Windows: `%LOCALAPPDATA%\ai-enhancer\models`); set `ENHANCER_MODEL_DIR` to use a different folder. To download everything in advance (about 1.2 GB):
+Models download automatically on first use, from each project's official release page. Each download is checked against a pinned SHA-256 hash. Files are stored in `~/.cache/ai-enhancer/models` (Windows: `%LOCALAPPDATA%\ai-enhancer\models`); set `ENHANCER_MODEL_DIR` to use a different folder. To download everything in advance (about 1.7 GB):
 
 ```bash
 ai-enhancer models --download all
@@ -61,6 +68,20 @@ ai-enhancer            # or: ai-enhancer-gui, or: python -m enhancer
 3. Adjust *Reduce noise*, *Recover original detail*, *Sharpen*, and *Face recovery*. Drag the white divider to compare.
 4. Choose the format and folder under **Export**, then click **Export** (all files) or **Export selected**.
 
+## TikTok edits
+
+Downloaded TikTok clips are small and heavily compressed. The **TikTok edit** presets first remove the compression blocks (FBCNN), then upscale 2x with a model trained on re-compressed web footage, then recover faces with GFPGAN at medium strength. A 1080x1920 clip comes out at 2160x3840 (4K vertical).
+
+| Preset | Upscaler | Use it for |
+| --- | --- | --- |
+| TikTok edit: fast | Fast Video 2x | Long clips; the upscaler is about 15x faster than the one in *balanced* |
+| TikTok edit: balanced | Social Media (fast) | Short clips; sharper detail |
+| TikTok edit: best quality | Social Media HD | Stills and very short clips; the most natural faces, but slow |
+
+For **Alight Motion**, export as H.264 or H.265. For **After Effects**, ProRes 422 HQ keeps the most quality for further editing. On an NVIDIA card, choose *H.264/H.265, NVIDIA GPU encoder* (NVENC): encoding then runs on the GPU. If NVENC is not available, the app falls back to the software encoder and says so. During video export the status bar shows frames per second and the time left.
+
+On GPUs without fast bfloat16 support (NVIDIA GTX/RTX 20-series and older), the Social Media models run in full precision; the other models use half precision on any NVIDIA GPU.
+
 ## Command line
 
 ```bash
@@ -75,6 +96,9 @@ ai-enhancer enhance noisy.png --denoise strong --model standard-2x --scale 2 --r
 
 # Video: 2x upscale to H.265, audio kept
 ai-enhancer enhance clip.mp4 --scale 2 --codec h265 --crf 18 -o out/
+
+# A TikTok clip with the built-in preset, encoded on an NVIDIA GPU for Alight Motion
+ai-enhancer enhance clip.mp4 --preset tiktok-fast --codec hevc_nvenc -o out/
 
 # Use a saved preset, overriding one value
 ai-enhancer enhance photo.jpg --preset best.json --sharpen 0.1
@@ -117,7 +141,9 @@ Measured on a 4-core CPU with no GPU, upscaling a 128x128 image to 512x512:
 | Standard + GFPGAN | 4.0 s |
 | Standard + CodeFormer | 3.8 s |
 
-Time grows with output pixel count. High Fidelity (SwinIR-L) is several times slower than the others. Use a CUDA or Apple GPU for large photos and video. If you run out of GPU memory, lower the **Tile size** under *Performance*.
+On the same CPU, the AI upscale of a 192x192 compressed image to 2x took 0.6 s with *TikTok edit: fast* (including compression removal) and 2.0 s with *balanced*. Face recovery added about 1.5 s. These are CPU numbers; GPU timings have not been measured yet.
+
+Time grows with output pixel count. High Fidelity (SwinIR-L) and Social Media HD (DAT-2) are several times slower than the others. Use a CUDA or Apple GPU for large photos and video. If you run out of GPU memory, lower the **Tile size** under *Performance*.
 
 ## Limitations
 
@@ -137,15 +163,21 @@ The code in this folder is MIT-licensed. Each model has its own license:
 | SCUNet | [cszn/SCUNet](https://github.com/cszn/SCUNet) | Apache-2.0 |
 | GFPGAN v1.4 | [TencentARC/GFPGAN](https://github.com/TencentARC/GFPGAN) | Apache-2.0 |
 | CodeFormer | [sczhou/CodeFormer](https://github.com/sczhou/CodeFormer) | S-Lab License 1.0, **non-commercial use only** |
+| 4xRealWebPhoto v4, 4xNomosWebPhoto, 2xNomosUni SPAN | [Phhofm/models](https://github.com/Phhofm/models) by Philip Hofmann | CC-BY-4.0 (credit required) |
+| SwinIR-M real-world x2 | [JingyunLiang/SwinIR](https://github.com/JingyunLiang/SwinIR) | Apache-2.0 |
+| Real-ESRGAN anime video v3 | [xinntao/Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) | BSD-3-Clause |
+| FBCNN | [jiaxi-jiang/FBCNN](https://github.com/jiaxi-jiang/FBCNN) | Apache-2.0 |
 | YuNet face detector | [opencv/opencv_zoo](https://github.com/opencv/opencv_zoo) | MIT |
 
-Models are loaded with [spandrel](https://github.com/chaiNNer-org/spandrel). If you use this commercially, choose GFPGAN rather than CodeFormer.
+Models are loaded with [spandrel](https://github.com/chaiNNer-org/spandrel).
+
+**Commercial use.** CodeFormer is hidden unless you turn on *Help → Show non-commercial models*; every other model allows commercial use. The CC-BY-4.0 models require credit to their author. *Help → About* lists the credits for every model, so keep that (or an equivalent credits page) in anything you distribute. This is a summary, not legal advice: check each license before you sell or distribute the app.
 
 ## Development
 
 ```bash
 pip install -e ".[dev]"
-pytest              # 26 tests, offline; a fake model stands in for real checkpoints
+pytest              # 32 tests, offline; a fake model stands in for real checkpoints
 pyflakes enhancer tests
 ```
 
@@ -155,8 +187,9 @@ GUI tests run headless (`QT_QPA_PLATFORM=offscreen`). On a minimal Linux system 
 | --- | --- |
 | `enhancer/models.py` | Model registry, verified downloads, loading, weight interpolation |
 | `enhancer/tiling.py` | Tiled inference with blended seams |
-| `enhancer/pipeline.py` | Denoise, upscale, recover detail, faces, sharpen; cached region preview |
+| `enhancer/pipeline.py` | Clean-up, upscale, recover detail, faces, sharpen; cached region preview |
+| `enhancer/presets.py` | Built-in presets (TikTok edits, photo) |
 | `enhancer/faces.py` | Face detection, FFHQ alignment, restoration, feathered paste-back |
-| `enhancer/video.py` | FFmpeg decode and encode pipes, audio passthrough |
+| `enhancer/video.py` | FFmpeg decode and encode pipes, NVENC with fallback, audio passthrough, ETA |
 | `enhancer/compare.py` | SSIM, PSNR, ΔE, and the settings search |
 | `enhancer/gui/` | PySide6 app: main window, viewer, settings panel, background jobs |

@@ -24,8 +24,9 @@ class FakeDescriptor:
 @pytest.fixture
 def fake_pipeline(monkeypatch) -> Pipeline:
     def get(self, file_keys, blend=0.0, progress=None):
-        scales = {f for up in models.UPSCALERS.values() for f in up.files if up.scale == 2}
-        return FakeDescriptor(2 if file_keys[0] in scales else 1 if file_keys[0].startswith("scunet") else 4)
+        two_x = {f for up in models.UPSCALERS.values() for f in up.files if up.scale == 2}
+        one_x = {key for _, key in models.DENOISERS.values()}
+        return FakeDescriptor(2 if file_keys[0] in two_x else 1 if file_keys[0] in one_x else 4)
 
     monkeypatch.setattr(models.ModelCache, "get", get)
     return Pipeline("cpu")

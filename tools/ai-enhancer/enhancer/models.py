@@ -24,6 +24,8 @@ class ModelFile:
     url: str
     sha256: str
     license: str
+    author: str = ""
+    commercial: bool = True  # False when the license forbids commercial use
 
 
 @dataclass(frozen=True)
@@ -44,6 +46,7 @@ class UpscaleModel:
 
 
 _RE = "https://github.com/xinntao/Real-ESRGAN/releases/download"
+_PH = "https://github.com/Phhofm/models/releases/download"
 
 FILES: dict[str, ModelFile] = {
     f.key: f
@@ -54,6 +57,7 @@ FILES: dict[str, ModelFile] = {
             f"{_RE}/v0.2.5.0/realesr-general-x4v3.pth",
             "8dc7edb9ac80ccdc30c3a5dca6616509367f05fbc184ad95b731f05bece96292",
             "BSD-3-Clause",
+    "Xintao Wang et al.",
         ),
         ModelFile(
             "realesr-general-wdn-x4v3",
@@ -61,6 +65,7 @@ FILES: dict[str, ModelFile] = {
             f"{_RE}/v0.2.5.0/realesr-general-wdn-x4v3.pth",
             "1641f8c4464b9f097c9fdda5589273713f67cf59f3d909e0bd688f0cee269dca",
             "BSD-3-Clause",
+    "Xintao Wang et al.",
         ),
         ModelFile(
             "RealESRGAN_x4plus",
@@ -68,6 +73,7 @@ FILES: dict[str, ModelFile] = {
             f"{_RE}/v0.1.0/RealESRGAN_x4plus.pth",
             "4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1",
             "BSD-3-Clause",
+    "Xintao Wang et al.",
         ),
         ModelFile(
             "RealESRGAN_x2plus",
@@ -75,6 +81,7 @@ FILES: dict[str, ModelFile] = {
             f"{_RE}/v0.2.1/RealESRGAN_x2plus.pth",
             "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
             "BSD-3-Clause",
+    "Xintao Wang et al.",
         ),
         ModelFile(
             "RealESRGAN_x4plus_anime_6B",
@@ -82,6 +89,7 @@ FILES: dict[str, ModelFile] = {
             f"{_RE}/v0.2.2.4/RealESRGAN_x4plus_anime_6B.pth",
             "f872d837d3c90ed2e05227bed711af5671a6fd1c9f7d7e91c911a61f155e99da",
             "BSD-3-Clause",
+    "Xintao Wang et al.",
         ),
         ModelFile(
             "SwinIR-L-realSR-x4",
@@ -90,6 +98,7 @@ FILES: dict[str, ModelFile] = {
             "003_realSR_BSRGAN_DFOWMFC_s64w8_SwinIR-L_x4_GAN.pth",
             "99adfa91350a84c99e946c1eb3d8fce34bc28f57d807b09dc8fe40a316328c0a",
             "Apache-2.0",
+    "Jingyun Liang et al.",
         ),
         ModelFile(
             "scunet-psnr",
@@ -97,6 +106,7 @@ FILES: dict[str, ModelFile] = {
             "https://github.com/cszn/KAIR/releases/download/v1.0/scunet_color_real_psnr.pth",
             "fa78899ba2caec9d235a900e91d96c689da71c42029230c2028b00f09f809c2e",
             "Apache-2.0",
+    "Kai Zhang et al.",
         ),
         ModelFile(
             "scunet-gan",
@@ -104,6 +114,7 @@ FILES: dict[str, ModelFile] = {
             "https://github.com/cszn/KAIR/releases/download/v1.0/scunet_color_real_gan.pth",
             "892c83f812c59173273b74f4f34a14ecaf57a2fdb68df056664589beb55c966e",
             "Apache-2.0",
+    "Kai Zhang et al.",
         ),
         ModelFile(
             "GFPGANv1.4",
@@ -111,6 +122,7 @@ FILES: dict[str, ModelFile] = {
             "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth",
             "e2cd4703ab14f4d01fd1383a8a8b266f9a5833dacee8e6a79d3bf21a1b6be5ad",
             "Apache-2.0",
+    "Xintao Wang et al. (Tencent ARC)",
         ),
         ModelFile(
             "CodeFormer",
@@ -118,6 +130,57 @@ FILES: dict[str, ModelFile] = {
             "https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth",
             "1009e537e0c2a07d4cabce6355f53cb66767cd4b4297ec7a4a64ca4b8a5684b7",
             "S-Lab License 1.0 (non-commercial use only)",
+            "Shangchen Zhou et al.",
+            commercial=False,
+        ),
+        ModelFile(
+            "4xRealWebPhoto_v4_dat2",
+            "4xRealWebPhoto_v4_dat2.safetensors",
+            f"{_PH}/4xRealWebPhoto_v4_dat2/4xRealWebPhoto_v4_dat2.safetensors",
+            "819047acf43073f63ea7289ed94d6991ba8446a3bdf38e274fadfcbaa2b7381d",
+            "CC-BY-4.0",
+            "Philip Hofmann",
+        ),
+        ModelFile(
+            "4xNomosWebPhoto_RealPLKSR",
+            "4xNomosWebPhoto_RealPLKSR.pth",
+            f"{_PH}/4xNomosWebPhoto_RealPLKSR/4xNomosWebPhoto_RealPLKSR.pth",
+            "a9db66c9b674c6a5025b6ef3bee71a57c33b8605d8a2de0980470f89002efbbe",
+            "CC-BY-4.0",
+            "Philip Hofmann",
+        ),
+        ModelFile(
+            "2xNomosUni_span_multijpg",
+            "2xNomosUni_span_multijpg.pth",
+            f"{_PH}/2xNomosUni_span_multijpg/2xNomosUni_span_multijpg.pth",
+            "1a981d0a11e2fcbb6cda7ac635f31b97d9903492ba7e4dda09b8be0b274f1ac5",
+            "CC-BY-4.0",
+            "Philip Hofmann",
+        ),
+        ModelFile(
+            "SwinIR-M-realSR-x2",
+            "003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x2_GAN.pth",
+            "https://github.com/JingyunLiang/SwinIR/releases/download/v0.0/"
+            "003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x2_GAN.pth",
+            "f397408977a3e07eb06afb7238d453a12ef35ebab7328a54241f307860dbe342",
+            "Apache-2.0",
+            "Jingyun Liang et al.",
+        ),
+        ModelFile(
+            "realesr-animevideov3",
+            "realesr-animevideov3.pth",
+            f"{_RE}/v0.2.5.0/realesr-animevideov3.pth",
+            "b8a8376811077954d82ca3fcf476f1ac3da3e8a68a4f4d71363008000a18b75d",
+            "BSD-3-Clause",
+            "Xintao Wang et al.",
+        ),
+        ModelFile(
+            "fbcnn",
+            "fbcnn_color.pth",
+            "https://github.com/jiaxi-jiang/FBCNN/releases/download/v1.0/fbcnn_color.pth",
+            "8b0e4ef23d59cf7ac934a342cb31a17619e4fa4a0b3374a9d78c5174312387e8",
+            "Apache-2.0",
+            "Jiaxi Jiang et al.",
         ),
         ModelFile(
             "YuNet",
@@ -126,6 +189,7 @@ FILES: dict[str, ModelFile] = {
             "face_detection_yunet/face_detection_yunet_2023mar.onnx",
             "8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4",
             "MIT",
+    "Shiqi Yu et al. (OpenCV)",
         ),
     ]
 }
@@ -143,12 +207,45 @@ UPSCALERS: dict[str, UpscaleModel] = {
             denoise_blend=True,
         ),
         UpscaleModel(
+            "social-hd",
+            "Social Media HD (best)",
+            "Trained on photos that were downscaled and re-compressed by web and social "
+            "media services. The most natural faces and skin on TikTok or Instagram "
+            "footage. Slow: best for stills and short clips.",
+            ("4xRealWebPhoto_v4_dat2",),
+            4,
+        ),
+        UpscaleModel(
+            "social-fast",
+            "Social Media (fast)",
+            "Trained on real photos with noise, lens blur, and JPEG/WebP re-compression. "
+            "Sharper and about 8x faster than Social Media HD.",
+            ("4xNomosWebPhoto_RealPLKSR",),
+            4,
+        ),
+        UpscaleModel(
+            "video-2x",
+            "Fast Video 2x",
+            "Very fast 2x model trained on heavy JPEG compression. Made for long "
+            "videos: pair it with Remove compression for TikTok downloads.",
+            ("2xNomosUni_span_multijpg",),
+            2,
+        ),
+        UpscaleModel(
             "high-fidelity",
             "High Fidelity",
             "Transformer model (SwinIR-L) that keeps fine texture on good-quality "
             "sources. Slowest option.",
             ("SwinIR-L-realSR-x4",),
             4,
+        ),
+        UpscaleModel(
+            "high-fidelity-2x",
+            "High Fidelity 2x",
+            "SwinIR-M trained for real-world 2x enlargement. Keeps texture without "
+            "inventing much detail.",
+            ("SwinIR-M-realSR-x2",),
+            2,
         ),
         UpscaleModel(
             "low-resolution",
@@ -173,18 +270,36 @@ UPSCALERS: dict[str, UpscaleModel] = {
             ("RealESRGAN_x4plus_anime_6B",),
             4,
         ),
+        UpscaleModel(
+            "anime-video",
+            "Anime Video",
+            "Real-ESRGAN's small anime model built for video. Very fast.",
+            ("realesr-animevideov3",),
+            4,
+        ),
     ]
 }
 
+# Clean-up passes that run at the input size, before upscaling.
 DENOISERS: dict[str, tuple[str, str]] = {
-    "normal": ("Normal", "scunet-psnr"),
-    "strong": ("Strong", "scunet-gan"),
+    "compression": ("Remove compression (TikTok, JPEG)", "fbcnn"),
+    "normal": ("Denoise", "scunet-psnr"),
+    "strong": ("Denoise strong", "scunet-gan"),
 }
 
 FACE_MODELS: dict[str, tuple[str, str]] = {
     "gfpgan": ("GFPGAN v1.4 (natural)", "GFPGANv1.4"),
     "codeformer": ("CodeFormer (non-commercial license)", "CodeFormer"),
 }
+
+
+def is_commercial(file_keys) -> bool:
+    return all(FILES[k].commercial for k in file_keys)
+
+
+def credits() -> list[str]:
+    """Attribution lines, required by the CC-BY models."""
+    return [f"{f.filename}: {f.author}, {f.license}" for f in FILES.values() if f.author]
 
 
 def model_dir() -> Path:

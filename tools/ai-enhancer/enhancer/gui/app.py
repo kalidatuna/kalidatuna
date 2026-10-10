@@ -249,6 +249,8 @@ class MainWindow(QMainWindow):
         self._act(m, "Match settings to reference", self.run_match, "Ctrl+M")
         self._act(m, "Score preview against reference", self.score_preview)
         m = self.menuBar().addMenu("&Help")
+        self.noncommercial_act = self._act(m, "Show non-commercial models", self._toggle_noncommercial)
+        self.noncommercial_act.setCheckable(True)
         self._act(m, "Models and licenses", self.show_models)
         self._act(m, "About", self.about)
 
@@ -268,6 +270,9 @@ class MainWindow(QMainWindow):
             self.restoreGeometry(geo)
         else:
             self.resize(1460, 880)
+        show = str(self.store.value("show_noncommercial", "false")).lower() == "true"
+        self.noncommercial_act.setChecked(show)
+        self.panel.set_show_noncommercial(show)
         try:
             self.panel.set_settings(Settings.from_dict(json.loads(self.store.value("settings", "{}"))))
             out = json.loads(self.store.value("output", "{}"))
@@ -752,17 +757,24 @@ class MainWindow(QMainWindow):
         else:
             self.viewer.fit()
 
+    def _toggle_noncommercial(self, show: bool):
+        self.store.setValue("show_noncommercial", "true" if show else "false")
+        self.panel.set_show_noncommercial(show)
+
     def show_models(self):
         lines = [f"Model folder: {models.model_dir()}", ""]
         for key, f in models.FILES.items():
             have = (models.model_dir() / f.filename).exists()
-            lines.append(f"{'✔' if have else '·'} {key} ({f.license})")
-        lines += ["", "Models download on first use and are checked against a SHA-256 hash."]
+            note = "" if f.commercial else "  [non-commercial]"
+            lines.append(f"{'✔' if have else '·'} {key}: {f.author}, {f.license}{note}")
+        lines += ["", "Models download on first use and are checked against a SHA-256 hash.",
+                  "Non-commercial models are hidden unless Help → Show non-commercial models is on."]
         QMessageBox.information(self, "Models and licenses", "\n".join(lines))
 
     def about(self):
-        QMessageBox.about(self, APP, f"<b>{APP}</b> {__version__}<br>Open-source AI photo and video enhancement "
-                          "built on Real-ESRGAN, SwinIR, SCUNet, GFPGAN and CodeFormer.")
+        credits = "<br>".join(models.credits())
+        QMessageBox.about(self, APP, f"<b>{APP}</b> {__version__}<br>Open-source AI photo and video enhancement."
+                          f"<br><br><b>Model credits</b><br><small>{credits}</small>")
 
 
 def run(argv: list[str] | None = None) -> int:

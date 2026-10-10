@@ -12,8 +12,14 @@ from . import models
 
 def _settings_from_args(a):
     from .pipeline import Settings
+    from .presets import PRESETS, apply
 
-    s = Settings.from_dict(json.loads(Path(a.preset).read_text())) if a.preset else Settings()
+    if not a.preset:
+        s = Settings()
+    elif a.preset in PRESETS:
+        s = apply(Settings(), a.preset)
+    else:
+        s = Settings.from_dict(json.loads(Path(a.preset).read_text()))
     for name in ("model", "scale", "width", "height", "noise", "denoise_model", "denoise_strength",
                  "recover_detail", "face_model", "face_strength", "face_fidelity", "sharpen", "tile", "device"):
         v = getattr(a, name, None)
@@ -108,7 +114,10 @@ def cmd_models(a) -> int:
 
 
 def _add_settings_args(p: argparse.ArgumentParser):
-    p.add_argument("--preset", help="JSON settings file (for example from 'match --save-preset')")
+    from .presets import PRESETS
+
+    p.add_argument("--preset", help="built-in preset (" + ", ".join(PRESETS) + ") or a JSON settings file, "
+                   "for example from 'match --save-preset'")
     p.add_argument("--model", choices=list(models.UPSCALERS))
     p.add_argument("--scale", type=float)
     p.add_argument("--width", type=int)
@@ -135,7 +144,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-o", "--output", help="output folder (default: next to each input)")
     p.add_argument("--format", default="png", choices=["png", "jpeg", "tiff", "webp", "same"])
     p.add_argument("--quality", type=int, default=95)
-    p.add_argument("--codec", default="h264", choices=["h264", "h265", "prores"])
+    p.add_argument("--codec", default="h264", choices=["h264", "h265", "h264_nvenc", "hevc_nvenc", "prores"])
     p.add_argument("--crf", type=int, default=16)
     p.add_argument("--overwrite", action="store_true")
     _add_settings_args(p)

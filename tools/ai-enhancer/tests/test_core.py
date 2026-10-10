@@ -172,6 +172,38 @@ def test_cli_enhance_and_preset(fake_pipeline, tmp_path, capsys):
     assert load_image(out).size == (36, 48)
 
 
+def test_presets_and_licenses():
+    from enhancer.presets import PRESETS, apply
+
+    for key, (_, values) in PRESETS.items():
+        s = apply(Settings(device="cuda", tile=512), key)
+        assert s.model in models.UPSCALERS and (s.device, s.tile) == ("cuda", 512)
+        files = models.UPSCALERS[s.model].files
+        if s.denoise_model:
+            files += (models.DENOISERS[s.denoise_model][1],)
+        if s.face_model:
+            files += (models.FACE_MODELS[s.face_model][1],)
+        assert models.is_commercial(files), key  # every built-in preset is safe for commercial use
+    assert not models.is_commercial(("CodeFormer",))
+    assert any("Philip Hofmann" in c for c in models.credits())
+
+
+def test_cli_accepts_builtin_preset(fake_pipeline, tmp_path, capsys):
+    src = save_image(tmp_path / "in.png", np.random.default_rng(5).random((16, 12, 3)).astype(np.float32))
+    assert main(["enhance", str(src), "-o", str(tmp_path), "--preset", "tiktok-fast", "--face", ""]) == 0
+    assert capsys.readouterr().out.strip().endswith("in-enhanced-video-2x-24x32.png")
+
+
+def test_video_codec_fallback(monkeypatch):
+    from enhancer import video
+
+    monkeypatch.setattr(video, "encoder_works", lambda codec: False)
+    assert video.resolve_codec("hevc_nvenc") == "h265"
+    assert video.resolve_codec("prores") == "prores"
+    assert video.quality_args("h264_nvenc", 18) == ["-cq", "18"]
+    assert video.format_eta(3725) == "1h 02m" and video.format_eta(75) == "1m 15s"
+
+
 def test_registry_is_consistent():
     for up in models.UPSCALERS.values():
         assert all(f in models.FILES for f in up.files)

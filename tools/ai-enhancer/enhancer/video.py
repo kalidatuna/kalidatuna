@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import functools
 import json
 import shutil
 import subprocess
+import sys
+import time
 from dataclasses import dataclass
 from fractions import Fraction
 from pathlib import Path
@@ -18,9 +21,53 @@ from .tiling import Cancelled
 
 CODECS = {
     "h264": ["-c:v", "libx264", "-preset", "slow", "-pix_fmt", "yuv420p"],
-    "h265": ["-c:v", "libx265", "-preset", "slow", "-pix_fmt", "yuv420p", "-tag:v", "hvc1"],
+    "h265": ["-c:v", "libx265", "-preset", "slow", "-pix_fmt", "yuv420p", "-tag:v", "hvc1",
+             "-x265-params", "log-level=error"],
+    "h264_nvenc": ["-c:v", "h264_nvenc", "-preset", "p7", "-tune", "hq", "-rc", "vbr", "-b:v", "0",
+                   "-pix_fmt", "yuv420p"],
+    "hevc_nvenc": ["-c:v", "hevc_nvenc", "-preset", "p7", "-tune", "hq", "-rc", "vbr", "-b:v", "0",
+                   "-pix_fmt", "yuv420p", "-tag:v", "hvc1"],
     "prores": ["-c:v", "prores_ks", "-profile:v", "3", "-pix_fmt", "yuv422p10le"],
 }
+# Software encoder to use when a GPU encoder is missing or fails to start.
+FALLBACK = {"h264_nvenc": "h264", "hevc_nvenc": "h265"}
+
+
+@functools.lru_cache(maxsize=None)
+def encoder_works(codec: str) -> bool:
+    """True if FFmpeg can actually open ``codec`` here (NVENC also needs an NVIDIA driver)."""
+    name = CODECS[codec][1]
+    try:
+        r = subprocess.run(
+            [ffmpeg_bin(), "-v", "error", "-f", "lavfi", "-i", "color=black:s=256x256:d=0.1",
+             "-frames:v", "1", "-c:v", name, "-f", "null", "-"],
+            capture_output=True, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return r.returncode == 0
+
+
+def resolve_codec(codec: str) -> str:
+    if codec in FALLBACK and not encoder_works(codec):
+        print(f"{codec} is not available here; using {FALLBACK[codec]} instead.", file=sys.stderr)
+        return FALLBACK[codec]
+    return codec
+
+
+def quality_args(codec: str, crf: int) -> list[str]:
+    if codec in ("h264", "h265"):
+        return ["-crf", str(crf)]
+    if codec.endswith("_nvenc"):
+        return ["-cq", str(crf)]
+    return []
+
+
+def format_eta(seconds: float) -> str:
+    seconds = int(max(0, seconds))
+    h, rem = divmod(seconds, 3600)
+    m, s = divmod(rem, 60)
+    return f"{h}h {m:02d}m" if h else f"{m}m {s:02d}s" if m else f"{s}s"
 
 
 @dataclass
@@ -100,9 +147,10 @@ def enhance_video(src: str | Path, dst: str | Path, settings: Settings, pipeline
         [ffmpeg_bin(), "-v", "error", "-i", str(src), "-map", "0:v:0", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
         stdout=subprocess.PIPE,
     )
+    codec = resolve_codec(codec)
     audio = ["-map", "1:a?"]
     audio += ["-c:a", "aac", "-b:a", "192k"] if dst.suffix.lower() in (".mp4", ".m4v") else ["-c:a", "copy"]
-    quality = ["-crf", str(crf)] if codec in ("h264", "h265") else []
+    quality = quality_args(codec, crf)
     writer = subprocess.Popen(
         [ffmpeg_bin(), "-y", "-v", "error",
          "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{ow}x{oh}", "-r", str(info.fps), "-i", "-",
@@ -110,6 +158,7 @@ def enhance_video(src: str | Path, dst: str | Path, settings: Settings, pipeline
         stdin=subprocess.PIPE,
     )
     n = 0
+    started = time.monotonic()
     try:
         while True:
             if cancel and cancel():
@@ -121,7 +170,13 @@ def enhance_video(src: str | Path, dst: str | Path, settings: Settings, pipeline
 
             def frame_progress(label: str, frac: float, n=n):
                 if progress:
-                    progress(f"Frame {n + 1}/{info.frames}", min(1.0, (n + frac) / info.frames))
+                    done = n + frac
+                    text = f"Frame {n + 1}/{info.frames}"
+                    elapsed = time.monotonic() - started
+                    if n >= 1 and elapsed > 0:
+                        fps = n / elapsed
+                        text += f" · {fps:.2f} fps · {format_eta((info.frames - done) / fps)} left"
+                    progress(text, min(1.0, done / info.frames))
 
             out, _ = pipeline.process(frame, s, progress=frame_progress, cancel=cancel)
             writer.stdin.write(to_uint8(out).tobytes())

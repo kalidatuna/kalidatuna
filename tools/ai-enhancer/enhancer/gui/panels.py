@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QLineEdit, QScrollArea, QSlider, QSpinBox, QToolButton, QVBoxLayout, QWidget,
 )
 
-from .. import models
+from .. import models, presets
 from ..batch import OutputOptions
 from ..pipeline import Settings
 
@@ -57,6 +57,15 @@ def _select(c: QComboBox, key: str):
         c.setCurrentIndex(i)
 
 
+CODEC_LABELS = {
+    "h264": "H.264 (MP4)",
+    "h265": "H.265 / HEVC (MP4)",
+    "h264_nvenc": "H.264, NVIDIA GPU encoder",
+    "hevc_nvenc": "H.265, NVIDIA GPU encoder",
+    "prores": "ProRes 422 HQ (MOV, for After Effects)",
+}
+
+
 class SettingsPanel(QScrollArea):
     """Emits ``changed`` with "base" (needs a new AI pass), "post" (cheap), or "output"."""
 
@@ -76,6 +85,9 @@ class SettingsPanel(QScrollArea):
         # AI model
         g = QGroupBox("AI model")
         f = QFormLayout(g)
+        self.preset = _combo([("", "Choose a preset…")] + [(k, v[0]) for k, v in presets.PRESETS.items()])
+        self.preset.activated.connect(self._preset_chosen)
+        f.addRow("Preset", self.preset)
         self.model = _combo([(k, m.label) for k, m in models.UPSCALERS.items()])
         self.model_desc = QLabel()
         self.model_desc.setWordWrap(True)
@@ -125,8 +137,8 @@ class SettingsPanel(QScrollArea):
         f.addRow("Sharpen", self.sharpen)
         root.addWidget(g)
 
-        # Denoise pre-pass
-        g = QGroupBox("Denoise before upscaling")
+        # Clean-up pre-pass
+        g = QGroupBox("Clean up before upscaling")
         f = QFormLayout(g)
         self.denoise = _combo([("", "Off")] + [(k, v[0]) for k, v in models.DENOISERS.items()])
         f.addRow("Model", self.denoise)
@@ -139,7 +151,9 @@ class SettingsPanel(QScrollArea):
         f = QFormLayout(g)
         self.face_on = QCheckBox("Enable")
         f.addRow(self.face_on)
-        self.face_model = _combo([(k, v[0]) for k, v in models.FACE_MODELS.items()])
+        self.face_model = QComboBox()
+        self.show_noncommercial = True
+        self._fill_face_models()
         f.addRow("Model", self.face_model)
         self.face_strength = Slider(0.8)
         f.addRow("Strength", self.face_strength)
@@ -168,7 +182,9 @@ class SettingsPanel(QScrollArea):
         folder.addWidget(self.folder, 1)
         folder.addWidget(browse)
         f.addRow("Folder", folder)
-        self.codec = _combo([("h264", "H.264 (MP4)"), ("h265", "H.265 / HEVC"), ("prores", "ProRes 422 HQ (MOV)")])
+        self.codec = _combo([(k, label) for k, label in CODEC_LABELS.items()])
+        self.codec.setToolTip("Alight Motion: H.264 or H.265. After Effects: ProRes. "
+                              "NVIDIA options encode on the graphics card, which is much faster.")
         f.addRow("Video codec", self.codec)
         self.crf = QSpinBox()
         self.crf.setRange(0, 40)
@@ -191,6 +207,10 @@ class SettingsPanel(QScrollArea):
         root.addWidget(g)
         root.addStretch(1)
         self.setWidget(body)
+        # Long item names must not force the panel wider than the scroll area.
+        for c in body.findChildren(QComboBox):
+            c.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+            c.setMinimumContentsLength(8)
 
         base = [self.model.currentIndexChanged, self.noise.valueChanged, self.denoise.currentIndexChanged,
                 self.denoise_strength.valueChanged, self.tile.valueChanged, self.device.currentIndexChanged]
@@ -210,6 +230,30 @@ class SettingsPanel(QScrollArea):
         self.out_h.valueChanged.connect(lambda v: self._dim_changed(v, 1))
         self.set_settings(Settings())
         self.set_output(OutputOptions())
+
+    def _preset_chosen(self, _):
+        key = self.preset.currentData()
+        self.preset.setCurrentIndex(0)
+        if key:
+            self.set_settings(presets.apply(self.settings(), key))
+
+    def _fill_face_models(self):
+        current = self.face_model.currentData()
+        self.face_model.blockSignals(True)
+        self.face_model.clear()
+        for k, (label, file_key) in models.FACE_MODELS.items():
+            if self.show_noncommercial or models.is_commercial((file_key,)):
+                self.face_model.addItem(label, k)
+        _select(self.face_model, current or "")
+        self.face_model.blockSignals(False)
+
+    def set_show_noncommercial(self, show: bool):
+        """Hide models whose licenses forbid commercial use (CodeFormer)."""
+        before = self.face_model.currentData()
+        self.show_noncommercial = show
+        self._fill_face_models()
+        if self.face_model.currentData() != before:
+            self._emit("post")
 
     def _browse(self):
         d = QFileDialog.getExistingDirectory(self, "Output folder", self.folder.text())

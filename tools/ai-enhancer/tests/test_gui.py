@@ -1,11 +1,14 @@
 """Headless GUI tests. Skipped when Qt cannot start (for example, missing system libraries)."""
 
 import os
+import tempfile
 
 import numpy as np
 import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+# Keep the app's saved settings out of the real user config (read once, at first QSettings use).
+os.environ["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="ai-enhancer-test-")
 QtWidgets = pytest.importorskip("PySide6.QtWidgets", exc_type=ImportError)
 
 from enhancer.imageio import save_image  # noqa: E402
@@ -21,8 +24,7 @@ def app():
 def window(app, fake_pipeline, monkeypatch, tmp_path):
     from PySide6.QtCore import QSettings
 
-    QSettings.setDefaultFormat(QSettings.Format.IniFormat)
-    QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(tmp_path))
+    QSettings("ai-enhancer", "ai-enhancer").clear()
     from enhancer.gui import app as gui_app
 
     monkeypatch.setattr(gui_app, "Pipeline", lambda device: fake_pipeline)
@@ -48,7 +50,25 @@ def wait_idle(app, w, timeout=10.0):
     raise TimeoutError
 
 
+def test_noncommercial_models_hidden_by_default(window):
+    faces = [window.panel.face_model.itemData(i) for i in range(window.panel.face_model.count())]
+    assert faces == ["gfpgan"]
+    window._toggle_noncommercial(True)
+    faces = [window.panel.face_model.itemData(i) for i in range(window.panel.face_model.count())]
+    assert faces == ["gfpgan", "codeformer"]
+
+
+def test_preset_menu_applies_preset(window):
+    p = window.panel
+    p.preset.setCurrentIndex(p.preset.findData("tiktok-fast"))
+    p.preset.activated.emit(p.preset.currentIndex())
+    s = p.settings()
+    assert (s.model, s.scale, s.denoise_model, s.face_model) == ("video-2x", 2.0, "compression", "gfpgan")
+    assert p.preset.currentIndex() == 0
+
+
 def test_settings_panel_roundtrip(window):
+    window._toggle_noncommercial(True)
     s = Settings(model="high-fidelity", scale=3, recover_detail=0.25, sharpen=0.4, face_model="codeformer",
                  face_strength=0.6, face_fidelity=0.3, denoise_model="strong", denoise_strength=0.5, tile=512)
     window.panel.set_settings(s)
