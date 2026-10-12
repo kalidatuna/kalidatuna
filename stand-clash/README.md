@@ -138,7 +138,7 @@ npm run test:sim             # 43 headless sim checks: movement, collisions, roo
 npm run build && npm start &
 npm run test:server          # 2 raw WebSocket clients: rooms, anti-teleport, server cooldowns, full match to 3 K.O.s
 npm run test:e2e             # drives the real game in headless Chromium (43 checks)
-npm run test:mp              # two browser sessions in one room + a bot room (24 checks)
+npm run test:mp              # two browser sessions in one room + a bot room (23 checks)
 npm run screenshots          # full-quality gallery into tests/out/
 ```
 

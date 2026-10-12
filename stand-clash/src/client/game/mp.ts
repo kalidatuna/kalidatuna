@@ -99,6 +99,8 @@ export class MPMode implements GameMode {
     while (this.acc >= STEP && steps < 15) {
       g.buildPlayerInput();
       const inp = g.sim.input(p.id);
+      // send a fresh position/aim first so the server resolves the action from where we actually are
+      if (EDGE_KEYS.some((k) => inp[k])) this.sendState();
       for (const k of EDGE_KEYS) if (inp[k]) this.net.send({ t: 'act', k });
       g.sim.step(STEP);
       // local events only drive cosmetics for our own fighter (combat comes from the server)
@@ -112,19 +114,7 @@ export class MPMode implements GameMode {
     this.sendAcc += dt;
     if (this.sendAcc >= 1 / 30) {
       this.sendAcc = 0;
-      const inp = g.sim.input(p.id);
-      this.net.send({
-        t: 'in',
-        p: [r2(p.pos.x), r2(p.pos.y), r2(p.pos.z)],
-        v: [r2(p.vel.x), r2(p.vel.y), r2(p.vel.z)],
-        y: r3(p.yaw),
-        ay: r3(p.aimYaw),
-        ap: r3(p.aimPitch),
-        g: p.grounded ? 1 : 0,
-        bl: p.blocking ? 1 : 0,
-        mx: r2(inp.mx),
-        mz: r2(inp.mz),
-      });
+      this.sendState();
     }
     this.interpolate(dt);
     if (p.dead) p.deadT += dt;
@@ -142,6 +132,26 @@ export class MPMode implements GameMode {
       }
     }
     g.afterSim(dt);
+  }
+
+  /** Client-authoritative movement + aim state (validated by the server). */
+  private sendState() {
+    const p = this.g.player!;
+    const inp = this.g.sim.input(p.id);
+    // aim comes from the camera even before the sim step copies it into the fighter
+    const ay = p.stun > 0 ? p.aimYaw : inp.yaw;
+    this.net.send({
+      t: 'in',
+      p: [r2(p.pos.x), r2(p.pos.y), r2(p.pos.z)],
+      v: [r2(p.vel.x), r2(p.vel.y), r2(p.vel.z)],
+      y: r3(p.yaw),
+      ay: r3(ay),
+      ap: r3(inp.pitch),
+      g: p.grounded ? 1 : 0,
+      bl: p.blocking || inp.block ? 1 : 0,
+      mx: r2(inp.mx),
+      mz: r2(inp.mz),
+    });
   }
 
   private scoreHtml(): string {

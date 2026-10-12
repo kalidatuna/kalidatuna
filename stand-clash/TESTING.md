@@ -10,7 +10,7 @@ Everything below was run against the code in this repository. Environment: Node 
 | `npm run test:sim` | Shared simulation, headless | **43 / 43 pass** |
 | `npm run test:server` | Two raw WebSocket clients against the real server | **10 / 10 pass** |
 | `npm run test:e2e` | The real game in Chromium, driven with keyboard/mouse events | **43 / 43 pass** |
-| `npm run test:mp` | Two (then three) separate browser sessions on the real server | **24 / 24 pass** |
+| `npm run test:mp` | Two (then three) separate browser sessions on the real server | **23 / 23 pass** |
 
 ### Covered by `test:sim`
 
@@ -71,7 +71,7 @@ Everything below was run against the code in this repository. Environment: Node 
   - Stand summon, knife projectiles and server-validated damage replicate. A and B see the same HP.
 - **Time stop across clients:** A's time stop freezes B on B's client. B can't move while frozen and recovers when time resumes.
 - **K.O. flow:** B can be K.O.ed, the K.O. is credited to A, and B respawns.
-- **Match end:** the match ends with results on both clients (*YOU WIN!* / *MATCH OVER*) and the room returns to the lobby.
+- **Match end:** the match plays out to **3 K.O.s** and ends with results on both clients (*YOU WIN!* / *MATCH OVER — FIRST TO 3 K.O.*). The room then returns to the lobby.
 - **Bot room:** a separate room with one human and one server bot works; the bot moves and attacks.
 
 ## Visual review
@@ -90,6 +90,7 @@ I checked full-quality screenshots of the title, character select, roster lineup
 - **The Google Fonts stylesheet blocked page load** when offline or slow. It is now non-blocking.
 - **Esc did nothing in a multiplayer match** started by the server, because pointer lock wasn't granted. Added an Esc pause fallback and guarded the resume handler against double-firing.
 - **The results screen didn't say why a match ended.** It now shows *TIME UP* or *FIRST TO N K.O.*
+- **Multiplayer attacks could resolve from a stale position.** The client sent ability requests before that frame's movement update, so at low frame rates the server saw an out-of-date position and most melee hits missed. The client now sends a fresh state packet immediately before any action, and all 3 combo hits register (210 → 187 HP).
 
 ## Measured performance
 
