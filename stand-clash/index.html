@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>STAND CLASH</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- non-blocking web fonts: the game falls back to Impact / system CJK fonts offline -->
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Noto+Sans+JP:wght@900&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  </head>
+  <body>
+    <div id="loading">LOADING…</div>
+    <canvas id="game"></canvas>
+    <canvas id="fx2d"></canvas>
+    <div id="floats"></div>
+    <div id="hud" class="hidden"></div>
+    <div id="screens"></div>
+    <div id="click-to-play" class="panel hidden">CLICK TO FIGHT</div>
+    <script type="module" src="/src/client/main.ts"></script>
+  </body>
+</html>

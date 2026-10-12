@@ -1,0 +1,38 @@
+{
+  "name": "stand-clash",
+  "version": "1.0.0",
+  "private": true,
+  "description": "STAND CLASH - a blocky third-person JoJo-inspired Stand battle game (unofficial fan project)",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n server,client -c magenta,yellow \"npm:server:dev\" \"npm:client:dev\"",
+    "client:dev": "vite",
+    "server:dev": "tsx watch server/server.ts",
+    "build": "tsc --noEmit && vite build",
+    "start": "tsx server/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test:sim": "tsx tests/sim.test.ts",
+    "test": "npm run typecheck && npm run test:sim",
+    "test:server": "node tests/server.test.mjs",
+    "test:e2e": "node tests/gameplay.mjs",
+    "test:mp": "node tests/multiplayer.mjs",
+    "screenshots": "node tests/gallery.mjs"
+  },
+  "dependencies": {
+    "three": "^0.186.1",
+    "tsx": "^4.20.6",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "@types/three": "^0.186.0",
+    "@types/ws": "^8.18.1",
+    "concurrently": "^9.2.1",
+    "playwright": "^1.56.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.7"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
