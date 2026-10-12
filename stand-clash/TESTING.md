@@ -96,9 +96,29 @@ I checked full-quality screenshots of the title, character select, roster lineup
 
 The mission 1 scene, with 7 fighters and the whole town, uses **289 draw calls and about 64k triangles**. Sixty sim ticks with 7 fighters take about 5 ms of CPU. In headless **software** WebGL the game ran at 7–10 fps at half resolution. That number reflects the CPU rasterizer, not the game.
 
+### Real-GPU baseline (before the Blender remodel)
+
+`npm run perf` (`tests/perf.mjs`) drives headed Chromium with hardware WebGL at 1920×1080, pixel ratio 1, full quality (no `lowgfx`), vsync and the frame cap disabled so the numbers show headroom. It plays Training, Free Roam and Mission 3 as Jotaro and DIO, then a stress scene with 8 extra enemies around the player (9 live fighters), Stand out, plus a barrage and a time stop in that crowd. Results go to `tests/out/perf/perf.json` with screenshots.
+
+Machine: NVIDIA GeForce RTX 2070 SUPER (ANGLE / OpenGL 4.5), Linux X11, Node 20.
+
+| Scene | Avg fps (uncapped) | p95 frame | Draw calls | Triangles |
+| --- | --- | --- | --- | --- |
+| Jotaro · Training barrage | 480 | 3.6 ms | 186 | 85k |
+| Jotaro · Free Roam | 567 | 3.9 ms | 205 | 85k |
+| Jotaro · Mission 3 | 444 | 3.9 ms | 292 | 87k |
+| DIO · Training time stop | 449 | 5.1 ms | 188 | 85k |
+| DIO · Free Roam | 405 | 7.6 ms | 135 | 83k |
+| DIO · Mission 3 | 417 | 4.0 ms | 250 | 87k |
+| Jotaro · 9 fighters | 326 | 4.2 ms | 484 | 92k |
+| DIO · 9 fighters | 298 | 5.5 ms | 532 | 93k |
+| DIO · 9 fighters, time stop | 384 | 3.9 ms | 508 | 92k |
+
+All four suites (`test`, `test:server`, `test:e2e`, `test:mp`) also pass on this machine. Baseline screenshots: `docs/screenshots/before/`.
+
 ## Not verified / limitations
 
-- **Real-GPU frame rate:** only software WebGL was available. The draw-call and triangle budget is small, but I couldn't measure 60 fps on real hardware.
+- **Real-GPU frame rate:** now measured on an RTX 2070 SUPER (see above). Integrated or mobile GPUs are still untested.
 - **Pointer lock and mouse-look feel:** headless Chromium can't grant pointer lock. Tests used `?test`, which accepts clicks without lock, and set the camera yaw directly. The click-to-lock → Esc-releases → pause flow and sensitivity feel weren't exercised with a physical mouse.
 - **Audio:** sounds are synthesized with WebAudio and no errors were logged, but nobody listened to them.
 - **Internet hosting:** only tested on localhost and through the Vite dev proxy. The port-forwarding, tunnel and VPS instructions in the README weren't exercised. Latency and packet-loss behaviour beyond about 1–5 ms localhost ping is untested.

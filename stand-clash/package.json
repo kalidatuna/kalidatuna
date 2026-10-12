@@ -16,7 +16,8 @@
     "test:server": "node tests/server.test.mjs",
     "test:e2e": "node tests/gameplay.mjs",
     "test:mp": "node tests/multiplayer.mjs",
-    "screenshots": "node tests/gallery.mjs"
+    "screenshots": "node tests/gallery.mjs",
+    "perf": "node tests/perf.mjs"
   },
   "dependencies": {
     "three": "^0.186.1",
