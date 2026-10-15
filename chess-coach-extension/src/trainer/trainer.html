@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Opening Trainer - Chess Coach</title>
+  <link rel="stylesheet" href="trainer.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">♞ Chess Coach <span>Opening Trainer</span></div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="learn" class="active">Learn</button>
+      <button role="tab" data-tab="drill">Drill</button>
+      <button role="tab" data-tab="progress">My progress</button>
+      <button role="tab" data-tab="guide">Principles</button>
+    </nav>
+  </header>
+
+  <main class="layout">
+    <section class="board-col">
+      <div id="board"></div>
+      <div class="board-bar">
+        <button id="btn-start" title="Back to start (Home)">⏮</button>
+        <button id="btn-prev" title="Previous move (←)">◀</button>
+        <button id="btn-next" title="Next move (→)">▶</button>
+        <button id="btn-end" title="End of line (End)">⏭</button>
+        <span class="spacer"></span>
+        <button id="btn-hint" title="Show a hint">Hint</button>
+        <button id="btn-restart" title="Restart line">Restart</button>
+        <button id="btn-flip" title="Flip board">Flip</button>
+      </div>
+      <div id="feedback" class="feedback" aria-live="polite"></div>
+      <div id="moves" class="movelist"></div>
+    </section>
+
+    <section class="side-col">
+      <div id="panel-learn" class="tabpanel">
+        <div class="card" id="line-card"></div>
+        <div class="card" id="note-card"></div>
+      </div>
+
+      <div id="panel-drill" class="tabpanel" hidden>
+        <div class="card">
+          <h2>Drill</h2>
+          <p class="muted">Play the book moves for your side. The trainer answers with the main line. Mistakes are tracked and lines come back for review on a spaced-repetition schedule.</p>
+          <div class="row">
+            <label>Play as
+              <select id="drill-color">
+                <option value="auto">Opening side (auto)</option>
+                <option value="w">White</option>
+                <option value="b">Black</option>
+              </select>
+            </label>
+            <button id="btn-due" class="primary">Review due lines</button>
+          </div>
+          <p id="due-info" class="muted"></p>
+        </div>
+        <div class="card" id="drill-card"></div>
+      </div>
+
+      <div id="panel-progress" class="tabpanel" hidden>
+        <div class="card" id="progress-card"></div>
+      </div>
+
+      <div id="panel-guide" class="tabpanel" hidden>
+        <div class="card" id="guide-card"></div>
+      </div>
+
+      <div class="card picker">
+        <div class="row">
+          <input id="search" type="search" placeholder="Search openings, ECO or moves…" aria-label="Search openings">
+          <select id="filter-side" aria-label="Filter by side">
+            <option value="all">All</option>
+            <option value="w">For White</option>
+            <option value="b">For Black</option>
+            <option value="due">Due for review</option>
+          </select>
+        </div>
+        <ul id="line-list" class="line-list"></ul>
+      </div>
+    </section>
+  </main>
+
+  <script src="../../vendor/chess.js"></script>
+  <script src="../core/openings-data.js"></script>
+  <script src="../core/opening-book.js"></script>
+  <script src="../core/coach.js"></script>
+  <script src="../core/srs.js"></script>
+  <script src="../core/storage.js"></script>
+  <script src="board.js"></script>
+  <script src="trainer.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+Chess piece images: "cburnett" set by Colin M.L. Burnett.
+Copied from the lichess repository (public/piece/cburnett).
+Originally published on Wikimedia Commons, where it is available under
+GFDL, BSD and GPL licenses; lichess distributes it under GPLv2+.

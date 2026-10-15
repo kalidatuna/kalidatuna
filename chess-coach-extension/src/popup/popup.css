@@ -1,0 +1,20 @@
+:root { --bg: #1f2227; --bg2: #2a2e35; --fg: #e8e6e3; --muted: #a3a8b0; --line: #3a3f47; --accent: #7fb45a; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; width: 330px; padding: 12px 14px; background: var(--bg); color: var(--fg); font: 13px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.brand { font-weight: 700; font-size: 16px; }
+button { font: inherit; color: inherit; cursor: pointer; background: var(--bg2); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; }
+button.primary { background: #4a6b34; border-color: #5d8541; }
+.wide { width: 100%; }
+.center { text-align: center; }
+.muted { color: var(--muted); }
+section { border-top: 1px solid var(--line); padding: 8px 0 4px; margin-top: 8px; }
+h3 { margin: 0 0 6px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.opt { display: block; margin: 6px 0; cursor: pointer; }
+.opt small { display: block; color: var(--muted); margin-left: 22px; }
+.switch { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+.games { list-style: none; padding: 0; margin: 0; }
+.games li { padding: 4px 0; border-bottom: 1px solid var(--line); }
+.games li:last-child { border-bottom: 0; }
+.games small { color: var(--muted); display: block; }
+.fair p { margin: 0; color: var(--muted); font-size: 12px; }

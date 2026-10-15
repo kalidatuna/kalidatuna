@@ -1,0 +1,13 @@
+{
+  "name": "chess-coach-extension",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser extension that teaches chess openings and principles on lichess and chess.com.",
+  "scripts": {
+    "test": "node --test tests/unit/*.test.js",
+    "test:e2e": "node tests/e2e/run.js"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}

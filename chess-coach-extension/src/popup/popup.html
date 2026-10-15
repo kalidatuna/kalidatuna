@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Chess Coach</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <div class="brand">♞ Chess Coach</div>
+    <label class="switch" title="Show the coach panel on lichess and chess.com">
+      <input type="checkbox" id="enabled"><span>On</span>
+    </label>
+  </header>
+
+  <button id="open-trainer" class="primary wide">Open opening trainer</button>
+  <p id="due" class="muted center"></p>
+
+  <section>
+    <h3>In-game panel</h3>
+    <label class="opt"><input type="checkbox" id="revealAuto"> Show book moves automatically<small>Off = try to remember first, then click to reveal</small></label>
+    <label class="opt"><input type="checkbox" id="showExplanations"> Explain every move</label>
+    <label class="opt"><input type="checkbox" id="showTips"> Opening-principle tips</label>
+    <label class="opt"><input type="checkbox" id="showTactics"> Loose-piece warnings</label>
+    <label class="opt"><input type="checkbox" id="recordGames"> Save post-game opening reviews</label>
+  </section>
+
+  <section>
+    <h3>Recent games</h3>
+    <ul id="games" class="games"></ul>
+  </section>
+
+  <section class="fair">
+    <h3>Fair play</h3>
+    <p>Full coaching runs on analysis boards, against the computer and after the game. In correspondence games only book moves are shown. During live games against people the coach pauses, because outside help breaks the lichess and chess.com rules.</p>
+  </section>
+
+  <script src="../core/storage.js"></script>
+  <script src="../core/srs.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

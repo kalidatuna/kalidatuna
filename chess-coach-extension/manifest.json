@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Chess Coach - Openings & Principles",
+  "short_name": "Chess Coach",
+  "version": "1.0.0",
+  "description": "Learn chess while you play: names your opening, explains every move, shows book moves and plans, and drills your repertoire with spaced repetition.",
+  "icons": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
+  "permissions": ["storage"],
+  "background": { "service_worker": "src/background/service-worker.js" },
+  "action": {
+    "default_title": "Chess Coach",
+    "default_popup": "src/popup/popup.html",
+    "default_icon": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://lichess.org/*", "https://www.chess.com/*", "https://chess.com/*"],
+      "js": [
+        "vendor/chess.js",
+        "src/core/openings-data.js",
+        "src/core/opening-book.js",
+        "src/core/coach.js",
+        "src/core/fair-play.js",
+        "src/core/position.js",
+        "src/core/storage.js",
+        "src/core/view-model.js",
+        "src/content/adapters.js",
+        "src/content/panel.js",
+        "src/content/main.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
