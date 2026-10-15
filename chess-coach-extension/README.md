@@ -1,6 +1,6 @@
-# Chess Coach: Openings & Principles
+# Chess Coach for chess.com: Openings & Principles
 
-A Chrome/Edge/Brave extension (Manifest V3) that helps you **learn** chess while you play on **lichess.org** and **chess.com**:
+A Chrome/Edge/Brave extension (Manifest V3) that helps you **learn** chess while you play on **chess.com**:
 
 - **Live opening coach**: a panel next to the board that names your opening (with ECO code), says whether you are still "in book", explains why each move is played, and shows the book moves for the next turn. Book moves are hidden behind a "Show book moves" button by default, so you try to remember them first.
 - **Plans and traps**: for each opening, the panel shows the typical plans for *your* color and the traps to watch for.
@@ -18,15 +18,15 @@ The opening book has 115 hand-written lines: all major 1.e4, 1.d4 and flank open
 
 ## Fair play
 
-Help from outside the game (books, engines, hints) is **against the rules in live games against people** on both lichess and chess.com, and it can get your account closed. The coach therefore checks what kind of page it is on:
+Help from outside the game (books, engines, hints) is **against chess.com's rules in live games against people**, and it can get your account closed. The coach therefore checks what kind of chess.com page it is on:
 
 | Where | What the coach shows |
 | --- | --- |
-| Analysis board, study, game review | Everything |
-| Game vs the computer (Stockfish / bots) | Everything. This is the best place to practice openings live. |
+| Analysis board (`/analysis`), Game Review, lessons | Everything |
+| Game vs the computer or a coach bot (`/play/computer`, `/play/coach`) | Everything. This is the best place to practice openings live. |
 | Finished game | Everything, plus the post-game review |
-| Correspondence / daily game | Opening name and book moves only (both sites allow opening books in correspondence). No move advice and no tactical hints. |
-| Live game vs a person (and any game page it can't identify) | **Paused.** It shows only a general thinking checklist; your review appears when the game ends. |
+| Daily game (`/game/daily/...`) | Opening name and book moves only (chess.com allows opening books in Daily games). No move advice and no tactical hints. |
+| Live game vs a person (`/game/live/...`, `/play/online`, and any game page it can't identify) | **Paused.** It shows only a general thinking checklist; your review appears when the game ends. |
 | Puzzles | Nothing, so you solve them yourself |
 
 There is no setting to override the pause during live games. Use it to prepare (trainer, games vs the computer) and to review afterwards.
@@ -36,10 +36,10 @@ There is no setting to override the pause during live games. Use it to prepare (
 1. Download or clone this folder.
 2. Open `chrome://extensions` (or `edge://extensions`) and turn on **Developer mode**.
 3. Click **Load unpacked** and select the `chess-coach-extension` folder.
-4. Open a game against the computer or an analysis board on lichess or chess.com. The panel appears on the right; drag it by its header or collapse it with **–**.
+4. On chess.com, open **Play → Play Bots** or the **Analysis** board. The panel appears on the right; drag it by its header or collapse it with **–**.
 5. Click the extension icon for settings, or click **Open opening trainer**.
 
-No build step is needed. The extension asks only for the `storage` permission and runs only on lichess.org and chess.com. Everything stays in your browser; nothing is sent anywhere.
+No build step is needed. The extension asks only for the `storage` permission and runs only on chess.com. Everything stays in your browser; nothing is sent anywhere.
 
 ## Suggested way to learn
 
@@ -53,7 +53,7 @@ No build step is needed. The extension asks only for the `storage` permission an
 ```
 npm install          # installs Playwright (only needed for the e2e test)
 npm test             # unit tests: book integrity, explanations, principles, fair-play rules, SRS
-npm run test:e2e     # loads the extension in Chromium against fake lichess/chess.com pages
+npm run test:e2e     # loads the extension in Chromium against fake chess.com pages
 ```
 
 Project layout:
@@ -70,7 +70,7 @@ src/core/                  site-independent logic (also loaded by the unit tests
   position.js              reconciles move list vs. board pieces
   view-model.js            builds what the panel shows
   srs.js, storage.js
-src/content/               content scripts: site adapters, panel, main loop
+src/content/               content scripts: chess.com adapter, panel, main loop
 src/trainer/               trainer page and board widget
 src/popup/                 settings popup
 src/background/            opens the trainer from the panel
@@ -78,8 +78,8 @@ src/background/            opens the trainer from the panel
 
 ### Known limitations
 
-- **Site markup changes.** lichess and chess.com change their page markup from time to time. All selectors are in `src/content/adapters.js`. The e2e test uses pages built to copy each site's board and move-list markup, not the live sites. If the panel stops updating, start there. If the move list can't be read, the coach falls back to reading the pieces on the board. It can still name book positions that way, but not explain the last move.
-- **Unknown game pages are treated as live.** On chess.com, watching someone else's live game looks the same as playing one, so it is also paused.
+- **Site markup changes.** chess.com changes its page markup from time to time. All selectors are in `src/content/adapters.js`. The e2e test uses pages built to copy chess.com's board (`wc-chess-board`) and move-list markup, not the live site. If the panel stops updating, start there. If the move list can't be read, the coach falls back to reading the pieces on the board. It can still name book positions that way, but not explain the last move.
+- **Unknown game pages are treated as live.** Watching someone else's live game looks the same as playing one, so it is also paused. A game vs the computer is only recognized from the `/play/computer`, `/play/coach` or `/game/computer/` URL.
 - **Rule-based coaching.** There is no engine, by design. Explanations and loose-piece checks follow simple rules (attackers vs. defenders). They are meant for learning and are not a full evaluation of the position.
 - **Firefox** is not supported yet: it needs a `background.scripts` entry in place of the MV3 service worker.
 

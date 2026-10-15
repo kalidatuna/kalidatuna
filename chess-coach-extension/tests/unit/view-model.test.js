@@ -3,7 +3,7 @@ const assert = require('node:assert');
 const CC = require('./load');
 
 const settings = Object.assign({}, CC.Storage.DEFAULT_SETTINGS);
-const page = (signals, sans, orientation) => ({ site: 'lichess', sans: sans.split(' '), pieces: null, lastMove: null, orientation: orientation || 'w', signals });
+const page = (signals, sans, orientation) => ({ site: 'chess.com', sans: sans.split(' '), pieces: null, lastMove: null, orientation: orientation || 'w', signals });
 
 test('live games against people show only the thinking checklist', () => {
   const vm = CC.buildViewModel(page({ isGamePage: true }, 'e4 e5 Nf3'), settings, {});
@@ -52,7 +52,7 @@ test('finished games produce a review and a record only for players', () => {
   assert.ok(spectator.review);
   assert.strictEqual(spectator.gameRecord, undefined);
   const player = CC.buildViewModel(page({ isGamePage: true, gameOver: true, isPlayer: true, gameId: 'abcdefgh' }, sans, 'b'), settings, {});
-  assert.strictEqual(player.gameRecord.id, 'lichess:abcdefgh');
+  assert.strictEqual(player.gameRecord.id, 'chess.com:abcdefgh');
   assert.strictEqual(player.gameRecord.leftBookByYou, true);
   assert.strictEqual(player.gameRecord.leftBookMove, '3...h6');
   assert.strictEqual(player.gameRecord.opening.name, 'Italian Game');

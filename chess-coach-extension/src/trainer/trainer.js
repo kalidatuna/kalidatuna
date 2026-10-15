@@ -314,7 +314,7 @@
       <h3>Openings in your games</h3>
       ${rows.length ? `<table class="stats"><tr><th>Opening</th><th>Games</th><th>You left book first</th><th>Avg. book length</th></tr>
         ${rows.map((r) => `<tr><td>${esc(r.name)}</td><td>${r.games}</td><td>${r.youLeft}</td><td>${r.plyCount ? 'move ' + Math.ceil(r.plySum / r.plyCount / 2) : '-'}</td></tr>`).join('')}</table>`
-        : '<p class="muted">Finish a game on lichess or chess.com with the extension enabled and its opening review will show up here.</p>'}`;
+        : '<p class="muted">Finish a game on chess.com with the extension enabled and its opening review will show up here.</p>'}`;
   }
 
   function renderGuide() {
@@ -328,7 +328,7 @@
         <li>Pick 1-2 openings for White and one defense each against 1.e4 and 1.d4.</li>
         <li>Use <b>Learn</b> to walk through the line and read why each move is played.</li>
         <li><b>Drill</b> the line until you play it without mistakes. It will come back for review in 1, 3, 7… days.</li>
-        <li>Play games vs the computer on lichess/chess.com with the coach panel open, then rated games without it - the post-game review shows where you left the book.</li>
+        <li>Play games vs the computer on chess.com with the coach panel open, then rated games without it - the post-game review shows where you left the book.</li>
       </ol>`;
   }
 

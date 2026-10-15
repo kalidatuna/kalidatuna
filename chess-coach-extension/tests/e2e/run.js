@@ -1,7 +1,7 @@
 /*
  * End-to-end test: loads the unpacked extension into Chromium, serves fake
- * lichess.org / chess.com pages (built to mirror their board and move-list
- * markup) and checks what the coach panel shows. Also drives the trainer.
+ * chess.com pages (built to mirror its board and move-list markup) and checks
+ * what the coach panel shows. Also drives the trainer.
  *
  *   npm run test:e2e            (set SCREENSHOTS=dir to save screenshots)
  */
@@ -23,34 +23,6 @@ function play(moves) {
   const hist = [];
   for (const m of moves) hist.push(c.move(m));
   return { chess: c, hist };
-}
-
-function lichessPage({ moves, orientation = 'white', meta = '', opponent = 'opponent', over = false, player = true }) {
-  const { chess, hist } = play(moves);
-  const size = 60;
-  const pos = (sq) => {
-    const f = FILES.indexOf(sq[0]);
-    const r = Number(sq[1]);
-    return orientation === 'white' ? [f * size, (8 - r) * size] : [(7 - f) * size, (r - 1) * size];
-  };
-  const pieces = [];
-  for (const row of chess.board()) for (const p of row) if (p) {
-    const [x, y] = pos(p.square);
-    pieces.push(`<piece class="${p.color === 'w' ? 'white' : 'black'} ${NAMES[p.type]}" style="transform: translate(${x}px, ${y}px);"></piece>`);
-  }
-  const last = hist.length ? [hist[hist.length - 1].from, hist[hist.length - 1].to].map((sq) => { const [x, y] = pos(sq); return `<square class="last-move" style="transform: translate(${x}px, ${y}px);"></square>`; }).join('') : '';
-  const list = hist.map((m, i) => (i % 2 === 0 ? `<i5z>${i / 2 + 1}</i5z>` : '') + `<kwdb${i === hist.length - 1 ? ' class="a1t"' : ''}>${m.san}</kwdb>`).join('');
-  return `<!doctype html><html><head><meta charset="utf-8"><title>lichess fixture</title></head><body>
-    <main class="round"><div class="round__app variant-standard">
-      <div class="round__app__board main-board"><div class="cg-wrap orientation-${orientation} manipulable">
-        <cg-container style="width: 480px; height: 480px; display:block; position:relative;"><cg-board style="display:block;width:480px;height:480px;">${last}${pieces.join('')}</cg-board></cg-container>
-      </div></div>
-      <div class="ruser-top ruser user-link"><a class="text ulpt">${opponent}</a></div>
-      <div class="rmoves"><rm6><l4x id="list">${list}</l4x>${over ? '<div class="result-wrap"><p class="result">1-0</p></div>' : ''}</rm6></div>
-      ${player ? '<div class="rcontrols"><button class="fbt resign">Resign</button></div>' : ''}
-    </div></main>
-    <div class="game__meta"><section>${meta}</section></div>
-  </body></html>`;
 }
 
 function chesscomPage({ moves, flipped = false, over = false }) {
@@ -78,13 +50,16 @@ function chesscomPage({ moves, flipped = false, over = false }) {
   </body></html>`;
 }
 
+const CC = 'https://www.chess.com';
 const pages = {
-  'https://lichess.org/abcdefgh': lichessPage({ moves: ['e4', 'e5', 'Nf3', 'Nc6'], meta: 'Rapid • Casual', opponent: 'Stockfish level 3' }),
-  'https://lichess.org/livegame1': lichessPage({ moves: ['e4', 'e5', 'Nf3', 'Nc6'], meta: '10+0 • Rated • Rapid', opponent: 'SomePlayer' }),
-  'https://lichess.org/corresp1': lichessPage({ moves: ['d4', 'Nf6', 'c4', 'e6'], meta: 'Correspondence • Casual', opponent: 'PenPal' }),
-  'https://lichess.org/fin1shed': lichessPage({ moves: 'e4 e5 Nf3 Nc6 Bc4 h6 d4 exd4'.split(' '), orientation: 'black', over: true, opponent: 'SomePlayer' }),
-  'https://www.chess.com/analysis': chesscomPage({ moves: 'e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6'.split(' '), flipped: true }),
-  'https://www.chess.com/game/live/123456789': chesscomPage({ moves: 'd4 d5 c4 e6 Nc3 Nf6 Bg5 h6'.split(' '), over: true })
+  [`${CC}/play/computer`]: chesscomPage({ moves: ['e4', 'e5', 'Nf3', 'Nc6'] }),
+  [`${CC}/game/live/111111111`]: chesscomPage({ moves: ['e4', 'e5', 'Nf3', 'Nc6'] }),
+  [`${CC}/game/daily/222222222`]: chesscomPage({ moves: ['d4', 'Nf6', 'c4', 'e6'] }),
+  [`${CC}/game/live/333333333`]: chesscomPage({ moves: 'e4 e5 Nf3 Nc6 Bc4 h6 d4 exd4'.split(' '), flipped: true, over: true }),
+  [`${CC}/analysis`]: chesscomPage({ moves: 'e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6'.split(' '), flipped: true }),
+  [`${CC}/game/live/123456789`]: chesscomPage({ moves: 'd4 d5 c4 e6 Nc3 Nf6 Bg5 h6'.split(' '), over: true }),
+  [`${CC}/puzzles/rated`]: chesscomPage({ moves: [] }),
+  'https://lichess.org/abcdefgh': chesscomPage({ moves: ['e4'] })
 };
 
 async function panelText(page) {
@@ -128,7 +103,7 @@ async function clickSquare(page, sq, orientation) {
     }
   };
   try {
-    await context.route(/https:\/\/(lichess\.org|www\.chess\.com)\/.*/, (route) => {
+    await context.route(/https:\/\/(www\.chess\.com|lichess\.org)\/.*/, (route) => {
       const url = route.request().url().split('?')[0];
       if (pages[url]) return route.fulfill({ status: 200, contentType: 'text/html', body: pages[url] });
       return route.fulfill({ status: 404, body: '' });
@@ -138,8 +113,8 @@ async function clickSquare(page, sq, orientation) {
     const extId = worker.url().split('/')[2];
     const page = await context.newPage();
 
-    await check('lichess game vs Stockfish gets full coaching', async () => {
-      await page.goto('https://lichess.org/abcdefgh');
+    await check('game vs the computer gets full coaching', async () => {
+      await page.goto(`${CC}/play/computer`);
       const text = await panelText(page);
       assert.match(text, /Game vs computer/);
       assert.match(text, /King's Knight Opening: Normal Variation/);
@@ -150,18 +125,18 @@ async function clickSquare(page, sq, orientation) {
       const after = await panelText(page);
       assert.match(after, /3\.Bc4/);
       assert.match(after, /Italian Game/);
-      await shot(page, 'lichess-bot');
+      await shot(page, 'chesscom-bot');
     });
 
     await check('panel follows new moves', async () => {
       await page.evaluate(() => {
         // Simulate 3.Bc4: move the bishop element and add the move to the list.
-        const board = document.querySelector('cg-board');
-        const bishop = [...board.querySelectorAll('piece.white.bishop')].find((p) => p.style.transform.includes('translate(300px, 420px)'));
-        bishop.style.transform = 'translate(120px, 240px)';
-        const k = document.createElement('kwdb');
-        k.textContent = 'Bc4';
-        document.getElementById('list').append(Object.assign(document.createElement('i5z'), { textContent: '3' }), k);
+        const bishop = document.querySelector('wc-chess-board .piece.wb.square-61');
+        bishop.classList.replace('square-61', 'square-34');
+        const row = document.createElement('div');
+        row.className = 'main-line-row move-list-row';
+        row.innerHTML = '<span class="move-number">3.</span><div class="node white-move main-line-ply"><span class="node-highlight-content"><span class="icon-font-chess bishop-white" data-figurine="B"></span>c4</span></div>';
+        document.querySelector('wc-simple-move-list').append(row);
       });
       await page.waitForFunction(() => document.getElementById('chess-coach-root').shadowRoot.querySelector('.opening-name').textContent.startsWith('Italian Game'), null, { timeout: 5000 });
       const text = await panelText(page);
@@ -169,37 +144,50 @@ async function clickSquare(page, sq, orientation) {
       assert.match(text, /f7/);
     });
 
-    await check('lichess live game vs a person pauses coaching', async () => {
-      await page.goto('https://lichess.org/livegame1');
+    await check('live game vs a person pauses coaching', async () => {
+      await page.goto(`${CC}/game/live/111111111`);
       const text = await panelText(page);
       assert.match(text, /Live game vs a person/);
       assert.match(text, /Coaching is paused/);
       assert.match(text, /thinking checklist/i);
       assert.doesNotMatch(text, /King's Knight/);
       assert.doesNotMatch(text, /Show book moves/);
-      await shot(page, 'lichess-live');
+      await shot(page, 'chesscom-live');
     });
 
-    await check('lichess correspondence shows book only', async () => {
-      await page.goto('https://lichess.org/corresp1');
+    await check('daily game shows book only', async () => {
+      await page.goto(`${CC}/game/daily/222222222`);
       const text = await panelText(page);
-      assert.match(text, /Correspondence/);
+      assert.match(text, /Daily game/);
       assert.match(text, /Indian Defense/);
       assert.doesNotMatch(text, /Development \d\/4/);
     });
 
-    await check('lichess finished game shows review and records it', async () => {
-      await page.goto('https://lichess.org/fin1shed');
+    await check('puzzles get no hints', async () => {
+      await page.goto(`${CC}/puzzles/rated`);
+      const text = await panelText(page);
+      assert.match(text, /Puzzle/);
+      assert.doesNotMatch(text, /Opening/i);
+    });
+
+    await check('finished game as Black shows review and records it', async () => {
+      await page.goto(`${CC}/game/live/333333333`);
       const text = await panelText(page);
       assert.match(text, /Finished game/);
       assert.match(text, /Post-game opening review/i);
       assert.match(text, /You left the book with 3\.\.\.h6/);
       await page.waitForFunction(() => /Saved to your opening stats/.test(document.getElementById('chess-coach-root').shadowRoot.textContent));
-      await shot(page, 'lichess-review');
+      await shot(page, 'chesscom-review');
     });
 
-    await check('chess.com analysis with figurine notation and flipped board', async () => {
-      await page.goto('https://www.chess.com/analysis');
+    await check('extension does not run on other chess sites', async () => {
+      await page.goto('https://lichess.org/abcdefgh');
+      await page.waitForTimeout(800);
+      assert.strictEqual(await page.evaluate(() => !!document.getElementById('chess-coach-root')), false);
+    });
+
+    await check('analysis board with figurine notation and flipped board', async () => {
+      await page.goto(`${CC}/analysis`);
       const text = await panelText(page);
       assert.match(text, /Analysis board/);
       assert.match(text, /Najdorf/);
@@ -207,8 +195,8 @@ async function clickSquare(page, sq, orientation) {
       await shot(page, 'chesscom-analysis');
     });
 
-    await check('chess.com finished game is recorded', async () => {
-      await page.goto('https://www.chess.com/game/live/123456789');
+    await check('finished game as White is recorded', async () => {
+      await page.goto(`${CC}/game/live/123456789`);
       const text = await panelText(page);
       assert.match(text, /Finished game/);
       assert.match(text, /QGD: Main Line|Queen's Gambit Declined/);
@@ -226,7 +214,7 @@ async function clickSquare(page, sq, orientation) {
 
     await check('disabling in settings hides the panel', async () => {
       await page.click('#enabled');
-      await page.goto('https://lichess.org/abcdefgh');
+      await page.goto(`${CC}/play/computer`);
       await page.waitForTimeout(800);
       const visible = await page.evaluate(() => {
         const h = document.getElementById('chess-coach-root');

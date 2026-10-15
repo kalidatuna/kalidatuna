@@ -13,7 +13,7 @@ test('fair-play classification', () => {
   assert.strictEqual(FairPlay.classify({}), 'none');
   const live = FairPlay.CONTEXTS.live.allow;
   assert.deepStrictEqual(live, { book: false, explain: false, tips: false, tactics: false });
-  const corr = FairPlay.CONTEXTS.correspondence.allow;
+  const corr = FairPlay.CONTEXTS.correspondence.allow; // chess.com Daily games
   assert.ok(corr.book && !corr.tips && !corr.tactics);
 });
 

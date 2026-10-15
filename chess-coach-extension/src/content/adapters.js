@@ -1,113 +1,11 @@
 /*
- * Site adapters: read the board, the move list and the kind of page from the
- * DOM. All site-specific selectors live in this file so they are easy to fix
- * when a site changes its markup.
+ * chess.com adapter: reads the board, the move list and the kind of page from
+ * the DOM. All chess.com selectors live in this file so they are easy to fix
+ * when the site changes its markup.
  */
 (function (root) {
   const CC = (root.ChessCoach = root.ChessCoach || {});
   const FILES = 'abcdefgh';
-  const TYPE = { pawn: 'p', knight: 'n', bishop: 'b', rook: 'r', queen: 'q', king: 'k' };
-
-  function textOf(el) {
-    return (el && el.textContent ? el.textContent : '').trim();
-  }
-
-  function translateOf(el) {
-    const m = /translate\(\s*(-?[\d.]+)px\s*,\s*(-?[\d.]+)px\s*\)/.exec(el.style.transform || '');
-    return m ? [Number(m[1]), Number(m[2])] : null;
-  }
-
-  /* ------------------------------------------------------------------ lichess */
-  const lichess = {
-    site: 'lichess',
-    matches: (loc) => /(^|\.)lichess\.org$/.test(loc.hostname),
-
-    board(doc) {
-      return doc.querySelector('.main-board cg-board') || doc.querySelector('cg-board');
-    },
-
-    orientation(doc) {
-      const board = this.board(doc);
-      const wrap = board && board.closest('.cg-wrap');
-      return wrap && wrap.classList.contains('orientation-black') ? 'b' : 'w';
-    },
-
-    squareFromTransform(el, size, orientation) {
-      const t = translateOf(el);
-      if (!t || !size) return null;
-      const fx = Math.round(t[0] / size);
-      const fy = Math.round(t[1] / size);
-      if (fx < 0 || fx > 7 || fy < 0 || fy > 7) return null;
-      return orientation === 'w' ? FILES[fx] + (8 - fy) : FILES[7 - fx] + (fy + 1);
-    },
-
-    boardSize(board) {
-      const container = board.closest('cg-container') || board;
-      const w = parseFloat(container.style.width) || board.getBoundingClientRect().width;
-      return w / 8;
-    },
-
-    pieces(doc) {
-      const board = this.board(doc);
-      if (!board) return null;
-      const size = this.boardSize(board);
-      const orientation = this.orientation(doc);
-      const out = [];
-      for (const el of board.querySelectorAll('piece')) {
-        if (el.classList.contains('ghost') || el.classList.contains('fading')) continue;
-        const color = el.classList.contains('white') ? 'w' : el.classList.contains('black') ? 'b' : null;
-        const typeName = Object.keys(TYPE).find((t) => el.classList.contains(t));
-        const sq = this.squareFromTransform(el, size, orientation);
-        if (color && typeName && sq) out.push({ sq, color, type: TYPE[typeName] });
-      }
-      return out;
-    },
-
-    lastMove(doc) {
-      const board = this.board(doc);
-      if (!board) return null;
-      const size = this.boardSize(board);
-      const orientation = this.orientation(doc);
-      return [...board.querySelectorAll('square.last-move')].map((el) => this.squareFromTransform(el, size, orientation)).filter(Boolean);
-    },
-
-    moves(doc) {
-      // Live/finished game page.
-      let nodes = doc.querySelectorAll('rm6 l4x kwdb, rm6 l4x u8t, .moves move');
-      if (nodes.length) return [...nodes].map((n) => textOf(n));
-      // Analysis / study: main line moves are direct children of .tview2.
-      const tview = doc.querySelector('.tview2');
-      if (tview) {
-        return [...tview.children]
-          .filter((c) => c.tagName.toLowerCase() === 'move')
-          .map((m) => textOf(m.querySelector('san')) || textOf(m));
-      }
-      return [];
-    },
-
-    signals(doc, loc) {
-      const path = loc.pathname;
-      const isAnalysis = /^\/(analysis|study|practice|opening|broadcast)(\/|$)/.test(path);
-      const isPuzzle = /^\/(training|streak|storm|racer)(\/|$)/.test(path);
-      const roundApp = doc.querySelector('.round__app, main.round');
-      const meta = textOf(doc.querySelector('.game__meta')) + ' ' + [...doc.querySelectorAll('.ruser, .ruser-top, .ruser-bottom')].map(textOf).join(' ');
-      const opponentIsComputer = /stockfish|level \d|\bBOT\b/i.test(meta) || !!doc.querySelector('.ruser .utitle[data-bot], .ruser-top .utitle[data-bot]');
-      const isCorrespondence = /correspondence/i.test(meta) || !!doc.querySelector('.rclock-correspondence');
-      const gameOver = !!doc.querySelector('.result-wrap, .follow-up, .rcontrols .rematch');
-      const isPlayer = !!doc.querySelector('.rcontrols');
-      const idMatch = /^\/([a-zA-Z0-9]{8})(?:[a-zA-Z0-9]{4})?(?:\/|$)/.exec(path);
-      return {
-        isAnalysis,
-        isPuzzle,
-        isGamePage: !!roundApp && !isAnalysis && !isPuzzle,
-        gameOver,
-        opponentIsComputer,
-        isCorrespondence,
-        isPlayer,
-        gameId: idMatch ? idMatch[1] : null
-      };
-    }
-  };
 
   /* ---------------------------------------------------------------- chess.com */
   const chesscom = {
@@ -179,7 +77,7 @@
       const path = loc.pathname;
       const isAnalysis = /^\/(analysis|explorer|lessons|lesson|learn|drills|openings)(\/|$)/.test(path);
       const isPuzzle = /^\/(puzzles?|solo-chess)(\/|$)/.test(path);
-      const opponentIsComputer = /^\/(play\/computer|game\/computer)(\/|$)/.test(path);
+      const opponentIsComputer = /^\/(play\/computer|play\/coach|game\/computer)(\/|$)/.test(path);
       const isCorrespondence = /^\/(daily|game\/daily|play\/daily)(\/|$)/.test(path);
       const isGamePage = !isAnalysis && !isPuzzle && (/^\/(game|live|play)(\/|$)/.test(path) || /^\/(daily)(\/|$)/.test(path)) && !!this.board(doc);
       const gameOver = !!doc.querySelector('.game-over-modal-content, .game-over-modal-shell-content, .game-result, .game-over-header-component');
@@ -197,7 +95,7 @@
     }
   };
 
-  const ADAPTERS = [lichess, chesscom];
+  const ADAPTERS = [chesscom];
 
   function forLocation(loc) {
     return ADAPTERS.find((a) => a.matches(loc)) || null;
@@ -217,5 +115,5 @@
     };
   }
 
-  CC.Adapters = { lichess, chesscom, forLocation, readPage };
+  CC.Adapters = { chesscom, forLocation, readPage };
 })(globalThis);
