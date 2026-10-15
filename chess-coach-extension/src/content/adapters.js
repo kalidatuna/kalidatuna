@@ -79,12 +79,15 @@
       const isPuzzle = /^\/(puzzles?|solo-chess)(\/|$)/.test(path);
       const opponentIsComputer = /^\/(play\/computer|play\/coach|game\/computer)(\/|$)/.test(path);
       const isCorrespondence = /^\/(daily|game\/daily|play\/daily)(\/|$)/.test(path);
-      const isGamePage = !isAnalysis && !isPuzzle && (/^\/(game|live|play)(\/|$)/.test(path) || /^\/(daily)(\/|$)/.test(path)) && !!this.board(doc);
+      // The Play page before a game starts (a game moves to /game/<id> once it is paired).
+      const isLobby = /^\/play(\/online)?\/?$/.test(path);
+      const isGamePage = !isLobby && !isAnalysis && !isPuzzle && (/^\/(game|live|play)(\/|$)/.test(path) || /^\/(daily)(\/|$)/.test(path)) && !!this.board(doc);
       const gameOver = !!doc.querySelector('.game-over-modal-content, .game-over-modal-shell-content, .game-result, .game-over-header-component');
       const idMatch = /\/(\d{5,})/.exec(path);
       return {
         isAnalysis,
         isPuzzle,
+        isLobby,
         isGamePage,
         gameOver,
         opponentIsComputer,

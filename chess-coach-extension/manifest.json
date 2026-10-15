@@ -23,6 +23,7 @@
         "src/core/fair-play.js",
         "src/core/position.js",
         "src/core/storage.js",
+        "src/core/repertoire.js",
         "src/core/view-model.js",
         "src/content/adapters.js",
         "src/content/panel.js",

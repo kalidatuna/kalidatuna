@@ -24,6 +24,10 @@
     const vm = { ctx, userColor, key: null };
 
     if (ctxName === 'none') return vm;
+    if (ctxName === 'prep') {
+      vm.repertoire = state.repertoire || null;
+      return vm;
+    }
     if (ctxName === 'live') {
       vm.checklist = CC.PRINCIPLES.checklist;
       return vm;
@@ -32,6 +36,10 @@
 
     const pos = Position.resolve({ sans: page.sans, pieces: page.pieces, lastMove: page.lastMove });
     if (!pos) return vm;
+    if (ctxName === 'review' && pos.source === 'moves' && pos.sans.length < 2 && !pos.browsing) {
+      vm.emptyGame = true;
+      return vm;
+    }
     const key = positionKey(pos.fen);
     const turn = pos.fen.split(' ')[1];
     vm.key = key;
@@ -80,6 +88,17 @@
         vm.continuations = book.continuations(key).map((c) => Object.assign({}, c, { label: pos.source === 'moves' ? moveLabel(ply, c.san) : c.san }));
         vm.toMoveIsYou = turn === userColor;
         vm.revealed = settings.revealBookMoves === 'auto' || state.revealedKey === key;
+      }
+    }
+
+    // ---- Has the opening phase ended? Then the coach steps back.
+    if (ctxName !== 'review' && pos.source === 'moves') {
+      const a = book.analyzeGame(pos.sans);
+      const outFor = a.leftBookPly === null ? 0 : pos.sans.length - a.leftBookPly + 1;
+      if (outFor >= 6 || pos.sans.length >= 30) {
+        vm.openingOver = { opening: a.opening, leftBook: a.leftBookPly ? moveLabel(a.leftBookPly, pos.sans[a.leftBookPly - 1]) : null };
+        for (const k of ['opening', 'bookStatus', 'lastMove', 'continuations']) delete vm[k];
+        return vm;
       }
     }
 

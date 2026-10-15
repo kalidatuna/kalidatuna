@@ -10,6 +10,7 @@ for (const f of [
   'src/core/position.js',
   'src/core/srs.js',
   'src/core/storage.js',
+  'src/core/repertoire.js',
   'src/core/view-model.js'
 ]) {
   require(path.join(root, f));

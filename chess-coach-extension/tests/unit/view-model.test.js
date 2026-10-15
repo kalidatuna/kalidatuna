@@ -63,3 +63,39 @@ test('out-of-book status names who deviated', () => {
   assert.match(vm.bookStatus.text, /Out of book since 3\.\.\.h6 \(opponent\)/);
   assert.strictEqual(vm.continuations, undefined);
 });
+
+test('the Play page (before a game) shows the repertoire, not live help', () => {
+  const repertoire = CC.Repertoire.suggest(CC.getBook(), {}, []);
+  const vm = CC.buildViewModel(page({ isLobby: true }, ''), settings, { repertoire });
+  assert.strictEqual(vm.ctx.name, 'prep');
+  assert.strictEqual(vm.repertoire.length, 3);
+  assert.strictEqual(vm.continuations, undefined);
+  assert.strictEqual(CC.FairPlay.classify({ isLobby: true, isGamePage: false }), 'prep');
+});
+
+test('repertoire prefers drilled lines, then played openings, then defaults', () => {
+  const book = CC.getBook();
+  const srs = { 'ruy-lopez': { reps: 3, due: 0 } };
+  const games = [{ opening: { id: 'caro-kann-defense' } }];
+  const [w, e4, d4] = CC.Repertoire.suggest(book, srs, games);
+  assert.strictEqual(w.line.id, 'ruy-lopez');
+  assert.strictEqual(e4.line.id, 'caro-kann-defense');
+  assert.strictEqual(d4.line.id, 'queen-s-gambit-declined');
+});
+
+test('the opening coach steps back once the opening is over', () => {
+  const sans = 'e4 e5 Nf3 Nc6 Bc4 h6 d3 a6 Nc3 b6 O-O Bb7';
+  const vm = CC.buildViewModel(page({ isGamePage: true, opponentIsComputer: true }, sans), settings, {});
+  assert.ok(vm.openingOver);
+  assert.strictEqual(vm.openingOver.opening.name, 'Italian Game');
+  assert.strictEqual(vm.continuations, undefined);
+  assert.strictEqual(vm.lastMove, undefined);
+});
+
+test('a finished game without moves is not reviewed', () => {
+  const start = new globalThis.ChessJS.Chess();
+  const pieces = start.board().flat().filter(Boolean).map((p) => ({ sq: p.square, color: p.color, type: p.type }));
+  const vm = CC.buildViewModel(Object.assign(page({ isGamePage: true, gameOver: true }, ''), { pieces }), settings, {});
+  assert.ok(vm.emptyGame);
+  assert.strictEqual(vm.continuations, undefined);
+});

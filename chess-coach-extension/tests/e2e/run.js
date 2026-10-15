@@ -58,6 +58,8 @@ const pages = {
   [`${CC}/game/live/333333333`]: chesscomPage({ moves: 'e4 e5 Nf3 Nc6 Bc4 h6 d4 exd4'.split(' '), flipped: true, over: true }),
   [`${CC}/analysis`]: chesscomPage({ moves: 'e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6'.split(' '), flipped: true }),
   [`${CC}/game/live/123456789`]: chesscomPage({ moves: 'd4 d5 c4 e6 Nc3 Nf6 Bg5 h6'.split(' '), over: true }),
+  [`${CC}/play/online`]: chesscomPage({ moves: [] }),
+  [`${CC}/game/185373995266`]: chesscomPage({ moves: [], over: true }),
   [`${CC}/puzzles/rated`]: chesscomPage({ moves: [] }),
   'https://lichess.org/abcdefgh': chesscomPage({ moves: ['e4'] })
 };
@@ -161,6 +163,23 @@ async function clickSquare(page, sq, orientation) {
       assert.match(text, /Daily game/);
       assert.match(text, /Indian Defense/);
       assert.doesNotMatch(text, /Development \d\/4/);
+    });
+
+    await check('Play page shows the openings to use in the next game', async () => {
+      await page.goto(`${CC}/play/online`);
+      const text = await panelText(page);
+      assert.match(text, /Before your game/);
+      assert.match(text, /Italian Game/);
+      assert.match(text, /vs 1\.e4/i);
+      assert.match(text, /vs 1\.d4/i);
+      await shot(page, 'chesscom-prep');
+    });
+
+    await check('finished game with no moves shows no book moves', async () => {
+      await page.goto(`${CC}/game/185373995266`);
+      const text = await panelText(page);
+      assert.match(text, /ended before any moves/);
+      assert.doesNotMatch(text, /Show book moves/);
     });
 
     await check('puzzles get no hints', async () => {

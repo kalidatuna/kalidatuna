@@ -26,7 +26,7 @@
           state.revealedKey = lastKey;
           refresh(true);
         } else if (action === 'drill') {
-          const msg = { type: 'open-trainer', line: data.line, color: lastColor };
+          const msg = { type: 'open-trainer', line: data.line, color: data.color || lastColor };
           try {
             chrome.runtime.sendMessage(msg);
           } catch (e) {
@@ -91,9 +91,16 @@
     scheduled = setTimeout(refresh, 200);
   }
 
+  async function loadRepertoire() {
+    const [srs, games] = await Promise.all([CC.Storage.getSrs(), CC.Storage.getGames()]);
+    state.repertoire = CC.Repertoire.suggest(CC.getBook(), srs, games);
+  }
+
   async function start() {
     settings = await CC.Storage.getSettings();
+    await loadRepertoire();
     CC.Storage.onChange((changes) => {
+      if (changes.srs || changes.games) loadRepertoire().then(() => refresh(true));
       if (changes.settings) {
         const keepPanel = settings.panel;
         settings = Object.assign({}, CC.Storage.DEFAULT_SETTINGS, changes.settings.newValue || {});

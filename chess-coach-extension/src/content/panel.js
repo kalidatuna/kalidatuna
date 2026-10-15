@@ -130,6 +130,9 @@
       this.pillEl.className = 'pill' + (!ctx.allow.book ? ' paused' : allowAll ? '' : ' partial');
       const html = [];
 
+      if (vm.repertoire) html.push(this._repertoire(vm));
+      if (vm.emptyGame) html.push('<section><p class="muted">The game ended before any moves were played - nothing to review.</p></section>');
+      if (vm.openingOver) html.push(this._openingOver(vm));
       if (vm.review) html.push(this._review(vm));
       if (vm.opening || vm.bookStatus) html.push(this._opening(vm));
       if (vm.lastMove) html.push(this._lastMove(vm));
@@ -198,10 +201,36 @@
       return parts.join('');
     }
 
+    _repertoire(vm) {
+      const items = vm.repertoire
+        .filter((r) => r.line)
+        .map((r) => {
+          const color = r.slot === 'w' ? 'w' : 'b';
+          const moves = r.line.sans.map((s, i) => (i % 2 === 0 ? `${i / 2 + 1}.${s}` : s)).join(' ');
+          const plans = (r.line.plans[color] || []).slice(0, 2);
+          return `<div class="move"><h3>${esc(r.label)}</h3><b>${esc(r.line.name)}</b> <span class="eco">${esc(r.line.eco)}</span>
+            <div class="san" style="font-weight:400">${esc(moves)}</div>
+            <p class="note">${esc(r.reason)}</p>
+            ${plans.length ? `<ul>${plans.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
+            <button class="btn" data-action="drill" data-line="${esc(r.line.id)}" data-color="${color}">Drill it first</button></div>`;
+        })
+        .join('');
+      return `<section><h3>Your openings for the next game</h3><p class="note">${esc(vm.ctx.note)}</p><div class="moves">${items}</div></section>`;
+    }
+
+    _openingOver(vm) {
+      const o = vm.openingOver;
+      return `<section><h3>Opening phase over</h3>
+        <p>${o.opening ? `You played the <b>${esc(o.opening.name)}</b>.` : 'You left known openings early.'}${o.leftBook ? ` Theory ended at ${esc(o.leftBook)}.` : ''}</p>
+        <p class="note">The opening coach steps back now. Your full opening review appears when the game ends.</p>
+        ${o.opening ? `<button class="btn" data-action="drill" data-line="${esc(o.opening.id)}">Drill this opening later</button>` : ''}</section>`;
+    }
+
     _checklist(vm) {
       return `<section><div class="live-note">${esc(vm.ctx.note)}</div>
         <h3 style="margin-top:10px">Your own thinking checklist</h3>
-        <ul>${vm.checklist.map((c) => `<li>${esc(c)}</li>`).join('')}</ul></section>`;
+        <ul>${vm.checklist.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>
+        <p class="note">Tip: open chess.com's Play page before you start a game - the coach shows which openings to play there.</p></section>`;
     }
 
     _review(vm) {

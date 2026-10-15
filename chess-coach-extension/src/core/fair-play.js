@@ -26,6 +26,11 @@
       allow: NONE,
       note: 'Coaching is paused: outside help during live games breaks chess.com fair-play rules and can get your account closed. Your opening review appears as soon as the game ends.'
     },
+    prep: {
+      label: 'Before your game',
+      allow: NONE,
+      note: 'Pick your openings now. Once a live game starts, the coach pauses (chess.com fair-play rules) and comes back for the review after the game.'
+    },
     puzzle: { label: 'Puzzle', allow: NONE, note: 'Hints are off so you can solve it yourself.' },
     none: { label: 'No board', allow: NONE, note: '' }
   };
@@ -39,6 +44,7 @@
     if (!signals) return 'none';
     if (signals.isPuzzle) return 'puzzle';
     if (signals.isAnalysis) return 'analysis';
+    if (signals.isLobby) return 'prep';
     if (signals.isGamePage) {
       if (signals.gameOver) return 'review';
       if (signals.opponentIsComputer) return 'bot';
