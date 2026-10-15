@@ -58,8 +58,8 @@ test('post-game review explains who left the book', () => {
   const book = CC.getBook();
   const game = 'e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5 d5 exd5 Nxd5 Nxf7 Kxf7 Qf3+ Ke6 Nc3'.split(' ');
   const rBlack = Coach.reviewGame(game, 'b', book);
-  assert.strictEqual(rBlack.opening.name, 'Two Knights: Fried Liver Attack');
-  const rWhite = Coach.reviewGame('e4 e5 Nf3 Nc6 Bc4 Bc5 Ng5 Nf6 Nxf7'.split(' '), 'w', book);
+  assert.strictEqual(rBlack.opening.name, 'Italian Game: Two Knights Defense, Fried Liver Attack');
+  const rWhite = Coach.reviewGame('e4 e5 Nf3 Nc6 Bc4 Bc5 Kf1 Nf6'.split(' '), 'w', book);
   assert.ok(rWhite.leftBook.byYou);
-  assert.match(rWhite.items[0].text, /You left the book with 4\.Ng5/);
+  assert.match(rWhite.items[0].text, /You left the book with 4\.Kf1/);
 });

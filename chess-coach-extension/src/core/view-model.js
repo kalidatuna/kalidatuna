@@ -41,6 +41,8 @@
       return vm;
     }
     const key = positionKey(pos.fen);
+    // On a finished game's last position, show the review instead of next-move advice.
+    const finalOfFinished = ctxName === 'review' && !pos.browsing;
     const turn = pos.fen.split(' ')[1];
     vm.key = key;
     vm.fen = pos.fen;
@@ -82,10 +84,17 @@
           : { inBook: false, text: 'Not in the coach\'s book' };
       }
 
-      // ---- Book continuations
-      if (book.has(key)) {
+      // ---- Book continuations (not on the final position of a finished game)
+      if (book.has(key) && !finalOfFinished) {
         const ply = pos.source === 'moves' ? pos.sans.length + 1 : turn === 'w' ? 1 : 2;
-        vm.continuations = book.continuations(key).map((c) => Object.assign({}, c, { label: pos.source === 'moves' ? moveLabel(ply, c.san) : c.san }));
+        const explain = allow.tips && settings.showExplanations;
+        vm.continuations = book.continuations(key).slice(0, 6).map((c, i) =>
+          Object.assign({}, c, {
+            main: i === 0 && c.main,
+            label: pos.source === 'moves' ? moveLabel(ply, c.san) : c.san,
+            note: c.note || (explain ? Coach.explainMove(pos.fen, c.san) : null)
+          })
+        );
         vm.toMoveIsYou = turn === userColor;
         vm.revealed = settings.revealBookMoves === 'auto' || state.revealedKey === key;
       }
@@ -103,12 +112,12 @@
     }
 
     // ---- Principles & tactics
-    if (allow.tips && settings.showTips) {
+    if (allow.tips && settings.showTips && !finalOfFinished) {
       const pt = Coach.principleTips(pos.fen, pos.sans, userColor);
       vm.meters = pt.meters;
       vm.tips = pt.tips;
     }
-    if (allow.tactics && settings.showTactics) vm.tactics = Coach.tacticalTips(pos.fen, userColor);
+    if (allow.tactics && settings.showTactics && !finalOfFinished) vm.tactics = Coach.tacticalTips(pos.fen, userColor);
 
     // ---- Post-game review
     if (ctxName === 'review') {

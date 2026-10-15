@@ -1,0 +1,8 @@
+Opening names and move sequences (a.tsv - e.tsv) are from
+https://github.com/lichess-org/chess-openings
+
+Copyright (from that project's README):
+As a collection of facts, this data set is in the public domain.
+Considerable effort was spent curating and cleaning the data. Insofar as that
+qualifies for copyright, the work is released under the
+CC0 Public Domain Dedication (https://creativecommons.org/publicdomain/zero/1.0/).

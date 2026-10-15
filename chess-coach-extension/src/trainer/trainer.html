@@ -70,6 +70,10 @@
       <div class="card picker">
         <div class="row">
           <input id="search" type="search" placeholder="Search openings, ECO or moves…" aria-label="Search openings">
+          <select id="filter-source" aria-label="Which openings">
+            <option value="curated">Explained lines</option>
+            <option value="all">Full database</option>
+          </select>
           <select id="filter-side" aria-label="Filter by side">
             <option value="all">All</option>
             <option value="w">For White</option>
@@ -84,6 +88,7 @@
 
   <script src="../../vendor/chess.js"></script>
   <script src="../core/openings-data.js"></script>
+  <script src="../core/openings-db.js"></script>
   <script src="../core/opening-book.js"></script>
   <script src="../core/coach.js"></script>
   <script src="../core/srs.js"></script>

@@ -149,6 +149,7 @@
       const parts = ['<section><h3>Opening</h3>'];
       if (o) {
         parts.push(`<div class="opening-name">${esc(o.name)}<span class="eco">${esc(o.eco)}</span></div>`);
+        if (o.family) parts.push(`<p class="note">Ideas below come from the parent opening, the ${esc(o.family)}.</p>`);
         if (o.summary) parts.push(`<p>${esc(o.summary)}</p>`);
       } else {
         parts.push('<p class="muted">No named opening yet.</p>');
@@ -184,7 +185,7 @@
       }
       const items = list
         .slice(0, 5)
-        .map((c) => `<div class="move"><span class="san">${esc(c.label)}</span>${c.opening ? `<span class="leads">${esc(c.opening)}</span>` : c.leadsTo.length ? `<span class="leads">→ ${esc(c.leadsTo.join(', '))}</span>` : ''}${c.note ? `<div>${esc(c.note)}</div>` : ''}</div>`)
+        .map((c) => `<div class="move"><span class="san">${esc(c.label)}</span>${c.main ? '<span class="status in" style="margin:0 6px 0 0">main line</span>' : ''}${c.opening ? `<span class="leads">${esc(c.opening)}</span>` : c.leadsTo.length ? `<span class="leads">→ ${esc(c.leadsTo.join(', '))}</span>` : ''}${c.note ? `<div>${esc(c.note)}</div>` : ''}</div>`)
         .join('');
       return `<section><h3>${who}</h3><div class="moves">${items}</div></section>`;
     }

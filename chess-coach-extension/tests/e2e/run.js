@@ -55,9 +55,10 @@ const pages = {
   [`${CC}/play/computer`]: chesscomPage({ moves: ['e4', 'e5', 'Nf3', 'Nc6'] }),
   [`${CC}/game/live/111111111`]: chesscomPage({ moves: ['e4', 'e5', 'Nf3', 'Nc6'] }),
   [`${CC}/game/daily/222222222`]: chesscomPage({ moves: ['d4', 'Nf6', 'c4', 'e6'] }),
-  [`${CC}/game/live/333333333`]: chesscomPage({ moves: 'e4 e5 Nf3 Nc6 Bc4 h6 d4 exd4'.split(' '), flipped: true, over: true }),
+  [`${CC}/game/live/333333333`]: chesscomPage({ moves: 'e4 e5 Nf3 Nc6 Bc4 Rb8 d4 exd4'.split(' '), flipped: true, over: true }),
   [`${CC}/analysis`]: chesscomPage({ moves: 'e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6'.split(' '), flipped: true }),
   [`${CC}/game/live/123456789`]: chesscomPage({ moves: 'd4 d5 c4 e6 Nc3 Nf6 Bg5 h6'.split(' '), over: true }),
+  [`${CC}/game/live/444444444`]: chesscomPage({ moves: 'e4 e5 Nf3 Nc6 Bb5 Nf6 d3 Bc5 c3 O-O O-O d6 h3'.split(' '), over: true }),
   [`${CC}/play/online`]: chesscomPage({ moves: [] }),
   [`${CC}/game/185373995266`]: chesscomPage({ moves: [], over: true }),
   [`${CC}/puzzles/rated`]: chesscomPage({ moves: [] }),
@@ -194,9 +195,19 @@ async function clickSquare(page, sq, orientation) {
       const text = await panelText(page);
       assert.match(text, /Finished game/);
       assert.match(text, /Post-game opening review/i);
-      assert.match(text, /You left the book with 3\.\.\.h6/);
+      assert.match(text, /You left the book with 3\.\.\.Rb8/);
       await page.waitForFunction(() => /Saved to your opening stats/.test(document.getElementById('chess-coach-root').shadowRoot.textContent));
       await shot(page, 'chesscom-review');
+    });
+
+    await check('the Anti-Berlin (4.d3) is recognized as theory', async () => {
+      await page.goto(`${CC}/game/live/444444444`);
+      const text = await panelText(page);
+      assert.match(text, /Anti-Berlin Variation/);
+      assert.match(text, /Ideas below come from the parent opening, the Ruy Lopez: Berlin Defense/);
+      assert.doesNotMatch(text, /4\.d3/);
+      assert.doesNotMatch(text, /No warnings right now/);
+      await shot(page, 'chesscom-berlin');
     });
 
     await check('extension does not run on other chess sites', async () => {
@@ -251,15 +262,16 @@ async function clickSquare(page, sq, orientation) {
       await clickSquare(page, 'd2', 'w');
       await clickSquare(page, 'd4', 'w');
       await page.waitForFunction(() => /also a book move/.test(document.querySelector('#feedback').textContent));
-      await clickSquare(page, 'a2', 'w');
-      await clickSquare(page, 'a3', 'w');
-      await page.waitForFunction(() => /not the book move/.test(document.querySelector('#feedback').textContent));
-      const line = ['e2e4', 'g1f3', 'f1c4'];
-      for (const mv of line) {
+      const play = async (mv) => {
         await clickSquare(page, mv.slice(0, 2), 'w');
         await clickSquare(page, mv.slice(2), 'w');
         await page.waitForTimeout(700); // the trainer answers after a short delay
-      }
+      };
+      await play('e2e4');
+      await play('g1f3');
+      await play('h2h3'); // not theory here: counts as a mistake
+      await page.waitForFunction(() => /not the book move/.test(document.querySelector('#feedback').textContent));
+      await play('f1c4');
       await page.waitForFunction(() => /Line complete/.test(document.querySelector('#feedback').textContent));
       const fb = await page.innerText('#feedback');
       assert.match(fb, /1 mistake/);

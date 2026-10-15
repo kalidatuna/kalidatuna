@@ -347,14 +347,14 @@
       const ply = res.leftBookPly;
       const mover = ply % 2 === 1 ? 'w' : 'b';
       const prevKey = res.positions[ply - 1].key;
-      const alternatives = book.continuations(prevKey).map((c) => c.san);
+      const alternatives = book.continuations(prevKey).slice(0, 4).map((c) => c.san);
       out.leftBook = { ply, byYou: mover === color, move: fmtPly(ply), alternatives };
       if (mover === color) {
         out.items.push({
           level: alternatives.length ? 'warn' : 'info',
           text: alternatives.length
-            ? `You left the book with ${fmtPly(ply)}. Book moves here: ${alternatives.join(', ')}. Drill this line in the trainer.`
-            : `You were the first to leave known theory at ${fmtPly(ply)} - that's fine, the book here ends.`
+            ? `You left the book with ${fmtPly(ply)}. ${alternatives.length === 1 ? `The known move here is ${alternatives[0]}` : `Known moves here: ${alternatives.join(', ')} (${alternatives[0]} is the main line)`}. Drill this opening in the trainer.`
+            : `You were the first to leave known theory at ${fmtPly(ply)}, after the opening database runs out - that's normal.`
         });
       } else {
         out.items.push({
@@ -366,7 +366,10 @@
       out.items.push({ level: 'good', text: `The whole game stayed within the coach's opening book (${res.legalPlies} plies).` });
     }
 
-    if (facts.castledPly) out.items.push({ level: 'good', text: `You castled on move ${moveNo(facts.castledPly)}.` });
+    if (facts.castledPly) {
+      const late = moveNo(facts.castledPly) > 12;
+      out.items.push({ level: late ? 'info' : 'good', text: `You castled on move ${moveNo(facts.castledPly)}${late ? ' - quite late; aim to castle by move 10 so your king is safe before the fight starts' : ''}.` });
+    }
     else if (facts.moves >= 10) out.items.push({ level: 'warn', text: 'You never castled. In open positions an uncastled king is a frequent reason for losing.' });
     if (facts.developedPly) out.items.push({ level: facts.developedPly <= 24 ? 'good' : 'info', text: `All four minor pieces were developed by move ${moveNo(facts.developedPly)}.` });
     else if (facts.moves >= 12) out.items.push({ level: 'warn', text: 'Some minor pieces never left their starting squares.' });

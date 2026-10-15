@@ -14,7 +14,12 @@ A Chrome/Edge/Brave extension (Manifest V3) that helps you **learn** chess while
   - **My progress**: the openings from your recorded games and the ones where you leave the book first, each with a link to drill it.
   - **Principles**: opening principles and a thinking checklist.
 
-The opening book has 115 hand-written lines: all major 1.e4, 1.d4 and flank openings, from the Italian, Ruy Lopez and Sicilian families to the King's Indian, Nimzo-Indian, London and English. Every line has a summary, plans for both sides and a note on the key move. Positions are matched by placement, so transpositions are recognized.
+The opening book combines two sources:
+
+- **3,865 named lines** from the [lichess chess-openings](https://github.com/lichess-org/chess-openings) data set (public domain / CC0), covering every ECO code with the precise variation names (for example "Ruy Lopez: Berlin Defense, Anti-Berlin Variation").
+- **115 hand-written lines** for the major openings, with a summary, plans for both sides, traps and a note on the key moves. Deeper database lines inherit the plans of the hand-written opening they belong to, and every other book move gets a plain-language explanation.
+
+Positions are matched by placement, so transpositions are recognized.
 
 ## Fair play
 
@@ -54,6 +59,7 @@ No build step is needed. The extension asks only for the `storage` permission an
 npm install          # installs Playwright (only needed for the e2e test)
 npm test             # unit tests: book integrity, explanations, principles, fair-play rules, SRS
 npm run test:e2e     # loads the extension in Chromium against fake chess.com pages
+node scripts/build-opening-db.js   # regenerates src/core/openings-db.js from data/chess-openings/*.tsv
 ```
 
 Project layout:
@@ -63,7 +69,8 @@ manifest.json
 vendor/chess.js            chess.js 1.4.0 (BSD-2), wrapped as a classic script
 assets/pieces/             cburnett piece set (from lichess, BSD/GPL/GFDL)
 src/core/                  site-independent logic (also loaded by the unit tests)
-  openings-data.js         the opening book: lines, notes, plans, traps
+  openings-data.js         hand-written lines: notes, plans, traps
+  openings-db.js           generated from the lichess opening data set (do not edit)
   opening-book.js          position index, transpositions, book continuations
   coach.js                 move explanations, principle tips, loose pieces, review
   fair-play.js             page-type classification and what may be shown
@@ -85,5 +92,6 @@ src/background/            opens the trainer from the panel
 
 ## Third-party code and assets
 
+- Opening names and moves: lichess chess-openings data set, CC0 (see `data/chess-openings/LICENSE.txt`).
 - chess.js 1.4.0 by Jeff Hlywa, BSD-2-Clause (see `vendor/LICENSE-chess.js.txt`).
 - The piece images are the cburnett set by Colin M.L. Burnett, as used by lichess (see `assets/pieces/LICENSE.txt`).

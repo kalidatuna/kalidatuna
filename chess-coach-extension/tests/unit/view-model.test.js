@@ -46,7 +46,7 @@ test('correspondence games show the book but no engine-like help', () => {
 });
 
 test('finished games produce a review and a record only for players', () => {
-  const sans = 'e4 e5 Nf3 Nc6 Bc4 h6 d4';
+  const sans = 'e4 e5 Nf3 Nc6 Bc4 Rb8 d4';
   const spectator = CC.buildViewModel(page({ isGamePage: true, gameOver: true, gameId: 'abcdefgh' }, sans, 'b'), settings, {});
   assert.strictEqual(spectator.ctx.name, 'review');
   assert.ok(spectator.review);
@@ -54,13 +54,13 @@ test('finished games produce a review and a record only for players', () => {
   const player = CC.buildViewModel(page({ isGamePage: true, gameOver: true, isPlayer: true, gameId: 'abcdefgh' }, sans, 'b'), settings, {});
   assert.strictEqual(player.gameRecord.id, 'chess.com:abcdefgh');
   assert.strictEqual(player.gameRecord.leftBookByYou, true);
-  assert.strictEqual(player.gameRecord.leftBookMove, '3...h6');
+  assert.strictEqual(player.gameRecord.leftBookMove, '3...Rb8');
   assert.strictEqual(player.gameRecord.opening.name, 'Italian Game');
 });
 
 test('out-of-book status names who deviated', () => {
-  const vm = CC.buildViewModel(page({ isAnalysis: true }, 'e4 e5 Nf3 Nc6 Bc4 h6 d4'), settings, {});
-  assert.match(vm.bookStatus.text, /Out of book since 3\.\.\.h6 \(opponent\)/);
+  const vm = CC.buildViewModel(page({ isAnalysis: true }, 'e4 e5 Nf3 Nc6 Bc4 Rb8 d4'), settings, {});
+  assert.match(vm.bookStatus.text, /Out of book since 3\.\.\.Rb8 \(opponent\)/);
   assert.strictEqual(vm.continuations, undefined);
 });
 
@@ -84,7 +84,7 @@ test('repertoire prefers drilled lines, then played openings, then defaults', ()
 });
 
 test('the opening coach steps back once the opening is over', () => {
-  const sans = 'e4 e5 Nf3 Nc6 Bc4 h6 d3 a6 Nc3 b6 O-O Bb7';
+  const sans = 'e4 e5 Nf3 Nc6 Bc4 Rb8 d3 a6 Nc3 b6 O-O Bb7';
   const vm = CC.buildViewModel(page({ isGamePage: true, opponentIsComputer: true }, sans), settings, {});
   assert.ok(vm.openingOver);
   assert.strictEqual(vm.openingOver.opening.name, 'Italian Game');

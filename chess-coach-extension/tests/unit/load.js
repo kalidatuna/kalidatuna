@@ -4,6 +4,7 @@ const root = path.join(__dirname, '..', '..');
 for (const f of [
   'vendor/chess.js',
   'src/core/openings-data.js',
+  'src/core/openings-db.js',
   'src/core/opening-book.js',
   'src/core/coach.js',
   'src/core/fair-play.js',

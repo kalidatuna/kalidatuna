@@ -7,7 +7,8 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const colorName = (c) => (c === 'w' ? 'White' : 'Black');
 
-  const lines = book.lines.slice().sort((a, b) => a.moves.localeCompare(b.moves));
+  const lines = book.lines.slice().sort((a, b) => a.sans.join(' ').localeCompare(b.sans.join(' ')) || (a.source === 'curated' ? -1 : 1));
+  const MAX_LIST = 200;
 
   const state = {
     tab: 'learn',
@@ -66,24 +67,28 @@
   function renderList() {
     const q = $('#search').value.trim().toLowerCase();
     const side = $('#filter-side').value;
+    const source = $('#filter-source').value;
     const items = lines.filter((l) => {
+      if (source === 'curated' && l.source !== 'curated' && side !== 'due') return false;
       if (side === 'w' || side === 'b') {
         if (l.side !== side) return false;
       } else if (side === 'due') {
         if (!(state.srs[l.id] && CC.SRS.isDue(state.srs[l.id]))) return false;
       }
       if (!q) return true;
-      return (l.name + ' ' + l.eco + ' ' + l.moves).toLowerCase().includes(q);
+      return (l.name + ' ' + l.eco + ' ' + formatMoves(l.sans) + ' ' + l.sans.join(' ')).toLowerCase().includes(q);
     });
+    const more = items.length > MAX_LIST ? `<li class="muted">Showing ${MAX_LIST} of ${items.length} - type to narrow the list.</li>` : '';
     $('#line-list').innerHTML = items.length
       ? items
+          .slice(0, MAX_LIST)
           .map(
             (l) => `<li data-id="${esc(l.id)}" class="${state.line && state.line.id === l.id ? 'active' : ''}">
               <span class="name">${esc(l.name)} <span class="eco">${esc(l.eco)}</span><span class="sub">${esc(formatMoves(l.sans))}</span></span>
               <span class="badge side">${l.side === 'w' ? 'W' : 'B'}</span>${srsBadge(l)}</li>`
           )
-          .join('')
-      : '<li class="muted">No openings match.</li>';
+          .join('') + more
+      : `<li class="muted">No openings match.${source === 'curated' ? ' Try "Full database".' : ''}</li>`;
     $('#due-info').textContent = dueLines().length ? `${dueLines().length} line(s) due for review.` : 'Nothing due right now - pick any line below to drill it.';
   }
 
@@ -100,15 +105,18 @@
       $('#line-card').innerHTML = '<p class="muted">Choose an opening below.</p>';
       return;
     }
-    const plans = (c) => (l.plans[c] || []).map((p) => `<li>${esc(p)}</li>`).join('');
+    const d = l.source === 'curated' ? l : book.describe(l);
+    const why = d.why || (state.replay && state.replay.moves.length ? noteFor(state.replay.moves.length) : '');
+    const plans = (c) => (d.plans[c] || []).map((p) => `<li>${esc(p)}</li>`).join('');
     $('#line-card').innerHTML = `
       <h2>${esc(l.name)}<span class="eco">${esc(l.eco)}</span></h2>
       <div class="line-moves">${esc(formatMoves(l.sans))}</div>
-      <p>${esc(l.summary || '')}</p>
-      <h3>Key idea of the last move</h3><p>${esc(l.why || '')}</p>
-      ${l.plans.w && l.plans.w.length ? `<h3>Plans for White</h3><ul>${plans('w')}</ul>` : ''}
-      ${l.plans.b && l.plans.b.length ? `<h3>Plans for Black</h3><ul>${plans('b')}</ul>` : ''}
-      ${l.traps.length ? `<h3>Traps &amp; pitfalls</h3><ul class="traps">${l.traps.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+      ${d.family ? `<p class="muted">Ideas from the parent opening, the ${esc(d.family)}.</p>` : ''}
+      <p>${esc(d.summary || '')}</p>
+      <h3>Key idea of the last move</h3><p>${esc(why || '')}</p>
+      ${d.plans.w && d.plans.w.length ? `<h3>Plans for White</h3><ul>${plans('w')}</ul>` : ''}
+      ${d.plans.b && d.plans.b.length ? `<h3>Plans for Black</h3><ul>${plans('b')}</ul>` : ''}
+      ${d.traps && d.traps.length ? `<h3>Traps &amp; pitfalls</h3><ul class="traps">${d.traps.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
       <div class="row" style="margin-top:12px"><button class="primary" data-act="drill-this">Drill this line</button></div>`;
   }
 
@@ -337,6 +345,7 @@
     const line = book.byId.get(id);
     if (!line) return;
     state.line = line;
+    if (line.source !== 'curated') $('#filter-source').value = 'all';
     state.replay = replayLine(line);
     state.drill = null;
     if (opts && opts.color) $('#drill-color').value = opts.color;
@@ -395,6 +404,7 @@
   });
   $('#search').addEventListener('input', renderList);
   $('#filter-side').addEventListener('change', renderList);
+  $('#filter-source').addEventListener('change', renderList);
   $('#drill-color').addEventListener('change', () => state.tab === 'drill' && state.line && startDrill());
   $('#btn-start').addEventListener('click', () => goTo(0));
   $('#btn-prev').addEventListener('click', () => goTo(state.ply - 1));

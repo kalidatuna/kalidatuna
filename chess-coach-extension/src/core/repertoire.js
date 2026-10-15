@@ -24,7 +24,7 @@
     const played = {};
     for (const g of games) if (g.opening && g.opening.id) played[g.opening.id] = (played[g.opening.id] || 0) + 1;
     return SLOTS.map((slot) => {
-      const candidates = book.lines.filter(slot.test);
+      const candidates = (book.curatedLines || book.lines).filter(slot.test);
       const drilled = candidates
         .filter((l) => srs[l.id] && srs[l.id].reps > 0)
         .sort((a, b) => srs[b.id].reps - srs[a.id].reps || b.sans.length - a.sans.length)[0];
