@@ -1,27 +1,52 @@
-# Hi, I'm Datuna
+![Datuna Jamburia. Websites and automation.](assets/profile-banner.svg)
 
-I work on software engineering, automation, and open-source development, with a focus on Python and JavaScript tools.
+### I build websites and tools that make everyday work easier.
 
-## Selected projects
+I'm **Datuna**, a developer focused on business websites, Python automation, and JavaScript integrations. I help turn a clear project brief into working software with documented setup and checks.
 
-| Project | What it does | Current scope |
-| --- | --- | --- |
-| [Offline Toolbox](https://github.com/kalidatuna/offline-toolbox) | Provides 17 Python command-line utilities and 8 browser tools for everyday file, text, and data tasks. | Python tools use the standard library; browser tools are standalone HTML files. Most tools work offline; `sitecheck` makes network requests. |
-| [Git Worklog](https://github.com/kalidatuna/git-worklog) | Turns local Git history into Markdown or JSON work summaries, grouped by UTC day and author. | Dependency-free Python CLI; reads local history and skips merge commits by default. |
-| [Invoice Validation for n8n](https://github.com/kalidatuna/n8n-invoice-validation-sample) | Checks extracted invoice fields, exact decimal totals, dates, and duplicates before human review. | Synthetic demonstration with local tests and an inactive example workflow; every result requires human review. |
-| [PDF Print Preflight](https://github.com/kalidatuna/pdf-print-check-sample) | Reports embedded-image resolution and possible gray page borders in a PDF. | Read-only Python diagnostic using Poppler; flags need human review and do not repair the document. |
-| [Bounty Scout](https://github.com/kalidatuna/bounty-scout) | Summarizes GitHub issues, repository activity, and linked pull requests to help review development opportunities. | Command-line prototype with a heuristic score; reward terms require manual verification. |
-| [RGBlink VUE / Companion PoC](https://github.com/kalidatuna/rgblink-vue-companion-poc) | Generates VISCA camera commands and exposes actions through a Bitfocus Companion module skeleton. | Offline packet and action tests; live camera transport remains unverified. |
-| [DeyeCloud EMS PoC](https://github.com/kalidatuna/deyecloud-ems-poc) | Provides station discovery, telemetry, and explicit opt-in control requests for DeyeCloud. | Diagnostic prototype with fake-transport tests; deployment requires device-specific validation. |
+**[Discuss your project](mailto:jamburiawork@gmail.com)** · [Browse my work](#selected-work) · [Project details](WORK_WITH_ME.md)
 
-## Current focus
+## What I can help you build
 
-- Practical developer automation and tools for reviewing open-source issues.
-- Small, testable integrations with clear examples and documented limitations.
-- Python and JavaScript projects that make external services easier to inspect and use.
+| Your project | What I can deliver |
+| --- | --- |
+| **A website for your business** | Responsive landing pages and business sites with clear services, mobile navigation, and contact links. |
+| **Less repetitive data work** | Python tools for CSV, Excel, PDF, file processing, validation, and reporting. |
+| **Connected tools and workflows** | JavaScript integrations, API connections, and n8n workflows with explicit error handling. |
+| **A focused fix to an existing project** | Reproducible bug fixes, regression checks, clearer documentation, and handoff notes. |
 
-## Contributions
+## Selected work
 
-I contribute through documentation improvements, reproducible issue reports, and small code changes that improve project clarity and reliability.
+### Business website · Design and implementation
 
-Each repository documents its setup, validation steps, and remaining work. For project-specific questions or reproducible bug reports, use that repository's issue tracker.
+[![Alder and Finch business website preview](https://raw.githubusercontent.com/kalidatuna/small-business-site-sample/main/preview-desktop.png)](https://github.com/kalidatuna/small-business-site-sample)
+
+**[Explore the website sample →](https://github.com/kalidatuna/small-business-site-sample)**
+
+A four-page HTML/CSS website covering Home, About, Services, and Contact. Includes mobile layouts, keyboard navigation, visible focus states, and reduced-motion support. The repository includes desktop and mobile previews plus recorded browser checks at 360, 768, and 1440 pixels. Alder & Finch is a fictional business used for this portfolio sample.
+
+### Automation and developer tools
+
+| Project | What you can inspect |
+| --- | --- |
+| **[Offline Toolbox](https://github.com/kalidatuna/offline-toolbox)** | Python utilities and browser tools for file, text, and data tasks. Includes usage instructions, tests, and CI. Most tools run locally without uploads. |
+| **[Invoice Validation for n8n](https://github.com/kalidatuna/n8n-invoice-validation-sample)** | A workflow demonstration that checks invoice fields, dates, decimal totals, and duplicates before human review. Includes synthetic inputs, generated workflow files, and 26 documented tests. |
+| **[Git Worklog](https://github.com/kalidatuna/git-worklog)** | A Python CLI that turns local Git history into Markdown or JSON work summaries, grouped by UTC day and author. |
+| **[CSV Model Check](https://github.com/kalidatuna/csv-model-check)** | A Python validator for two related educational geometry tables. Preserves text IDs and reports malformed rows, missing references, and invalid coordinates as JSON. |
+
+The invoice workflow and geometry checker are independent demonstrations. Each repository explains its scope, setup, and limitations.
+
+## How we'll work
+
+1. **Define the result.** Share the problem, existing site or files, and what success should look like.
+2. **Agree on scope.** Set the deliverables, price, and timeline before implementation.
+3. **Build and verify.** Review the working result with checks appropriate to the project.
+4. **Hand it over.** Receive the agreed files, setup instructions, and a summary of what changed.
+
+**Core tools:** Python · JavaScript · HTML/CSS · Git · n8n
+
+## Have a project in mind?
+
+Email **[jamburiawork@gmail.com](mailto:jamburiawork@gmail.com)** with your website or project link, the result you need, and your budget and deadline if you have them.
+
+Available for remote freelance projects and agency implementation work.
