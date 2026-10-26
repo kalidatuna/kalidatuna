@@ -1,0 +1,15 @@
+{
+  "name": "iapi",
+  "version": "1.0.0",
+  "description": "Find the cheapest fast-food items and best deals in Georgia (McDonald's, Wendy's, Subway and more).",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node src/server.js",
+    "refresh": "node scripts/refresh.js",
+    "reclassify": "node scripts/reclassify.js",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "license": "MIT"
+}

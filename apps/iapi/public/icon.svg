@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#0f766e"/>
+  <path d="M14 30h36a0 0 0 0 1 0 0c0-9-8-16-18-16S14 21 14 30Z" fill="#fbbf24"/>
+  <rect x="12" y="33" width="40" height="5" rx="2.5" fill="#16a34a"/>
+  <rect x="13" y="40" width="38" height="6" rx="3" fill="#7c2d12"/>
+  <path d="M14 49h36c0 3-2 5-5 5H19c-3 0-5-2-5-5Z" fill="#fbbf24"/>
+  <circle cx="48" cy="16" r="11" fill="#dc2626"/>
+  <text x="48" y="20.5" font-family="system-ui,sans-serif" font-size="12" font-weight="800" fill="#fff" text-anchor="middle">₾</text>
+</svg>

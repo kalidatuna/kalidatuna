@@ -1,0 +1,28 @@
+{
+  "cities": [
+    { "slug": "tbilisi", "name": "Tbilisi", "nameKa": "თბილისი", "lat": 41.7151, "lon": 44.8271 },
+    { "slug": "batumi", "name": "Batumi", "nameKa": "ბათუმი", "lat": 41.6168, "lon": 41.6367 },
+    { "slug": "kutaisi", "name": "Kutaisi", "nameKa": "ქუთაისი", "lat": 42.2679, "lon": 42.6946 },
+    { "slug": "rustavi", "name": "Rustavi", "nameKa": "რუსთავი", "lat": 41.5495, "lon": 44.9932 },
+    { "slug": "zugdidi", "name": "Zugdidi", "nameKa": "ზუგდიდი", "lat": 42.5088, "lon": 41.8709 },
+    { "slug": "gori", "name": "Gori", "nameKa": "გორი", "lat": 41.9842, "lon": 44.1158 }
+  ],
+  "brands": [
+    { "slug": "mcdonalds", "name": "McDonald's", "color": "#ffc72c" },
+    { "slug": "wendys", "name": "Wendy's", "color": "#e2203d" },
+    { "slug": "wendys-chicken", "name": "Wendy's Chicken", "color": "#c8102e" },
+    { "slug": "wendys-pizza", "name": "Wendy's Pizza", "color": "#a50f25" },
+    { "slug": "burger-king", "name": "Burger King", "color": "#d62300" },
+    { "slug": "subway", "name": "Subway", "color": "#008938" },
+    { "slug": "dominos-pizza", "name": "Domino's", "color": "#006491" },
+    { "slug": "pizza-hut", "name": "Pizza Hut", "color": "#ee3124" },
+    { "slug": "dunkin", "name": "Dunkin'", "color": "#ff671f" },
+    { "slug": "shaurma-club", "name": "Shaurma Club", "color": "#7a4b2a" },
+    { "slug": "kfc", "name": "KFC", "color": "#a3080c" }
+  ],
+  "crawl": {
+    "delayMs": 700,
+    "maxVenuesPerBrandPerCity": 0,
+    "languages": ["en", "ka"]
+  }
+}

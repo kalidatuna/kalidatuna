@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Iapi · Cheap Eats Georgia</title>
+  <meta name="description" content="Find the cheapest fast-food items and best deals in Georgia: McDonald's, Wendy's, Subway, Domino's and more.">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brandmark">
+      <img src="icon.svg" alt="" width="32" height="32">
+      <div>
+        <h1>Iapi <span lang="ka">იაფი</span></h1>
+        <p class="tagline" data-i18n="tagline">Cheapest fast food in Georgia</p>
+      </div>
+    </div>
+    <div class="topbar-controls">
+      <label class="visually-hidden" for="city" data-i18n="city">City</label>
+      <select id="city"></select>
+      <button id="lang" class="ghost" type="button" aria-label="Switch language">ქა</button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="deals" aria-selected="true"><span aria-hidden="true">🔥</span><span data-i18n="tabDeals">Deals</span></button>
+    <button role="tab" data-tab="budget" aria-selected="false"><span aria-hidden="true">💰</span><span data-i18n="tabBudget">Budget</span></button>
+    <button role="tab" data-tab="branches" aria-selected="false"><span aria-hidden="true">📍</span><span data-i18n="tabBranches">Branches</span></button>
+    <button role="tab" data-tab="saved" aria-selected="false"><span aria-hidden="true">♥</span><span data-i18n="tabSaved">Saved</span></button>
+  </nav>
+
+  <main>
+    <section id="view-deals" class="view" role="tabpanel">
+      <div id="highlights" class="highlights"></div>
+      <div class="filters">
+        <input id="q" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search: burger, cola, nuggets…" autocomplete="off">
+        <div id="brand-chips" class="chips" aria-label="Brands"></div>
+        <div id="kind-chips" class="chips" aria-label="Item type"></div>
+        <div class="filter-row">
+          <label class="range">
+            <span data-i18n="maxPrice">Max price</span>
+            <input id="max" type="range" min="1" max="60" step="1" value="60">
+            <output id="max-out">any</output>
+          </label>
+          <label class="toggle"><input id="discounted" type="checkbox"> <span data-i18n="onlyDeals">Only discounts &amp; price drops</span></label>
+        </div>
+        <div class="filter-row">
+          <label><span data-i18n="sortBy">Sort</span>
+            <select id="sort">
+              <option value="price" data-i18n="sortPrice">Cheapest first</option>
+              <option value="discount" data-i18n="sortDiscount">Biggest discount</option>
+              <option value="savings" data-i18n="sortSavings">Most saved at cheapest branch</option>
+              <option value="drop" data-i18n="sortDrop">Recent price drops</option>
+              <option value="distance" data-i18n="sortDistance">Nearest branch</option>
+            </select>
+          </label>
+          <button id="locate" class="ghost" type="button"><span aria-hidden="true">📍</span> <span data-i18n="nearMe">Near me</span></button>
+        </div>
+      </div>
+      <p id="deals-count" class="muted" aria-live="polite"></p>
+      <div id="deals" class="grid"></div>
+      <button id="more" class="primary wide" type="button" hidden data-i18n="loadMore">Show more</button>
+    </section>
+
+    <section id="view-budget" class="view" role="tabpanel" hidden>
+      <form id="budget-form" class="budget-form">
+        <label for="budget" data-i18n="budgetQuestion">How much do you want to spend?</label>
+        <div class="budget-input">
+          <input id="budget" type="number" min="1" max="200" step="0.5" value="10" inputmode="decimal">
+          <span>₾</span>
+          <button class="primary" type="submit" data-i18n="find">Find meals</button>
+        </div>
+        <div class="chips" id="budget-quick"></div>
+        <p class="muted small" data-i18n="budgetHint">A full meal is a combo, or a main + side + drink from the same branch.</p>
+      </form>
+      <div id="budget-results" class="stack"></div>
+    </section>
+
+    <section id="view-branches" class="view" role="tabpanel" hidden>
+      <div class="filters">
+        <div id="branch-brand-chips" class="chips"></div>
+        <div class="filter-row">
+          <label class="toggle"><input id="promo-only" type="checkbox"> <span data-i18n="promoOnly">Only branches with promotions</span></label>
+          <button id="locate2" class="ghost" type="button"><span aria-hidden="true">📍</span> <span data-i18n="nearMe">Near me</span></button>
+        </div>
+      </div>
+      <p id="branches-count" class="muted" aria-live="polite"></p>
+      <div id="branches" class="stack"></div>
+    </section>
+
+    <section id="view-saved" class="view" role="tabpanel" hidden>
+      <p class="muted" data-i18n="savedHint">Tap ♥ on any item to track its price here.</p>
+      <div id="saved" class="grid"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p id="updated" class="muted small"></p>
+    <p class="muted small" data-i18n="disclaimer">Prices come from Wolt delivery menus. In-store prices can be lower, and promotions may need a minimum order.</p>
+  </footer>
+
+  <dialog id="detail" aria-labelledby="detail-title">
+    <div class="dialog-body">
+      <button class="close ghost" type="button" aria-label="Close" data-close>✕</button>
+      <div id="detail-content"></div>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script src="app.js" type="module"></script>
+</body>
+</html>
