@@ -4,7 +4,7 @@
 
 I'm **Datuna**, a developer focused on business websites, Python automation, and JavaScript integrations. I help turn a clear project brief into working software with documented setup and checks.
 
-**[Discuss your project](mailto:jamburiawork@gmail.com)** · [Browse my work](#selected-work) · [Project details](WORK_WITH_ME.md)
+**[Discuss your project](mailto:jamburiawork@gmail.com)** · [Browse my work](#selected-work) · [Read my writing](articles/README.md) · [Project details](WORK_WITH_ME.md)
 
 ## What I can help you build
 
