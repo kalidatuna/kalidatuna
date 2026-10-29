@@ -40,4 +40,4 @@ curl -X POST http://localhost:5678/webhook/demo-payment-event \
 
 The demos use n8n workflow static data so they can run without external credentials. For real concurrent production workloads, replace that demo state with durable storage that enforces a unique key, such as PostgreSQL, Redis with an atomic claim, or a CRM/database field with a uniqueness constraint. Downstream APIs should receive their own stable idempotency keys when they support them.
 
-The design rationale is described in [Idempotent Webhooks Without Duplicate Side Effects](../articles/idempotent-webhooks.md).
+The design rationale is described in [Idempotent Webhooks Without Duplicate Side Effects](../../articles/idempotent-webhooks.md).
