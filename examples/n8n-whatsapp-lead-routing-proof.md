@@ -100,3 +100,8 @@ return [{
 - The delivered workflow includes an export plus short handoff notes describing credentials, environment variables, and retry behavior.
 
 For an actual client build, provider payloads, credentials, CRM fields, approved message templates, and retention rules would be confirmed before implementation.
+
+## Related
+
+- [Retry-safe n8n workflow samples](../workflows/n8n/README.md) show the deduplication step as importable workflows.
+- [Idempotent Webhooks Without Duplicate Side Effects](../articles/idempotent-webhooks.md) explains why the dedupe key and side-effect keys are separate.
