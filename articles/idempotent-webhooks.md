@@ -308,3 +308,8 @@ You get close to that by combining:
 - replayable state
 
 That design is simple enough for a small integration and strong enough to prevent the duplicate invoices, duplicate emails, and duplicate CRM records that make automation unreliable.
+
+## Try it
+
+- [Retry-safe n8n workflow samples](../workflows/n8n/README.md) implement event deduplication and stable side-effect keys without external credentials.
+- [Why webhook retries send duplicate emails](idempotent-webhook-retries.md) is a shorter walkthrough with a runnable Python reproduction.
