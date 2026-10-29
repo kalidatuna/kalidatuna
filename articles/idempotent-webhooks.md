@@ -8,6 +8,19 @@ The practical goal is not "process every HTTP request once." That is usually imp
 
 This article shows a small design that works for common automation stacks such as Node.js services, n8n-style workflows, Make scenarios, and queue workers.
 
+## Contents
+
+- [1. Give every business event a stable identity](#1-give-every-business-event-a-stable-identity)
+- [2. Acknowledge only after durable capture](#2-acknowledge-only-after-durable-capture)
+- [3. Separate event deduplication from side-effect deduplication](#3-separate-event-deduplication-from-side-effect-deduplication)
+- [4. Treat timeouts as "unknown," not "failed"](#4-treat-timeouts-as-unknown-not-failed)
+- [5. Make retries selective](#5-make-retries-selective)
+- [6. Keep the worker transaction small](#6-keep-the-worker-transaction-small)
+- [7. Design for replay from day one](#7-design-for-replay-from-day-one)
+- [8. Example: lead form to CRM and email](#8-example-lead-form-to-crm-and-email)
+- [9. Tests that catch the expensive bugs](#9-tests-that-catch-the-expensive-bugs)
+- [A practical rule](#a-practical-rule)
+
 ## 1. Give every business event a stable identity
 
 Do not deduplicate on request time, payload hash alone, or a random ID you generate after receiving the webhook.
