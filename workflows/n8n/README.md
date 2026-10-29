@@ -10,12 +10,12 @@ Flow:
 
 `Webhook -> normalize fields -> build stable operation key -> suppress duplicate delivery -> prepare CRM upsert/follow-up payload -> respond`
 
-Example request after importing and activating the workflow:
+Example request after importing and activating the workflow, run from this folder ([payload](payloads/lead.json)):
 
 ```bash
 curl -X POST http://localhost:5678/webhook/demo-lead-intake \
   -H 'content-type: application/json' \
-  -d '{"lead_id":"lead_42","email":"Alice@Example.com","name":"Alice","company":"Acme","source":"landing-page"}'
+  -d @payloads/lead.json
 ```
 
 Send the same event twice. The first response reports `status: accepted`; the next reports `status: duplicate`.
@@ -28,12 +28,12 @@ Flow:
 
 `Webhook -> validate event -> dedupe by provider event ID -> prepare accounting update -> prepare stable receipt idempotency key -> respond`
 
-Example:
+Example, run from this folder ([payload](payloads/payment-paid.json)):
 
 ```bash
 curl -X POST http://localhost:5678/webhook/demo-payment-event \
   -H 'content-type: application/json' \
-  -d '{"event_id":"evt_1001","invoice_id":"inv_77","status":"paid","amount":12500,"currency":"USD","customer_email":"alice@example.com"}'
+  -d @payloads/payment-paid.json
 ```
 
 ## Production note
