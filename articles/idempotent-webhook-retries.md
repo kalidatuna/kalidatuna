@@ -8,6 +8,16 @@ That assumption is unsafe.
 
 Webhook providers retry. Queues redeliver. HTTP clients time out after the server already accepted a request. Workers crash between two writes. Someone presses "retry" in an automation tool. If the workflow has a side effect and no idempotency boundary, every retry can perform the side effect again.
 
+## Contents
+
+- [The common fix that still races](#the-common-fix-that-still-races)
+- [I claim the event before doing the side effect](#i-claim-the-event-before-doing-the-side-effect)
+- [A boolean "processed" flag is too weak](#a-boolean-processed-flag-is-too-weak)
+- [The provider request ID should be stored](#the-provider-request-id-should-be-stored)
+- [The idempotency key should describe intent](#the-idempotency-key-should-describe-intent)
+- [Automation tools still need a durable store](#automation-tools-still-need-a-durable-store)
+- [What I test before calling the workflow done](#what-i-test-before-calling-the-workflow-done)
+
 I built a small reproduction to make the failure obvious. I created 10 unique lead events and delivered the same set five times, simulating retries.
 
 The naive handler sent 50 emails. The idempotent handler sent 10.
