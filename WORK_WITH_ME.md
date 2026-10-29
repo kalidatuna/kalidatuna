@@ -11,6 +11,10 @@ I build business websites, Python utilities, and JavaScript integrations. Contac
 | Workflow integrations | Connect APIs or add a validation step to an n8n workflow using agreed sample data. | [Invoice validation demonstration](https://github.com/kalidatuna/n8n-invoice-validation-sample) |
 | Existing project fixes | Reproduce a specific issue, implement a bounded repair, and verify the result. | [Public repositories](https://github.com/kalidatuna?tab=repositories) |
 
+## How I approach automation
+
+Before taking on integration work, you can read how I handle retries and duplicate events in [Idempotent Webhooks Without Duplicate Side Effects](articles/idempotent-webhooks.md), or import the [n8n workflow samples](workflows/n8n/README.md) and run them locally.
+
 ## Send a useful project brief
 
 Copy these prompts into an email:
