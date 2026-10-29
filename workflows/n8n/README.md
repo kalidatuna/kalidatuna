@@ -2,6 +2,15 @@
 
 These are small, credential-free workflow samples for showing implementation style. They are demos, not claims of client deployment.
 
+## Import a sample
+
+1. Start n8n locally, for example with `npx n8n` or the official Docker image.
+2. In the editor, create a workflow and choose **Import from File**.
+3. Select one of the JSON files in this folder.
+4. Activate the workflow so its production webhook URL (`/webhook/...`) is registered.
+
+No credentials are required. Each workflow keeps its demo state in workflow static data.
+
 ## 1. Retry-safe lead intake
 
 File: `lead-intake-retry-safe.json`
