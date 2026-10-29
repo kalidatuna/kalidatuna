@@ -45,6 +45,16 @@ curl -X POST http://localhost:5678/webhook/demo-payment-event \
   -d @payloads/payment-paid.json
 ```
 
+## Validate locally
+
+From the repository root:
+
+```bash
+make check
+```
+
+This runs the unit tests, checks that each workflow export has the expected node fields and valid connections, confirms the sample payloads are valid JSON, and checks Markdown links.
+
 ## Production note
 
 The demos use n8n workflow static data so they can run without external credentials. For real concurrent production workloads, replace that demo state with durable storage that enforces a unique key, such as PostgreSQL, Redis with an atomic claim, or a CRM/database field with a uniqueness constraint. Downstream APIs should receive their own stable idempotency keys when they support them.
