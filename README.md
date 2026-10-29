@@ -36,6 +36,12 @@ A four-page HTML/CSS website covering Home, About, Services, and Contact. Includ
 
 The invoice workflow and geometry checker are independent demonstrations. Each repository explains its scope, setup, and limitations.
 
+## Writing and workflow samples
+
+- **[Articles](articles/README.md)**: technical writing on idempotent webhooks and retry-safe automation.
+- **[n8n workflow samples](workflows/n8n/README.md)**: credential-free workflows you can import and run locally.
+- **[Architecture examples](examples/README.md)**: synthetic write-ups such as WhatsApp lead routing.
+
 ## How we'll work
 
 1. **Define the result.** Share the problem, existing site or files, and what success should look like.
