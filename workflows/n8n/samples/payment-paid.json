@@ -1,0 +1,8 @@
+{
+  "event_id": "evt_1001",
+  "invoice_id": "inv_77",
+  "status": "paid",
+  "amount": 12500,
+  "currency": "USD",
+  "customer_email": "alice@example.com"
+}
