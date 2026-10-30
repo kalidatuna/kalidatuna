@@ -54,6 +54,16 @@ curl -X POST http://localhost:5678/webhook/demo-payment-event \
 
 Or send [`samples/payment-paid.json`](samples/payment-paid.json) with `--data @samples/payment-paid.json`.
 
+Expected behaviour:
+
+| Request | Response |
+| --- | --- |
+| First delivery of `evt_1001` | `ok: true`, `duplicate: false`, plus `accountingUpdate` and a `receiptRequest` keyed `receipt:inv_77` |
+| Repeat delivery of `evt_1001` | `ok: true`, `duplicate: true`, with the original `firstProcessedAt` timestamp |
+| [`samples/payment-invalid.json`](samples/payment-invalid.json) (no `invoice_id`) | `ok: false`, `status: invalid` |
+
+A `receiptRequest` is only prepared when `status` is `paid`.
+
 ## Production note
 
 The demos use n8n workflow static data so they can run without external credentials. For real concurrent production workloads, replace that demo state with durable storage that enforces a unique key, such as PostgreSQL, Redis with an atomic claim, or a CRM/database field with a uniqueness constraint. Downstream APIs should receive their own stable idempotency keys when they support them.
