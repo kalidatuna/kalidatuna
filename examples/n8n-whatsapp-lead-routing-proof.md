@@ -100,3 +100,8 @@ return [{
 - The delivered workflow includes an export plus short handoff notes describing credentials, environment variables, and retry behavior.
 
 For an actual client build, provider payloads, credentials, CRM fields, approved message templates, and retention rules would be confirmed before implementation.
+
+## Related
+
+- [Retry-safe lead intake workflow](../workflows/n8n/README.md#1-retry-safe-lead-intake) applies the same normalize-then-dedupe step in an importable n8n export.
+- [Idempotent Webhooks Without Duplicate Side Effects](../articles/idempotent-webhooks.md) explains why the idempotency key must stay stable across retries.
