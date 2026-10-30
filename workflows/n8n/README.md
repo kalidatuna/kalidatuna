@@ -2,6 +2,14 @@
 
 These are small, credential-free workflow samples for showing implementation style. They are demos, not claims of client deployment.
 
+## Importing a sample
+
+1. In n8n, open **Workflows → Import from File** and choose one of the `.json` files in this folder.
+2. Save the workflow and toggle it to **Active** so the production webhook URL is registered.
+3. Send a request with `curl` as shown below. Test webhook URLs use `/webhook-test/` instead of `/webhook/`.
+
+No credentials are required; state is kept in workflow static data.
+
 ## 1. Retry-safe lead intake
 
 File: `lead-intake-retry-safe.json`
