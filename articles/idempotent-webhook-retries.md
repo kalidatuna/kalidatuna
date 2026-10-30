@@ -207,3 +207,8 @@ The goal is not "the happy path works."
 The goal is that retries change the result only when I intend them to.
 
 For this reproduction, five deliveries of each of 10 unique events produced 50 side effects in the naive handler and 10 in the idempotent handler. That tiny test captures the core failure mode. The production design is about preserving that property when concurrency, crashes, and external APIs make the timing messy.
+
+## Related reading
+
+- [Idempotent Webhooks Without Duplicate Side Effects](idempotent-webhooks.md) covers the full design, including durable capture, reconciliation, and replay.
+- The [n8n samples](../workflows/n8n/README.md) show these patterns in importable workflows.

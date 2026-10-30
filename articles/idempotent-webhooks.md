@@ -295,3 +295,8 @@ You get close to that by combining:
 - replayable state
 
 That design is simple enough for a small integration and strong enough to prevent the duplicate invoices, duplicate emails, and duplicate CRM records that make automation unreliable.
+
+## Related reading
+
+- [Why webhook retries send duplicate emails, and how I make the workflow idempotent](idempotent-webhook-retries.md) walks through a small reproduction of the failure.
+- The [n8n samples](../workflows/n8n/README.md) show these patterns in importable workflows.
