@@ -26,6 +26,14 @@ curl -X POST http://localhost:5678/webhook/demo-lead-intake \
   -d '{"lead_id":"lead_42","email":"Alice@Example.com","name":"Alice","company":"Acme","source":"landing-page"}'
 ```
 
+The same payload is available as [`samples/lead.json`](samples/lead.json):
+
+```bash
+curl -X POST http://localhost:5678/webhook/demo-lead-intake \
+  -H 'content-type: application/json' \
+  --data @samples/lead.json
+```
+
 Send the same event twice. The first response reports `status: accepted`; the next reports `status: duplicate`.
 
 ## 2. Idempotent payment event
@@ -43,6 +51,8 @@ curl -X POST http://localhost:5678/webhook/demo-payment-event \
   -H 'content-type: application/json' \
   -d '{"event_id":"evt_1001","invoice_id":"inv_77","status":"paid","amount":12500,"currency":"USD","customer_email":"alice@example.com"}'
 ```
+
+Or send [`samples/payment-paid.json`](samples/payment-paid.json) with `--data @samples/payment-paid.json`.
 
 ## Production note
 
