@@ -6,6 +6,20 @@ I'm **Datuna**, a developer focused on business websites, Python automation, and
 
 **[Discuss your project](mailto:jamburiawork@gmail.com)** · [Browse my work](#selected-work) · [Project details](WORK_WITH_ME.md)
 
+## Small, fixed-price website and automation fixes
+
+I take on **single, testable problems** for small businesses and developers. You get a short written scope and acceptance check before any work starts.
+
+| Starting price | Example deliverable |
+| --- | --- |
+| **$49** | Fix one broken link, button, responsive layout, or contact-form setting, and verify the result. |
+| **$99** | Repair a specific booking/contact flow, or clean and validate one small CSV/Excel processing task. |
+| **$149** | Connect or repair one bounded API/webhook or n8n automation step, with a reproducible test and handoff. |
+
+These are **starting prices, not automatic quotes**. Final cost and delivery date depend on access, complexity, and agreed checks. I don't need passwords or private data for the initial discussion.
+
+**Have a broken flow or repetitive task?** [Email me the URL, expected result, and budget](mailto:jamburiawork@gmail.com?subject=One-off%20website%20or%20automation%20fix). I can review whether it fits a small fixed-price scope.
+
 ## What I can help you build
 
 | Your project | What I can deliver |
