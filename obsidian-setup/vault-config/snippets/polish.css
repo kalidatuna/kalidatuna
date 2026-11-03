@@ -1,0 +1,97 @@
+/* polish.css - small refinements on top of the Minimal theme.
+   Uses only Obsidian/Minimal CSS variables, so it follows light/dark
+   mode and whatever color scheme you pick in Style Settings. */
+
+body {
+  /* Rounder, softer corners everywhere */
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 14px;
+
+  /* Slightly more generous reading width and line height */
+  --line-height-normal: 1.65;
+  --file-line-width: 44rem;
+}
+
+/* Thin, quiet scrollbars */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background-color: var(--background-modifier-border);
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-faint);
+  background-clip: content-box;
+}
+
+/* Callouts: soft card look */
+.callout {
+  border-radius: var(--radius-l);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  padding: 0.85em 1.1em;
+}
+.callout-title { font-weight: 600; }
+
+/* Code blocks and inline code */
+.markdown-rendered pre,
+.cm-s-obsidian .HyperMD-codeblock-bg {
+  border-radius: var(--radius-m);
+}
+.markdown-rendered code {
+  border-radius: var(--radius-s);
+  padding: 0.1em 0.35em;
+}
+
+/* Tags as soft pills */
+a.tag, .cm-hashtag {
+  border-radius: 999px;
+  padding: 0.1em 0.65em;
+  background-color: var(--background-secondary);
+  color: var(--text-accent);
+  font-size: 0.85em;
+  text-decoration: none;
+}
+
+/* Images and embeds */
+.markdown-rendered img,
+.internal-embed .markdown-embed {
+  border-radius: var(--radius-m);
+}
+
+/* Blockquotes: accent bar, gentle tint */
+.markdown-rendered blockquote {
+  border-left: 3px solid var(--text-accent);
+  background: var(--background-secondary);
+  border-radius: 0 var(--radius-m) var(--radius-m) 0;
+  padding: 0.4em 1em;
+}
+
+/* Headings: tighter, a little more presence */
+.markdown-rendered h1, .markdown-rendered h2, .markdown-rendered h3 {
+  letter-spacing: -0.01em;
+}
+.markdown-rendered h2 {
+  border-bottom: 1px solid var(--background-modifier-border);
+  padding-bottom: 0.2em;
+}
+
+/* Links: subtle underline that strengthens on hover */
+.markdown-rendered a.internal-link {
+  text-decoration-color: var(--background-modifier-border-hover);
+  text-underline-offset: 3px;
+}
+.markdown-rendered a.internal-link:hover {
+  text-decoration-color: var(--text-accent);
+}
+
+/* Tables: rounded outer border */
+.markdown-rendered table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+}

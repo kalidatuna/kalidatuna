@@ -1,0 +1,7 @@
+{
+  "cssTheme": "Minimal",
+  "theme": "system",
+  "enabledCssSnippets": ["polish"],
+  "baseFontSize": 16,
+  "translucency": false
+}
