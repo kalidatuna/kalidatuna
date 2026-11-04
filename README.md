@@ -1,66 +1,35 @@
-![Datuna Jamburia. Websites and automation.](assets/profile-banner.svg)
+![Datuna Jamburia. Websites, automation, and developer tools.](https://raw.githubusercontent.com/kalidatuna/kalidatuna/main/assets/profile-banner.svg)
 
-### I build websites and tools that make everyday work easier.
+I build business websites, Python tools, and JavaScript integrations. My projects focus on practical problems, with source code, setup instructions, and checks you can inspect.
 
-I'm **Datuna**, a developer focused on business websites, Python automation, and JavaScript integrations. I help turn a clear project brief into working software with documented setup and checks.
+**[Email](mailto:jamburiawork@gmail.com)** · [Selected projects](#selected-projects) · [All repositories](https://github.com/kalidatuna?tab=repositories)
 
-**[Discuss your project](mailto:jamburiawork@gmail.com)** · [Browse my work](#selected-work) · [Project details](WORK_WITH_ME.md)
+## Selected projects
 
-## Small, fixed-price website and automation fixes
+| Project | What it does | Built with |
+| :--- | :--- | :--- |
+| **[Business website](https://github.com/kalidatuna/small-business-site-sample)** | Four-page portfolio sample for a fictional business. Responsive layouts, keyboard navigation, and desktop/mobile previews. | `HTML` `CSS` |
+| **[Invoice validation](https://github.com/kalidatuna/n8n-invoice-validation-sample)** | Checks invoice fields, dates, totals, and duplicates before human review. Synthetic data and 26 documented tests. | `JavaScript` `n8n` |
+| **[dotenv-lint](https://github.com/kalidatuna/dotenv-lint)** | Finds syntax errors, duplicate keys, and missing configuration keys. No runtime dependencies, with JSON output and pre-commit support. | `Python` `CLI` |
+| **[Git Worklog](https://github.com/kalidatuna/git-worklog)** | Turns local Git history into Markdown or JSON work summaries, with date and author filters. | `Python` `Git` |
 
-I take on **single, testable problems** for small businesses and developers. You get a short written scope and acceptance check before any work starts.
+<details>
+<summary>Preview the business website</summary>
 
-| Starting price | Example deliverable |
-| --- | --- |
-| **$49** | Fix one broken link, button, responsive layout, or contact-form setting, and verify the result. |
-| **$99** | Repair a specific booking/contact flow, or clean and validate one small CSV/Excel processing task. |
-| **$149** | Connect or repair one bounded API/webhook or n8n automation step, with a reproducible test and handoff. |
+[![Alder and Finch website sample, desktop preview](https://raw.githubusercontent.com/kalidatuna/small-business-site-sample/main/preview-desktop.png)](https://github.com/kalidatuna/small-business-site-sample)
 
-These are **starting prices, not automatic quotes**. Final cost and delivery date depend on access, complexity, and agreed checks. I don't need passwords or private data for the initial discussion.
+Alder & Finch is a fictional business. This is an independent portfolio sample.
 
-**Have a broken flow or repetitive task?** [Email me the URL, expected result, and budget](mailto:jamburiawork@gmail.com?subject=One-off%20website%20or%20automation%20fix). I can review whether it fits a small fixed-price scope.
+[View mobile preview](https://github.com/kalidatuna/small-business-site-sample/blob/main/preview-mobile.png) · [Read setup and checks](https://github.com/kalidatuna/small-business-site-sample#readme)
 
-## What I can help you build
+</details>
 
-| Your project | What I can deliver |
-| --- | --- |
-| **A website for your business** | Responsive landing pages and business sites with clear services, mobile navigation, and contact links. |
-| **Less repetitive data work** | Python tools for CSV, Excel, PDF, file processing, validation, and reporting. |
-| **Connected tools and workflows** | JavaScript integrations, API connections, and n8n workflows with explicit error handling. |
-| **A focused fix to an existing project** | Reproducible bug fixes, regression checks, clearer documentation, and handoff notes. |
+### More tools
 
-## Selected work
+**[Offline Toolbox](https://github.com/kalidatuna/offline-toolbox)** brings together local utilities for file handling, CSV inspection, Markdown links, JSON, and text. Python command-line tools and browser utilities, with usage instructions and tests.
 
-### Business website · Design and implementation
+## Tools I use
 
-[![Alder and Finch business website preview](https://raw.githubusercontent.com/kalidatuna/small-business-site-sample/main/preview-desktop.png)](https://github.com/kalidatuna/small-business-site-sample)
+`Python` · `JavaScript` · `HTML / CSS` · `Git` · `n8n`
 
-**[Explore the website sample →](https://github.com/kalidatuna/small-business-site-sample)**
-
-A four-page HTML/CSS website covering Home, About, Services, and Contact. Includes mobile layouts, keyboard navigation, visible focus states, and reduced-motion support. The repository includes desktop and mobile previews plus recorded browser checks at 360, 768, and 1440 pixels. Alder & Finch is a fictional business used for this portfolio sample.
-
-### Automation and developer tools
-
-| Project | What you can inspect |
-| --- | --- |
-| **[Offline Toolbox](https://github.com/kalidatuna/offline-toolbox)** | Python utilities and browser tools for file, text, and data tasks. Includes usage instructions, tests, and CI. Most tools run locally without uploads. |
-| **[Invoice Validation for n8n](https://github.com/kalidatuna/n8n-invoice-validation-sample)** | A workflow demonstration that checks invoice fields, dates, decimal totals, and duplicates before human review. Includes synthetic inputs, generated workflow files, and 26 documented tests. |
-| **[Git Worklog](https://github.com/kalidatuna/git-worklog)** | A Python CLI that turns local Git history into Markdown or JSON work summaries, grouped by UTC day and author. |
-| **[CSV Model Check](https://github.com/kalidatuna/csv-model-check)** | A Python validator for two related educational geometry tables. Preserves text IDs and reports malformed rows, missing references, and invalid coordinates as JSON. |
-
-The invoice workflow and geometry checker are independent demonstrations. Each repository explains its scope, setup, and limitations.
-
-## How we'll work
-
-1. **Define the result.** Share the problem, existing site or files, and what success should look like.
-2. **Agree on scope.** Set the deliverables, price, and timeline before implementation.
-3. **Build and verify.** Review the working result with checks appropriate to the project.
-4. **Hand it over.** Receive the agreed files, setup instructions, and a summary of what changed.
-
-**Core tools:** Python · JavaScript · HTML/CSS · Git · n8n
-
-## Have a project in mind?
-
-Email **[jamburiawork@gmail.com](mailto:jamburiawork@gmail.com)** with your website or project link, the result you need, and your budget and deadline if you have them.
-
-Available for remote freelance projects and agency implementation work.
+Source, setup, and verification details live in each project repository.

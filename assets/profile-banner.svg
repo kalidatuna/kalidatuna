@@ -1,28 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
-  <title id="title">Datuna Jamburia. Websites and automation.</title>
-  <desc id="desc">Web development, Python tools, and workflow integrations. Available for freelance projects.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="310" viewBox="0 0 1000 310" role="img" aria-labelledby="title description">
+  <title id="title">Datuna Jamburia</title>
+  <desc id="description">Terminal-inspired header. Websites, automation, and developer tools. Python, JavaScript, and web.</desc>
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#101a30"/><stop offset="1" stop-color="#182746"/></linearGradient>
-    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#a9bfff" stroke-opacity=".06"/></pattern>
+    <linearGradient id="surface" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#11191d"/>
+      <stop offset="1" stop-color="#0c1117"/>
+    </linearGradient>
   </defs>
-  <rect width="1200" height="360" rx="20" fill="url(#bg)"/>
-  <rect width="1200" height="360" rx="20" fill="url(#grid)"/>
-  <rect x="48" y="44" width="5" height="30" rx="2" fill="#bafa7b"/>
-  <text x="68" y="67" font-family="DejaVu Sans, sans-serif" font-size="20" font-weight="bold" letter-spacing="3" fill="#c9d5ee">DATUNA JAMBURIA</text>
-  <text x="48" y="147" font-family="DejaVu Sans, sans-serif" font-size="57" font-weight="bold" letter-spacing="-2" fill="#fff">Websites &amp; automation.</text>
-  <text x="51" y="195" font-family="DejaVu Sans, sans-serif" font-size="24" fill="#b7c5df">Clear interfaces. Useful tools. Tested code.</text>
-  <rect x="48" y="244" width="248" height="48" rx="24" fill="#bafa7b"/>
-  <text x="172" y="275" text-anchor="middle" font-family="DejaVu Sans, sans-serif" font-size="17" font-weight="bold" fill="#102117">FREELANCE PROJECTS</text>
-  <text x="326" y="275" font-family="DejaVu Sans, sans-serif" font-size="21" fill="#d5e0f4">Web / Python / Integrations</text>
-  <g transform="translate(880 78)">
-    <rect width="270" height="198" rx="13" fill="#0e1729" stroke="#4c638b"/>
-    <path d="M0 38H270" stroke="#4c638b"/>
-    <circle cx="19" cy="19" r="4" fill="#bafa7b"/><circle cx="34" cy="19" r="4" fill="#7288ac"/><circle cx="49" cy="19" r="4" fill="#7288ac"/>
-    <rect x="22" y="60" width="143" height="12" rx="4" fill="#d5e0f4"/>
-    <rect x="22" y="84" width="218" height="7" rx="3" fill="#4c638b"/>
-    <rect x="22" y="100" width="168" height="7" rx="3" fill="#4c638b"/>
-    <rect x="22" y="130" width="65" height="44" rx="6" fill="#243b5d"/>
-    <rect x="98" y="130" width="65" height="44" rx="6" fill="#243b5d"/>
-    <rect x="174" y="130" width="65" height="44" rx="6" fill="#bafa7b"/>
+  <rect x="1" y="1" width="998" height="308" rx="16" fill="url(#surface)" stroke="#303b41"/>
+  <path d="M1 49H999" stroke="#303b41"/>
+  <g fill="#73818c">
+    <circle cx="28" cy="25" r="5"/>
+    <circle cx="47" cy="25" r="5"/>
+    <circle cx="66" cy="25" r="5"/>
+  </g>
+  <g font-family="DejaVu Sans Mono, Consolas, monospace" xml:space="preserve">
+    <text x="500" y="31" text-anchor="middle" font-size="14" fill="#9baab5">kalidatuna / profile</text>
+    <text x="40" y="97" font-size="19" fill="#8fe5ad">kalidatuna<tspan fill="#80939f"> ~ </tspan><tspan fill="#e3ecf2">$ whoami</tspan></text>
+    <text x="40" y="157" font-size="43" font-weight="bold" letter-spacing="-1.2" fill="#f0f6fc">Datuna Jamburia</text>
+    <text x="40" y="204" font-size="23" fill="#bccbd6">Websites. Automation. Developer tools.</text>
+    <path d="M40 232H960" stroke="#26353d"/>
+    <text x="40" y="272" font-size="18" fill="#91a4b1">Python <tspan fill="#4b6370">/</tspan> JavaScript <tspan fill="#4b6370">/</tspan> Web</text>
+    <text x="910" y="272" font-size="20" fill="#8fe5ad">$</text>
+    <rect x="937" y="253" width="12" height="23" rx="1" fill="#8fe5ad"/>
   </g>
 </svg>
