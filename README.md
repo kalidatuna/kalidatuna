@@ -6,6 +6,16 @@ I build business websites, Python tools, and JavaScript integrations. My project
 
 ## Selected projects
 
+### [leadhound](https://github.com/kalidatuna/leadhound): find freelance clients who need you right now
+
+Finds people asking for freelance help today (Freelancer.com, Reddit, Hacker News, GitHub bounties, contract roles) and local businesses with website problems, scores each lead with the reasons listed, and drafts the first message in the client's language. Follow-up reminders, 11 languages, runs on your computer. Free and open source.
+
+[![leadhound: today's matches, follow-ups due, and a first message ready to send](https://raw.githubusercontent.com/kalidatuna/leadhound/main/docs/img/demo.gif)](https://github.com/kalidatuna/leadhound)
+
+`Python` `JavaScript` `SQLite` · zero dependencies · [Website](https://kalidatuna.github.io/leadhound/) · [Try the demo](https://github.com/kalidatuna/leadhound#try-it-in-10-seconds)
+
+### More projects
+
 | Project | What it does | Built with |
 | :--- | :--- | :--- |
 | **[Business website](https://github.com/kalidatuna/small-business-site-sample)** | Four-page portfolio sample for a fictional business. Responsive layouts, keyboard navigation, and desktop/mobile previews. | `HTML` `CSS` |
