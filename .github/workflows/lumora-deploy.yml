@@ -1,0 +1,56 @@
+name: Deploy Lumora to Fly.io
+
+# Manual one-click deploy. Prerequisite: add a repository secret FLY_API_TOKEN
+# (create it with `fly tokens create org` or in the Fly dashboard → Tokens).
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: "Fly app name (becomes https://<name>.fly.dev). Must be globally unique."
+        required: true
+        default: "lumora-academy"
+      region:
+        description: "Fly region code (fra = Frankfurt, iad = Virginia, lhr = London, sin = Singapore)"
+        required: true
+        default: "fra"
+      admin_email:
+        description: "Email that becomes the admin when it signs up"
+        required: true
+
+concurrency: deploy-lumora
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lumora
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      APP: ${{ inputs.app_name }}
+      REGION: ${{ inputs.region }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Check token
+        run: |
+          if [ -z "$FLY_API_TOKEN" ]; then echo "::error::Add the FLY_API_TOKEN repository secret first."; exit 1; fi
+      - name: Create app (first deploy only)
+        run: |
+          flyctl apps list --json | grep -q "\"Name\": *\"$APP\"" || flyctl apps create "$APP"
+      - name: Create database volume (first deploy only)
+        run: |
+          flyctl volumes list -a "$APP" --json | grep -q lumora_data || flyctl volumes create lumora_data -a "$APP" --region "$REGION" --size 1 --yes
+      - name: Configure
+        run: |
+          flyctl secrets set -a "$APP" --stage PUBLIC_URL="https://$APP.fly.dev" ADMIN_EMAILS="${{ inputs.admin_email }}"
+      - name: Deploy
+        run: |
+          flyctl deploy -a "$APP" --primary-region "$REGION" --remote-only --ha=false
+      - name: Smoke test
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS "https://$APP.fly.dev/api/health"; then echo; echo "Live at https://$APP.fly.dev"; exit 0; fi
+            sleep 5
+          done
+          flyctl logs -a "$APP" --no-tail | tail -50; exit 1

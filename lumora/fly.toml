@@ -1,0 +1,41 @@
+# Fly.io deployment for Lumora. First deploy:
+#   fly launch --copy-config --no-deploy --name <your-app-name>
+#   fly volumes create lumora_data --size 1 --region <region>
+#   fly secrets set PUBLIC_URL=https://<your-app-name>.fly.dev ADMIN_EMAILS=you@example.com
+#   fly deploy
+app = "lumora"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  BIND = "0.0.0.0:8080"
+  DATABASE_URL = "sqlite:///data/lumora.db"
+  CONTENT_DIR = "/app/content"
+  STATIC_DIR = "/app/web"
+  TRUST_PROXY = "true"
+  BILLING_MODE = "demo"
+  EMAIL_PROVIDER = "log"
+
+[mounts]
+  source = "lumora_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    path = "/api/health"
+    timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

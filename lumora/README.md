@@ -104,7 +104,16 @@ Set `EMAIL_PROVIDER=resend` (or `postmark`), `EMAIL_API_KEY`, `EMAIL_FROM` (a se
 
 ## Deploying
 
-### Docker (any VPS, Fly.io, Render, Railway…)
+### Fly.io (one click from GitHub)
+
+1. Create a free account at fly.io and add a payment method (Fly bills usage; Lumora fits in about $5/month).
+2. Create a deploy token: Fly dashboard → **Tokens** → create an org token (or `fly tokens create org`).
+3. In GitHub: **Settings → Secrets and variables → Actions → New repository secret**, name `FLY_API_TOKEN`, paste the token.
+4. **Actions → Deploy Lumora to Fly.io → Run workflow**, choose an app name, region and your admin email.
+
+The workflow creates the app and a 1 GB database volume on the first run, deploys the Docker image with HTTPS, and checks `/api/health`. Your site is then live at `https://<app-name>.fly.dev`. Run it again to ship updates. To add Stripe or email later: `fly secrets set -a <app-name> BILLING_MODE=stripe STRIPE_SECRET_KEY=... EMAIL_PROVIDER=resend EMAIL_API_KEY=...` (Fly restarts the app automatically). For a custom domain: `fly certs add your-domain.com -a <app-name>`, then add the DNS records it prints.
+
+### Docker (any VPS, Render, Railway…)
 
 ```bash
 cd lumora
