@@ -1,0 +1,47 @@
+name: Lumora CI
+
+on:
+  push:
+    paths: ["lumora/**", ".github/workflows/lumora-ci.yml"]
+  pull_request:
+    paths: ["lumora/**", ".github/workflows/lumora-ci.yml"]
+
+defaults:
+  run:
+    working-directory: lumora
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: "clippy, rustfmt" }
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: lumora/server }
+      - run: cd server && cargo fmt --check
+      - run: cd server && cargo clippy --all-targets -- -D warnings
+      - run: cd server && cargo test
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: lumora/web/package-lock.json }
+      - run: cd web && npm ci && npm run typecheck && npm test && npm run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [server, web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: lumora/server }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: cd web && npm ci && npm run build
+      - run: cd server && cargo build --release
+      - run: cd e2e && npm ci && npx playwright install --with-deps chromium
+      - run: cd e2e && npx playwright test --trace off

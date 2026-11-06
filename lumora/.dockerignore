@@ -1,0 +1,7 @@
+**/node_modules
+server/target
+web/dist
+data
+e2e
+**/*.db
+.env

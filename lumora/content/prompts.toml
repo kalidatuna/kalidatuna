@@ -1,0 +1,680 @@
+# Lumora Prompt Library. Fill in the [brackets]. `free = true` items are visible to everyone.
+
+[[prompts]]
+slug = "brief-anything"
+title = "The BRIEF master prompt"
+category = "Essentials"
+description = "A universal template that works for almost any request."
+free = true
+tags = ["template", "beginner"]
+prompt = '''Background: [the situation, who's involved, what's happened so far]
+Role: Act as [an expert editor / a friendly coach / a travel planner / ...]
+Intent: I need you to [specific task] so that [the outcome I want].
+Examples: Here's something similar I like: [optional example]
+Format: [length, structure, tone]. Don't [things to avoid].
+If anything is unclear, ask me up to 3 questions before you start.'''
+
+[[prompts]]
+slug = "interview-me"
+title = "Interview me first"
+category = "Essentials"
+description = "Let the AI ask the questions so it understands your situation before helping."
+free = true
+tags = ["planning", "beginner"]
+prompt = '''I want help with [goal]. Before suggesting anything, interview me. Ask one question at a time (maximum 6). After my last answer, summarise what you've learned in 3 bullet points and then give me a tailored plan with a first step I can do in 10 minutes.'''
+
+[[prompts]]
+slug = "explain-like-im-new"
+title = "Explain it at my level"
+category = "Learning"
+description = "Get a clear explanation of any topic, then check your understanding."
+free = true
+tags = ["learning", "explain"]
+prompt = '''Explain [topic] to me. I'm [your background, e.g. "a beginner with no maths background"].
+1. Start with a one-paragraph explanation using an everyday analogy.
+2. Then list the 5 key terms I'll come across, one sentence each.
+3. Finish with one question to check I've understood. Wait for my answer.'''
+
+[[prompts]]
+slug = "calm-reply"
+title = "Calm reply to a difficult message"
+category = "Writing"
+description = "Turn frustration into a firm, kind response."
+free = true
+tags = ["email", "conflict"]
+prompt = '''Here's a message I received: [paste].
+Honestly, I feel [how you feel] because [reason]. The outcome I want is [outcome].
+Draft a calm, professional reply that's firm but kind, under [N] words. Then give me a shorter alternative. Don't apologise for things that aren't my fault.'''
+
+[[prompts]]
+slug = "polite-no"
+title = "Say no politely"
+category = "Writing"
+description = "Decline a request without damaging the relationship."
+free = true
+tags = ["email", "boundaries"]
+prompt = '''Help me say no to [request] from [person/relationship]. Reason (only share if appropriate): [reason]. I'd like to [offer an alternative / keep the door open / close it firmly]. Write 3 versions: very warm, neutral, and brief. Each under 80 words.'''
+
+[[prompts]]
+slug = "sound-like-me"
+title = "Learn my writing style"
+category = "Writing"
+description = "Teach the AI to write in your voice."
+free = false
+tags = ["style", "personalisation"]
+prompt = '''Here are 3 examples of my writing: [paste].
+Analyse my style: sentence length, vocabulary, humour, formality, structure and any habits. Summarise it as 6 bullet points I can save as instructions. Then rewrite this draft in my style: [paste draft]. Point out any phrases that still sound generic.'''
+
+[[prompts]]
+slug = "follow-up-chaser"
+title = "Friendly follow-up chaser"
+category = "Writing"
+description = "Nudge someone who's gone quiet, without sounding pushy."
+free = false
+tags = ["email", "work"]
+prompt = '''Write a short follow-up to [person] about [topic]. I last contacted them on [date] and haven't heard back. I need [specific thing] by [deadline] because [reason]. Tone: friendly, assumes good intent, makes it easy to reply. Under 70 words, with a clear question at the end.'''
+
+[[prompts]]
+slug = "complaint-letter"
+title = "Effective complaint letter"
+category = "Writing"
+description = "Get refunds and repairs with a clear, factual complaint."
+free = false
+tags = ["consumer", "money"]
+prompt = '''Help me write a complaint to [company]. What happened: [details with dates]. What I've already tried: [steps]. What I want: [refund/repair/replacement/apology] within [timeframe]. Order/reference: [number].
+Write a calm, factual letter with: a clear summary, a timeline, the specific outcome I'm requesting and a reasonable deadline. Mention any consumer rights that may apply in [country] and tell me to verify them.'''
+
+[[prompts]]
+slug = "inbox-triage"
+title = "Inbox triage table"
+category = "Work"
+description = "Sort a batch of emails by urgency, with suggested replies."
+free = true
+tags = ["email", "productivity"]
+prompt = '''Below are several emails (personal details removed). For each, give me a table row with: sender (role only), one-line summary, needs reply (yes/no), urgency (today / this week / whenever), and a 1–2 sentence suggested reply if needed. Then tell me which 3 to handle first.
+
+[paste emails]'''
+
+[[prompts]]
+slug = "meeting-to-actions"
+title = "Meeting notes → action plan"
+category = "Work"
+description = "Turn a transcript or messy notes into decisions, owners and deadlines."
+free = true
+tags = ["meetings", "summary"]
+prompt = '''Here are the notes/transcript from our meeting: [paste].
+Produce:
+1. A 3-sentence summary
+2. Decisions made
+3. Action items as a table: task | owner | deadline
+4. Open questions
+5. A short follow-up email to attendees
+Only include what was actually said. Mark anything uncertain with (?).'''
+
+[[prompts]]
+slug = "meeting-prep"
+title = "Five-minute meeting prep"
+category = "Work"
+description = "Walk into any meeting with an agenda, key questions and answers to objections."
+free = false
+tags = ["meetings", "preparation"]
+prompt = '''I have a [length] meeting with [who] about [topic]. My goal: [outcome]. Background: [notes].
+Give me: a 3-point agenda, the 3 questions I most need answered, the 3 most likely objections with short responses, and a confident opening sentence.'''
+
+[[prompts]]
+slug = "weekly-update"
+title = "Weekly update for my manager"
+category = "Work"
+description = "Turn rough bullet points into a crisp status update."
+free = false
+tags = ["reporting", "work"]
+prompt = '''Turn these notes into a short weekly update for my manager: [bullets].
+Structure: Wins (with impact), Priorities next week, Blockers, Asks. Max 3 bullets per section. Lead with the most important item. Keep it skimmable in 30 seconds.'''
+
+[[prompts]]
+slug = "spreadsheet-formula"
+title = "Spreadsheet formula builder"
+category = "Work"
+description = "Describe what you need; get the formula plus a plain-English explanation."
+free = true
+tags = ["excel", "sheets"]
+prompt = '''I'm using [Excel / Google Sheets]. My data: column [A] has [..], column [B] has [..], column [C] has [..]. Data runs from row 2 to row [N].
+I want a formula that [describe result]. Give me the formula, explain how it works in one sentence, and suggest 2 test cases where I know the right answer so I can check it.'''
+
+[[prompts]]
+slug = "data-insights"
+title = "Find insights in a spreadsheet"
+category = "Work"
+description = "Upload a CSV/Excel file and get trends, outliers and a chart."
+free = false
+tags = ["data", "analysis"]
+prompt = '''I've uploaded a spreadsheet of [what the data is]. Please:
+1. Describe the data briefly (rows, columns, date range).
+2. Find the 3 most important trends and any unusual values.
+3. Create one clear chart that shows the main story.
+4. Explain the findings for a non-technical audience, with your confidence level for each.
+Check totals against the raw data and tell me if anything looks inconsistent.'''
+
+[[prompts]]
+slug = "presentation-outline"
+title = "Presentation outline + speaker notes"
+category = "Work"
+description = "Structure any talk in minutes."
+free = false
+tags = ["slides", "presenting"]
+prompt = '''I'm presenting to [audience] for [N] minutes. Key message: [message]. Goal: [what they should think or do afterwards].
+Create a [N]-slide outline: slide title, one key point, a suggested visual, and 2–3 sentences of speaker notes per slide. Include a strong opening hook and a memorable closing line.'''
+
+[[prompts]]
+slug = "cv-tailor"
+title = "Tailor my CV to a job"
+category = "Career"
+description = "Match your real experience to a job description, honestly."
+free = true
+tags = ["jobs", "cv"]
+prompt = '''Here's my CV: [paste]. Here's the job description: [paste].
+1. Which of my real experiences best match the 5 most important requirements?
+2. Rewrite my summary and my 4 most relevant bullet points to highlight those matches, using strong verbs and numbers where I have them.
+3. What gaps will a hiring manager notice, and how can I honestly address them?
+Do not invent any experience, skills or numbers.'''
+
+[[prompts]]
+slug = "interview-coach"
+title = "Mock interview coach"
+category = "Career"
+description = "Practise interview questions with feedback (great in voice mode)."
+free = false
+tags = ["jobs", "interview"]
+prompt = '''Act as an interviewer for a [role] position at [type of company]. Ask me 8 questions, one at a time, mixing behavioural and role-specific questions. After each answer, give brief feedback using STAR (Situation, Task, Action, Result), score it out of 5, and show a stronger version of my answer. At the end, summarise my top 3 strengths and 3 things to improve.'''
+
+[[prompts]]
+slug = "salary-negotiation"
+title = "Salary negotiation rehearsal"
+category = "Career"
+description = "Prepare and role-play a pay conversation."
+free = false
+tags = ["jobs", "money"]
+prompt = '''I've been offered [salary] for [role] in [city]. I'd like [target]. My strongest points: [list].
+1. Draft a polite, confident counter-offer email.
+2. Then role-play the conversation: you're the hiring manager and you push back realistically. Coach me after each of my replies.'''
+
+[[prompts]]
+slug = "career-paths"
+title = "Explore career paths"
+category = "Career"
+description = "Find realistic next moves and a plan to test them."
+free = false
+tags = ["career", "planning"]
+prompt = '''I'm a [current role] with [X] years of experience. I enjoy [..] and dislike [..]. I'm curious about [field].
+Suggest 3 realistic career paths. For each: what the work is really like, the skills gap, how AI is likely to change it, typical pay range (say how confident you are), and a 90-day plan to test it cheaply.'''
+
+[[prompts]]
+slug = "meal-plan"
+title = "Weekly meal plan + shopping list"
+category = "Home & Family"
+description = "Realistic dinners for your household, budget and schedule."
+free = true
+tags = ["food", "planning"]
+prompt = '''Plan [N] dinners for [household: adults, kids' ages, dietary needs, dislikes]. Budget about [amount] for the week. Max [N] minutes active cooking on weeknights. Equipment: [e.g. slow cooker, air fryer].
+Reuse ingredients to cut waste. Then give me one shopping list grouped by supermarket aisle, and note which meals make good leftovers for lunch.'''
+
+[[prompts]]
+slug = "fridge-rescue"
+title = "What can I cook with this?"
+category = "Home & Family"
+description = "Turn whatever's in your fridge into dinner."
+free = true
+tags = ["food", "photo"]
+prompt = '''Here's what I have: [list ingredients, or attach a photo of your fridge]. I have [N] minutes and [equipment]. Suggest 3 dinner options from fastest to most impressive, with step-by-step instructions for the one you'd recommend. Tell me what I'd need to buy for the others, if anything.'''
+
+[[prompts]]
+slug = "trip-itinerary"
+title = "Day-by-day trip itinerary"
+category = "Home & Family"
+description = "A realistic holiday plan grouped by area, with booking flags."
+free = true
+tags = ["travel", "planning"]
+prompt = '''Plan [N] days in [destination] in [month] for [who]. We like [interests] and dislike [..]. Budget: [low/mid/high]. Pace: [relaxed/busy].
+Give me a day-by-day plan (morning/afternoon/evening), grouping nearby places together, with one rainy-day alternative per day. Flag anything that usually needs booking ahead. Remind me to confirm opening times on official sites.'''
+
+[[prompts]]
+slug = "family-week-planner"
+title = "Family week planner"
+category = "Home & Family"
+description = "Untangle the family calendar, pick-ups and dinners."
+free = false
+tags = ["family", "planning"]
+prompt = '''Here's our week: [events, activities, work schedules]. Our rules: [e.g. who can do pick-ups when].
+Produce a day-by-day table with commitments, who's responsible, and a quick dinner for busy nights. Flag clashes and tight transitions (under 30 minutes). Then list anything we should prepare in advance.'''
+
+[[prompts]]
+slug = "chore-rota"
+title = "Fair chore rota"
+category = "Home & Family"
+description = "Split household jobs fairly (and end the arguments)."
+free = false
+tags = ["family", "home"]
+prompt = '''Create a fair weekly chore rota for [household members with ages]. Chores: [list, or ask AI to suggest]. Consider age-appropriate tasks, availability [details], and rotate the least popular jobs. Present it as a printable table and include a simple reward idea for the kids.'''
+
+[[prompts]]
+slug = "party-planner"
+title = "Party planner"
+category = "Home & Family"
+description = "Timeline, shopping, activities and a plan B."
+free = false
+tags = ["events", "planning"]
+prompt = '''I'm hosting [type of party] for [N] guests ([ages]) on [date] at [venue]. Budget: [amount]. Theme ideas: [..].
+Give me: a countdown timeline (4 weeks out → on the day), a shopping list, food plan, 3 activities, an hour-by-hour plan for the day, and a rainy-day backup.'''
+
+[[prompts]]
+slug = "budget-builder"
+title = "Simple monthly budget"
+category = "Money"
+description = "A budget you'll understand, built from rough numbers."
+free = true
+tags = ["budget", "money"]
+prompt = '''Help me build a simple monthly budget. Take-home pay: [amount]. Fixed costs: [list]. Debts: [list with rates if known]. Savings goal: [amount/month].
+Suggest category amounts using a simple method, explain it in plain English, and give me 3 realistic ways to free up [amount] a month. Present it as a table I can paste into a spreadsheet.'''
+
+[[prompts]]
+slug = "bill-decoder"
+title = "Decode a bill or statement"
+category = "Money"
+description = "Understand every line and find savings (redact account numbers first)."
+free = false
+tags = ["bills", "money"]
+prompt = '''Here's the text of my [bill/statement] with personal details removed: [paste].
+Explain each charge in plain English, flag anything unusual or worth questioning, compare it to what's typical if you can, and give me 3 questions to ask the provider to lower my costs.'''
+
+[[prompts]]
+slug = "big-purchase"
+title = "Big purchase comparison"
+category = "Money"
+description = "Compare options by total cost, not just sticker price."
+free = false
+tags = ["shopping", "decisions"]
+prompt = '''I'm choosing between [option A], [option B] and [option C] for [purpose]. My priorities: [list]. Expected use: [details]. Keep it for about [N] years.
+Compare them in a table: upfront cost, running costs, total cost of ownership over [N] years, pros, cons, best for. State your assumptions clearly. Recommend one for my situation and tell me what would change your recommendation.'''
+
+[[prompts]]
+slug = "subscription-audit"
+title = "Subscription audit"
+category = "Money"
+description = "Find subscriptions to cancel, downgrade or share."
+free = false
+tags = ["money", "saving"]
+prompt = '''Here are my subscriptions with monthly costs and how often I use them: [list].
+Sort them into keep / downgrade / cancel / share with family, with reasons. Total my potential monthly and yearly savings. Then draft a short cancellation message I can adapt.'''
+
+[[prompts]]
+slug = "doctor-prep"
+title = "Prepare for a doctor's appointment"
+category = "Health & Wellbeing"
+description = "Organise symptoms and questions so nothing gets forgotten."
+free = true
+tags = ["health", "preparation"]
+prompt = '''I have an appointment about [issue]. Help me prepare. Ask me questions one at a time to build a short timeline: when it started, frequency, triggers, what helps or worsens it, medications I take. Then produce a one-page summary to bring, and the 5 most useful questions to ask. Remind me that this doesn't replace medical advice.'''
+
+[[prompts]]
+slug = "medical-letter-explainer"
+title = "Explain a medical letter"
+category = "Health & Wellbeing"
+description = "Translate medical jargon into plain English."
+free = false
+tags = ["health", "explain"]
+prompt = '''Here's a letter/test result I received (personal details removed): [paste]. Explain what it says in plain English, define each medical term, and list questions I could ask my doctor. Don't diagnose me or tell me what treatment to choose. Flag anything that sounds like it needs prompt follow-up.'''
+
+[[prompts]]
+slug = "habit-coach"
+title = "Tiny-habits coach"
+category = "Health & Wellbeing"
+description = "Build a habit that actually sticks."
+free = false
+tags = ["habits", "wellbeing"]
+prompt = '''I want to build the habit of [habit]. I've struggled before because [reason]. My daily routine: [describe].
+Design a tiny version I can do in under 2 minutes, an anchor in my routine ("After I..., I will..."), a way to track it, and what to do on bad days. Then check in with me: ask how day 1 went when I come back.'''
+
+[[prompts]]
+slug = "workout-plan"
+title = "Beginner-friendly workout plan"
+category = "Health & Wellbeing"
+description = "A safe, realistic plan around your time and equipment."
+free = false
+tags = ["fitness", "planning"]
+prompt = '''Create a [N]-week beginner workout plan. Me: [age, current fitness, any injuries or conditions]. Time: [N] sessions of [N] minutes per week. Equipment: [list or "none"]. Goal: [goal].
+Include warm-ups, clear instructions, how to progress each week, and signs I should stop or see a professional. Keep it realistic and safe.'''
+
+[[prompts]]
+slug = "study-plan"
+title = "Learn a skill in 8 weeks"
+category = "Learning"
+description = "A week-by-week plan with free resources and practice projects."
+free = false
+tags = ["learning", "planning"]
+prompt = '''I want to learn [skill] well enough to [goal] in [N] weeks. I can study [time per day/week]. My starting level: [level].
+Create a week-by-week plan with free resources, a small practice project each week, and a checkpoint to test myself. Keep it realistic for a busy adult.'''
+
+[[prompts]]
+slug = "quiz-me"
+title = "Quiz me (adaptive)"
+category = "Learning"
+description = "Retrieval practice that gets harder as you improve."
+free = true
+tags = ["learning", "revision"]
+prompt = '''Quiz me on [topic / the document I've uploaded] with 10 questions, one at a time. Mix multiple choice and short answer. Wait for my answer each time, tell me if I'm right, explain briefly, then continue. Make questions harder if I'm doing well and easier if I'm struggling. Finish with my score and the 3 concepts I should review.'''
+
+[[prompts]]
+slug = "feynman-check"
+title = "Feynman check"
+category = "Learning"
+description = "Explain a topic in your own words and find the gaps."
+free = false
+tags = ["learning", "understanding"]
+prompt = '''I'm learning about [topic]. Here's my explanation in my own words: [explanation].
+What did I get right? What's missing or wrong? Give me one question that would test whether I really understand it, and wait for my answer.'''
+
+[[prompts]]
+slug = "language-partner"
+title = "Language conversation partner"
+category = "Learning"
+description = "Practise a language with gentle corrections."
+free = false
+tags = ["languages", "voice"]
+prompt = '''Let's have a conversation in [language] at [beginner/intermediate] level about [topic]. Keep your messages short. After each of my replies, show corrections of my mistakes in a small note (in English), then continue the conversation naturally. Introduce one useful new word or phrase every few messages.'''
+
+[[prompts]]
+slug = "kids-tutor"
+title = "Homework tutor (no answers!)"
+category = "Learning"
+description = "A patient tutor that guides kids without doing the work."
+free = true
+tags = ["kids", "homework"]
+prompt = '''You're a patient, encouraging tutor for a [age]-year-old. Never give the final answer to homework questions. Ask guiding questions, give hints one at a time, and explain concepts with simple examples. When they get it, ask one quick question to check understanding and celebrate their effort. Subject today: [subject].'''
+
+[[prompts]]
+slug = "decision-matrix"
+title = "Decision matrix"
+category = "Thinking & Decisions"
+description = "Compare options against what matters to you."
+free = true
+tags = ["decisions", "analysis"]
+prompt = '''I'm deciding between [options] for [decision]. What matters to me: [criteria].
+Help me weight the criteria (ask me if unsure), score each option in a table with short reasons, and give a recommendation. Then tell me what information would most change the result, and the cheapest way to get it.'''
+
+[[prompts]]
+slug = "expert-panel"
+title = "Expert panel debate"
+category = "Thinking & Decisions"
+description = "Hear multiple perspectives on a tough choice."
+free = false
+tags = ["decisions", "perspectives"]
+prompt = '''I'm deciding whether to [decision]. My situation: [details].
+Simulate a short discussion between [3 relevant perspectives, e.g. a cautious financial planner, an ambitious career coach, my practical best friend]. Each makes their strongest point and responds to the others once. Then summarise where they agree, where they disagree, and what I should find out before deciding.'''
+
+[[prompts]]
+slug = "pre-mortem"
+title = "Pre-mortem"
+category = "Thinking & Decisions"
+description = "Imagine the plan failed, then prevent it."
+free = false
+tags = ["planning", "risk"]
+prompt = '''Here's my plan: [plan]. Imagine it's [6 months] from now and the plan has failed badly. List the 7 most likely reasons it failed, rate each by likelihood and impact, and suggest a specific prevention step for the top 3.'''
+
+[[prompts]]
+slug = "critique-and-improve"
+title = "Harsh editor, then fix"
+category = "Thinking & Decisions"
+description = "Get honest feedback, then an improved version."
+free = true
+tags = ["editing", "feedback"]
+prompt = '''Here's my [draft/plan/idea]: [paste]. First, act as a harsh but fair [editor/investor/teacher] and list the 5 biggest weaknesses. Be specific. Then rewrite or revise it to fix all five, and explain the most important change in one sentence.'''
+
+[[prompts]]
+slug = "brand-voice-guide"
+title = "Brand voice guide"
+category = "Business"
+description = "Create a reusable guide so all content sounds like you."
+free = false
+tags = ["marketing", "brand"]
+prompt = '''Interview me to create a brand voice guide for my business, [business]. Ask about our customers, values, personality, words we love and hate, and examples we admire (one question at a time). Then write a one-page guide with: 3 voice adjectives, do/don't examples, sample phrases, and a short paragraph I can paste into any AI tool as instructions.'''
+
+[[prompts]]
+slug = "one-idea-many-posts"
+title = "One story → a week of content"
+category = "Business"
+description = "Repurpose one real story into posts, a newsletter and video ideas."
+free = true
+tags = ["marketing", "social"]
+prompt = '''Here's a real story from our business this week: [story]. Audience: [who]. Brand voice: [adjectives + example sentence].
+Turn it into: an Instagram caption (hook first, <120 words), a LinkedIn post (story → lesson → question), a 150-word newsletter section, 3 short video ideas with hooks, and a Google Business Profile update. Keep everything specific to the story. No clichés.'''
+
+[[prompts]]
+slug = "product-descriptions"
+title = "Product descriptions that sell"
+category = "Business"
+description = "Benefit-led descriptions in your style."
+free = false
+tags = ["ecommerce", "copywriting"]
+prompt = '''Write product descriptions for: [product list with key facts]. Customer: [who] who wants [outcome]. Style examples I like: [1–2 examples].
+For each: a headline, a 2–3 sentence description leading with the benefit, and 3 short feature bullets. Don't invent features, awards or guarantees.'''
+
+[[prompts]]
+slug = "review-reply"
+title = "Reply to a customer review"
+category = "Business"
+description = "Gracious replies to positive and negative reviews."
+free = true
+tags = ["customers", "reviews"]
+prompt = '''Here's a customer review: [paste]. Reply as the owner of [business].
+If positive: thank them specifically, mention a detail they raised, under 50 words.
+If negative: acknowledge, apologise for their experience (without admitting legal fault), offer to make it right offline via [contact], under 80 words. Never defensive.'''
+
+[[prompts]]
+slug = "customer-reply-grounded"
+title = "Grounded customer reply"
+category = "Business"
+description = "Answer customers using only your approved information."
+free = false
+tags = ["customers", "support"]
+prompt = '''You help me reply to customer messages for [business]. Use ONLY the information in the business brain below. If the answer isn't there, say "Let me check and get back to you" instead of guessing. Never promise refunds, discounts or dates. Tone: [tone]. Under 100 words.
+
+Business brain: [policies, prices, hours, FAQs]
+
+Customer message: [paste]'''
+
+[[prompts]]
+slug = "ai-policy"
+title = "One-page AI policy for a small team"
+category = "Business"
+description = "Simple ground rules for safe AI use at work."
+free = false
+tags = ["policy", "team"]
+prompt = '''Draft a one-page, plain-English AI use policy for a [type] business with [N] staff. Cover: approved tools, data that must never be shared, human review of customer-facing content, disclosure, and who to ask for help. Friendly and practical, not legalistic. Add a 5-question checklist staff can use before sending AI-assisted work.'''
+
+[[prompts]]
+slug = "service-ideas"
+title = "AI service ideas for local businesses"
+category = "Business"
+description = "Turn your skills into services people will pay for."
+free = false
+tags = ["side-hustle", "freelance"]
+prompt = '''My skills and experience: [list]. Location: [area]. Time available: [hours/week].
+Suggest 5 AI-assisted services I could offer local small businesses. For each: a simple package, a price range, who to approach first, and how to find my first 3 clients without paid ads. Be realistic about how long it might take.'''
+
+[[prompts]]
+slug = "idea-validator"
+title = "Sceptical idea validator"
+category = "Business"
+description = "Stress-test a side project before you invest."
+free = false
+tags = ["startup", "validation"]
+prompt = '''My idea: [idea]. Act as a sceptical but helpful advisor. Who exactly is the customer? What do they use today? Why would they switch? What's the smallest version I could test in 2 weeks for under [budget]? What results would tell me to stop? End with a 5-step test plan.'''
+
+[[prompts]]
+slug = "image-prompt-builder"
+title = "Image prompt builder"
+category = "Creative"
+description = "Craft detailed prompts for AI image tools."
+free = true
+tags = ["images", "design"]
+prompt = '''Help me create an image prompt. I want an image of [rough idea] for [purpose]. Ask me about style, mood and composition if I haven't said. Then write 3 detailed prompts covering subject, setting, style/medium, lighting, mood, colour palette and composition: one realistic, one illustrated, one bold/experimental.'''
+
+[[prompts]]
+slug = "video-script"
+title = "Short video script"
+category = "Creative"
+description = "A hook-first script with on-screen text and shot ideas."
+free = false
+tags = ["video", "social"]
+prompt = '''Write a [30/60/90]-second video script explaining [topic] to [audience]. Goal: [action or feeling]. Include: a hook in the first 3 seconds, 3 key points, a clear call to action, on-screen text for each section, and B-roll/shot ideas. Keep the language conversational.'''
+
+[[prompts]]
+slug = "song-lyrics"
+title = "Personalised song"
+category = "Creative"
+description = "Lyrics and a style prompt for AI music tools."
+free = false
+tags = ["music", "gifts"]
+prompt = '''Write lyrics for a [style] song for [occasion] about [person], mentioning [3 specific details]. Structure: verse, chorus, verse, chorus, bridge, chorus. Make the chorus easy to sing along to. Then write a one-line style description I can paste into an AI music tool.'''
+
+[[prompts]]
+slug = "creative-brainstorm"
+title = "Wild brainstorm (escape the average)"
+category = "Creative"
+description = "Get past obvious ideas to the interesting ones."
+free = false
+tags = ["ideas", "creativity"]
+prompt = '''Give me 30 ideas for [project]. The first 10 can be obvious. The next 10 should be unusual. The final 10 should be genuinely weird or surprising, combining unrelated fields. Then pick the 3 with the best mix of originality and feasibility and explain why.'''
+
+[[prompts]]
+slug = "automation-finder"
+title = "What should I automate?"
+category = "Automation"
+description = "Score your tasks and design your first automations."
+free = true
+tags = ["automation", "productivity"]
+prompt = '''Here are tasks I do regularly, with rough time per week: [list].
+Score each from 1–5 on frequency, boredom, how rule-based it is, and how low-risk mistakes would be. Rank them. For the top 2, describe the trigger and actions for an automation, recommend a beginner-friendly tool (e.g. Zapier, Make, n8n, Apple Shortcuts, Power Automate), and estimate the time saved.'''
+
+[[prompts]]
+slug = "automation-ai-step"
+title = "Reliable AI step for an automation"
+category = "Automation"
+description = "A structured-output prompt template for Zapier, Make or n8n."
+free = false
+tags = ["automation", "json"]
+prompt = '''You are a step in an automated workflow. Read the input below and reply with JSON only, no other text:
+{"summary": string (one sentence), "category": one of ["billing","booking","question","complaint","other"], "urgency": one of ["high","medium","low"], "suggested_reply": string (2–3 friendly sentences)}
+If you are unsure about a field, use "other" or "medium". Never invent facts not in the input.
+
+Input: {{input}}'''
+
+[[prompts]]
+slug = "receipt-extractor"
+title = "Receipt data extractor"
+category = "Automation"
+description = "Pull vendor, date, total and category from receipts."
+free = false
+tags = ["automation", "money"]
+prompt = '''Extract the following from this receipt and reply with JSON only:
+{"vendor": string, "date": "YYYY-MM-DD", "total": number, "currency": string, "category": one of ["groceries","transport","bills","eating out","household","other"]}
+If a field is missing or unreadable, use null. Receipt: [paste text or attach image]'''
+
+[[prompts]]
+slug = "morning-briefing"
+title = "Scheduled morning briefing"
+category = "Automation"
+description = "A daily briefing to schedule in your assistant."
+free = true
+tags = ["scheduled", "productivity"]
+prompt = '''Every weekday at [time]: give me a briefing under 150 words: today's weather in [city], my calendar for today (if connected), the one thing I should prepare for, and a short encouraging note. On Mondays, also list my top 3 priorities for the week based on my calendar.'''
+
+[[prompts]]
+slug = "skill-from-chat"
+title = "Turn this chat into a reusable skill"
+category = "Automation"
+description = "Capture a successful conversation as a skill or template."
+free = false
+tags = ["skills", "templates"]
+prompt = '''That worked really well. Turn this whole conversation into a reusable skill I can save: include a name, when to use it, the inputs I need to provide, step-by-step instructions, the output format, a quality checklist, and a short example. Write it so it works when pasted into a new chat or saved as a custom assistant / skill.'''
+
+[[prompts]]
+slug = "custom-assistant-builder"
+title = "Custom assistant instructions writer"
+category = "Automation"
+description = "Draft instructions for a custom GPT, Gem or Claude Project."
+free = false
+tags = ["skills", "custom-gpt"]
+prompt = '''I want a custom assistant that [job]. Interview me (one question at a time, max 6) about the audience, process, tone, output format and edge cases. Then write complete instructions with sections: PURPOSE, PROCESS (numbered steps), TONE, FORMAT, WHEN UNSURE, NEVER. Finally, give me 5 test cases including awkward ones.'''
+
+[[prompts]]
+slug = "vibe-code-tool"
+title = "Build me a tiny app"
+category = "Automation"
+description = "A vibe-coding starter prompt for a personal tool."
+free = false
+tags = ["vibe-coding", "apps"]
+prompt = '''Build a simple, mobile-friendly web app that [what it does] for [who].
+Features:
+- [feature 1]
+- [feature 2]
+- [feature 3]
+Data should be saved in the browser. Design: [style, colours, large text]. Start with the simplest version that works, then tell me 3 improvements we could make next.'''
+
+[[prompts]]
+slug = "scam-checker"
+title = "Is this a scam?"
+category = "Safety"
+description = "Analyse a suspicious message safely."
+free = true
+tags = ["safety", "scams"]
+prompt = '''I received this message (personal details removed): [paste]. Does it show signs of a scam? List the warning signs, what a legitimate version would look like, and how I can verify it safely without using any links or numbers in the message.'''
+
+[[prompts]]
+slug = "fact-check-claims"
+title = "Confidence check on an answer"
+category = "Safety"
+description = "Make the AI flag what it's unsure about."
+free = true
+tags = ["safety", "verification"]
+prompt = '''List every factual claim in your last answer. For each one, rate your confidence (high/medium/low), explain why, and tell me exactly how I could verify it. Then point out anything you may have guessed or generalised.'''
+
+[[prompts]]
+slug = "redact-helper"
+title = "Redact before sharing"
+category = "Safety"
+description = "Spot personal details to remove from a document."
+free = false
+tags = ["privacy", "documents"]
+prompt = '''I'm about to share a document with an AI tool. Without repeating any sensitive values back to me, list the types of personal or sensitive information I should remove (names, addresses, account numbers, ID numbers, dates of birth, etc.) and where they appear (by section or line). Suggest placeholder labels like [NAME] and [ACCOUNT].'''
+
+[[prompts]]
+slug = "family-ai-agreement"
+title = "Family AI agreement"
+category = "Safety"
+description = "Friendly ground rules for the whole household."
+free = false
+tags = ["family", "kids"]
+prompt = '''Help us write a friendly one-page family agreement about using AI. Our family: [ages]. Cover homework (tutor, not ghostwriter), privacy, checking facts, what to do if something seems wrong or upsetting, screen time, and safe words for phone calls. Positive tone, short sentences, room for everyone to sign.'''
+
+[[prompts]]
+slug = "deep-research-brief"
+title = "Deep research brief"
+category = "Thinking & Decisions"
+description = "Brief a research mode like a professional researcher."
+free = false
+tags = ["research", "power-user"]
+prompt = '''Research question: [question]
+Context: I'm [who] and I need this to [decision/purpose].
+Cover: [aspects].
+Prioritise official, primary and recent sources (within [timeframe]). Separate established facts from opinions and estimates, note where sources disagree, and finish with what's still uncertain and how I could find out. Format: summary first, then details, then a checklist of next steps.'''
+
+[[prompts]]
+slug = "ninety-day-plan"
+title = "My 90-day AI plan"
+category = "Essentials"
+description = "Turn what you've learned into habits and systems."
+free = false
+tags = ["habits", "planning"]
+prompt = '''Here's my situation: [job, family, goals, time available]. Tasks that drain me: [list]. Things I'd love to achieve this year: [list].
+Create my personal 90-day AI plan: Days 1–30 a daily micro-habit and 10 tasks to try; Days 31–60 two skills/custom assistants and one automation to build, with first steps; Days 61–90 one ambitious project in weekly milestones. Add a weekly check-in question.'''

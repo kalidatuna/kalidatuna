@@ -1,0 +1,394 @@
+# Lumora curriculum: module order, lesson order and end-of-module quizzes.
+# Lessons live in lessons/<slug>.md. The first lesson of every module is free,
+# and the whole Foundations module is free.
+
+[[modules]]
+slug = "foundations"
+title = "AI Foundations"
+tagline = "What AI actually is, in plain English"
+description = "Strip away the hype. Learn what today's AI assistants are, how they produce answers, which one to pick, and how to have a genuinely useful first conversation."
+model = "orb"
+color = "#8b7bff"
+free = true
+lessons = ["what-ai-really-is", "how-chatbots-think", "choosing-your-assistant", "your-first-conversation"]
+
+[[modules.quiz]]
+q = "What is a large language model fundamentally doing when it writes an answer?"
+options = ["Looking the answer up in a database of facts", "Predicting likely next pieces of text, one after another", "Copying a matching web page", "Running a search engine and summarising the top result"]
+answer = 1
+why = "Chat assistants generate text by repeatedly predicting what should come next, based on patterns learned in training. That's why they're fluent, and why they can be confidently wrong."
+
+[[modules.quiz]]
+q = "Your assistant gives you a very specific statistic with no source. What's the best move?"
+options = ["Trust it, as AI doesn't make up numbers", "Ask it to double-check itself and accept whatever it says next", "Verify it against a reliable source before you use it", "Never use AI for anything involving numbers"]
+answer = 2
+why = "Specific facts, figures and quotes are where 'hallucinations' hide. Treat them as leads to verify, not as finished facts."
+
+[[modules.quiz]]
+q = "What does the 'context window' refer to?"
+options = ["The browser tab the chatbot runs in", "How much text the model can consider at once in a conversation", "The time of day the model was trained", "The list of websites the model is allowed to visit"]
+answer = 1
+why = "The context window is the model's working memory for a conversation: your messages, its replies and any files you've added."
+
+[[modules.quiz]]
+q = "Which statement about free vs. paid AI plans is most accurate?"
+options = ["Free plans are useless", "Paid plans never make mistakes", "Free plans are great for learning; paid plans mostly add stronger models, higher limits and extra features", "You need a paid plan to ask more than one question"]
+answer = 2
+why = "Start free. Upgrade when you hit limits or need features like larger file uploads, research modes or projects."
+
+[[modules.quiz]]
+q = "What are 'custom instructions' (or 'personalisation') for?"
+options = ["Changing the colour of the app", "Telling the assistant standing facts and preferences about you so you don't repeat them each time", "Unlocking secret features", "Making the assistant browse the web"]
+answer = 1
+why = "Custom instructions are a short standing brief (who you are, how you like answers) applied to every new chat."
+
+[[modules]]
+slug = "prompting"
+title = "Prompting That Works"
+tagline = "Ask better, get better: the skill behind every other skill"
+description = "A simple, repeatable way to brief an AI assistant so you get useful answers the first time, plus the follow-up moves that turn an okay draft into a great one."
+model = "bubble"
+color = "#5cc8ff"
+lessons = ["anatomy-of-a-great-prompt", "iterate-dont-restart", "examples-and-formats", "advanced-prompt-patterns"]
+
+[[modules.quiz]]
+q = "Which prompt will most likely produce the most useful result?"
+options = ["Write an email.", "Write a professional email.", "Write a short, friendly email to my landlord asking to fix a leaking tap this week. I'm a polite long-term tenant. Under 120 words.", "Email landlord tap now!!!"]
+answer = 2
+why = "It gives the task, the audience, the context, the tone and a length limit: everything a capable helper needs."
+
+[[modules.quiz]]
+q = "The first draft is close but too formal. What should you do?"
+options = ["Start a brand new chat and retype everything", "Reply in the same chat: 'Good, but make it warmer and more casual, and cut it by a third'", "Give up and write it yourself", "Paste the draft into another AI"]
+answer = 1
+why = "Iterating in the same conversation keeps all the context. Specific feedback beats starting over."
+
+[[modules.quiz]]
+q = "What is 'few-shot' prompting?"
+options = ["Asking very short questions", "Showing the model a few examples of the output you want", "Limiting the model to a few words", "Using AI only a few times a day"]
+answer = 1
+why = "Examples are the fastest way to communicate style and format. Show, don't just tell."
+
+[[modules.quiz]]
+q = "Why ask an assistant to 'ask me 3 questions before you start'?"
+options = ["It makes the answer longer", "It surfaces missing context so the final result fits your situation", "It's required by the AI", "It makes the AI more creative"]
+answer = 1
+why = "When you're not sure what details matter, letting the model interview you fills the gaps."
+
+[[modules.quiz]]
+q = "Which is the best way to get output you can paste into a spreadsheet?"
+options = ["Ask for 'a list'", "Ask for a table with named columns (or CSV) and say exactly which columns", "Ask for a paragraph", "Ask it to be organised"]
+answer = 1
+why = "Name the format and the fields. Structure is something you can simply request."
+
+[[modules]]
+slug = "everyday"
+title = "AI for Everyday Life"
+tagline = "Emails, meals, trips, money and learning, sorted"
+description = "Practical wins you can use today: writing tricky messages, planning meals and trips, understanding bills and paperwork, and learning new things faster."
+model = "home"
+color = "#ffb85c"
+lessons = ["writing-emails-and-messages", "planning-meals-trips-and-budgets", "learning-anything-faster", "health-money-and-legal-questions"]
+
+[[modules.quiz]]
+q = "You need to reply to an upsetting message. What's a smart way to use AI?"
+options = ["Let AI send a reply automatically", "Paste the message, explain how you feel and what outcome you want, and ask for a calm draft you then edit", "Ask AI to write the angriest reply possible", "Avoid AI for anything emotional"]
+answer = 1
+why = "AI is great at taking the heat out of a draft, but you stay in charge of what's actually sent."
+
+[[modules.quiz]]
+q = "When asking for a weekly meal plan, which detail matters most for a useful answer?"
+options = ["Your favourite colour", "Household size, budget, dietary needs and how much time you have to cook", "The day of the week you were born", "Which AI model you're using"]
+answer = 1
+why = "Constraints make plans realistic. The more specific your situation, the more usable the plan."
+
+[[modules.quiz]]
+q = "What's the 'Feynman' study trick you can run with AI?"
+options = ["Have AI write your essay", "Explain a topic in your own words and ask AI to find gaps and quiz you", "Read AI summaries only", "Ask AI for the answers to the test"]
+answer = 1
+why = "Explaining something yourself, then getting targeted feedback, is one of the most effective ways to learn."
+
+[[modules.quiz]]
+q = "How should you use AI for a medical or legal question?"
+options = ["As a replacement for a professional", "Never, under any circumstances", "To understand terms, prepare questions and organise information, then confirm with a qualified professional", "Only if the AI says it's a doctor"]
+answer = 2
+why = "AI is an excellent preparation and explanation tool. Decisions with real consequences need a qualified human."
+
+[[modules.quiz]]
+q = "Before pasting a bill or bank statement into an AI, you should…"
+options = ["Remove or mask account numbers and personal identifiers", "Add your password so it can log in", "Paste it exactly as is", "Take a blurry photo so it's private"]
+answer = 0
+why = "You rarely need full account numbers for help understanding a document. Redact first."
+
+[[modules]]
+slug = "work"
+title = "AI at Work"
+tagline = "Win back hours every week, without cutting corners"
+description = "Meetings, documents, spreadsheets, research and your career, with a clear line on what's appropriate to share with AI at work."
+model = "laptop"
+color = "#4fe3b0"
+lessons = ["meetings-notes-and-summaries", "documents-spreadsheets-and-slides", "research-and-fact-checking", "job-search-and-career"]
+
+[[modules.quiz]]
+q = "Before using AI with work documents, the first thing to check is…"
+options = ["Whether your company has an AI policy or approved tools", "Whether the AI likes your document", "How fast your internet is", "Nothing, since all AI tools are the same"]
+answer = 0
+why = "Many employers have approved tools and rules about confidential data. Follow them; they protect you too."
+
+[[modules.quiz]]
+q = "What's the most reliable way to get a useful meeting summary?"
+options = ["Ask AI to guess what was discussed", "Give it the transcript or notes and ask for decisions, owners, deadlines and open questions", "Ask for 'a summary' with no input", "Record the meeting and never review it"]
+answer = 1
+why = "Summaries are only as good as the source. Ask for the specific structure you'll actually use."
+
+[[modules.quiz]]
+q = "AI suggests a spreadsheet formula. What should you do?"
+options = ["Paste it and trust every result", "Test it on a few rows where you know the right answer", "Never use AI formulas", "Ask a different AI to approve it"]
+answer = 1
+why = "Spot-check on known cases. It takes a minute and catches most errors."
+
+[[modules.quiz]]
+q = "For research that needs up-to-date facts, which approach is best?"
+options = ["A model with no web access", "A search-connected or 'deep research' mode, then open and read the key sources yourself", "Ask the AI to remember the news", "Use the oldest model available"]
+answer = 1
+why = "Use tools that cite sources, then check the sources. Citations can be wrong too."
+
+[[modules.quiz]]
+q = "What's the most honest way to use AI on your CV?"
+options = ["Invent experience that sounds impressive", "Use it to tailor and sharpen how you describe real experience for a specific role", "Copy a stranger's CV", "Let AI apply to 500 jobs blindly"]
+answer = 1
+why = "AI is brilliant at matching your real strengths to a job description. Making things up backfires in interviews."
+
+[[modules]]
+slug = "skills"
+title = "Skills, Projects & Custom Assistants"
+tagline = "Teach your AI once, use it forever"
+description = "Turn repeated instructions into reusable skills: custom instructions, projects, custom GPTs and Gems, Claude Skills, and connecting AI to the apps you already use."
+model = "blocks"
+color = "#ff7ad9"
+lessons = ["what-are-ai-skills", "build-your-own-assistant", "reusable-skills-and-templates", "connecting-your-apps"]
+
+[[modules.quiz]]
+q = "In plain terms, what is an AI 'skill'?"
+options = ["A paid add-on that makes AI smarter", "A saved, reusable set of instructions (and sometimes files) that teaches the assistant how to do a specific task your way", "A certificate you earn", "A type of computer chip"]
+answer = 1
+why = "Skills, custom GPTs, Gems and projects are all ways to package know-how so you don't repeat yourself."
+
+[[modules.quiz]]
+q = "What belongs in a good custom assistant's instructions?"
+options = ["Only its name", "Its job, audience, step-by-step process, tone, output format and what to do when unsure", "As many emojis as possible", "Your passwords so it can log in for you"]
+answer = 1
+why = "Write it like a job description plus a checklist. Clear process gives consistent results."
+
+[[modules.quiz]]
+q = "What's a 'project' (or workspace) in an AI app good for?"
+options = ["Keeping related chats, files and instructions together for one ongoing piece of work", "Making the AI run faster", "Sharing your screen", "Deleting old conversations"]
+answer = 0
+why = "Projects give the assistant the right background every time you return to a topic."
+
+[[modules.quiz]]
+q = "Connecting AI to your email or files means you should…"
+options = ["Grant every permission without reading", "Review what access you're granting, start with read-only where possible, and disconnect what you don't use", "Never use connectors", "Share your login with the AI"]
+answer = 1
+why = "Connectors are powerful. Give the minimum access needed and review it occasionally."
+
+[[modules.quiz]]
+q = "What is MCP (Model Context Protocol), in one line?"
+options = ["A new AI model", "An open standard that lets AI assistants plug into tools and data sources", "A type of password", "A subscription plan"]
+answer = 1
+why = "Think of MCP as a universal adapter between AI assistants and other software."
+
+[[modules]]
+slug = "automation"
+title = "Automation Without Code"
+tagline = "Let the boring stuff run itself"
+description = "Learn the trigger → action mindset, build your first no-code automation, add AI steps that summarise and sort, and use scheduled tasks and agents responsibly."
+model = "gears"
+color = "#ffd166"
+lessons = ["automation-mindset", "your-first-automation", "ai-inside-workflows", "scheduled-tasks-and-agents"]
+
+[[modules.quiz]]
+q = "Every automation is built from which two basic parts?"
+options = ["A password and a username", "A trigger (when) and one or more actions (then)", "A robot and a camera", "A model and a GPU"]
+answer = 1
+why = "When something happens → do these steps. Everything else is detail."
+
+[[modules.quiz]]
+q = "Which task is the best first candidate to automate?"
+options = ["A rare, high-stakes decision", "A frequent, repetitive, low-risk task with clear rules", "Your wedding speech", "Firing an employee"]
+answer = 1
+why = "Start with frequent, boring, low-risk tasks. Wins compound and mistakes are cheap."
+
+[[modules.quiz]]
+q = "Why ask an AI step to return structured output (like JSON or fixed fields)?"
+options = ["It looks more technical", "So later steps can reliably use specific values like 'category' or 'priority'", "It's cheaper", "It makes the AI more creative"]
+answer = 1
+why = "Automations need predictable data. Fixed fields make the next step reliable."
+
+[[modules.quiz]]
+q = "What's a sensible guardrail for an AI agent that can act on your behalf?"
+options = ["Let it make purchases freely", "Require your approval before it sends, buys, deletes or posts anything", "Give it your bank password", "Turn off all logs"]
+answer = 1
+why = "Keep a human in the loop for anything irreversible or public."
+
+[[modules.quiz]]
+q = "Your new automation runs. What should you do in the first week?"
+options = ["Never look at it again", "Check its results regularly and keep a simple log of failures", "Delete it", "Add ten more steps immediately"]
+answer = 1
+why = "Watch new automations closely, then relax once they've earned your trust."
+
+[[modules]]
+slug = "creative"
+title = "Create with AI"
+tagline = "Images, voice, video and music, with your taste in charge"
+description = "Make images from words, edit photos, create voiceovers, videos and presentations, and keep your own creative voice while respecting other creators."
+model = "prism"
+color = "#ff8a5c"
+lessons = ["images-from-words", "voice-audio-and-music", "video-and-presentations", "your-creative-voice"]
+
+[[modules.quiz]]
+q = "Which image prompt gives the AI the most to work with?"
+options = ["A dog", "Nice picture", "A golden retriever puppy asleep on a red wool blanket, soft morning window light, cosy, shallow depth of field, photo", "Make art"]
+answer = 2
+why = "Subject, setting, lighting, mood and style: describe what a photographer or illustrator would need to know."
+
+[[modules.quiz]]
+q = "What's the ethical line with AI voice cloning?"
+options = ["Clone anyone you like", "Only clone voices with clear, informed permission, and never to deceive", "Celebrity voices are fine for ads", "It's fine if you only fool your family"]
+answer = 1
+why = "Consent and honesty. Voice clones are also used in scams, so be careful with your own voice samples too."
+
+[[modules.quiz]]
+q = "When using AI to draft a presentation, the best first step is…"
+options = ["Ask for 40 slides", "Give it your goal, audience, key message and time limit, and ask for an outline first", "Ask for random images", "Skip the outline"]
+answer = 1
+why = "Outline first, slides second. Structure is where AI saves the most time."
+
+[[modules.quiz]]
+q = "How do you keep AI-assisted work feeling like 'you'?"
+options = ["Accept the first output", "Feed it examples of your own work, give strong opinions, and edit the result heavily", "Use the most popular style", "Avoid editing"]
+answer = 1
+why = "Your taste is the product. AI is the fast first draft and the tireless assistant."
+
+[[modules.quiz]]
+q = "Is it wise to sell images made 'in the style of' a living artist by name?"
+options = ["Yes, always", "It's risky and widely seen as unfair; develop your own style and check each tool's terms", "Only on weekends", "Yes, if you change one colour"]
+answer = 1
+why = "Respect creators. Rules are still evolving, so check tool terms and local law for commercial use."
+
+[[modules]]
+slug = "business"
+title = "Earn & Grow with AI"
+tagline = "Practical AI for freelancers, side projects and small businesses"
+description = "Use AI to market, sell, support customers and run a small business, plus a realistic look at earning money with AI skills."
+model = "coins"
+color = "#7ee081"
+lessons = ["ai-for-small-business", "marketing-and-content-engine", "customer-service-with-ai", "side-projects-and-income"]
+
+[[modules.quiz]]
+q = "What's the most reliable way to start using AI in a small business?"
+options = ["Replace your staff", "Pick one costly, repetitive bottleneck, fix it with AI, measure the time saved, then expand", "Buy every AI tool", "Wait until AI is perfect"]
+answer = 1
+why = "One bottleneck at a time. Measure, then move on."
+
+[[modules.quiz]]
+q = "What makes AI-assisted marketing content actually work?"
+options = ["Posting as much generic content as possible", "Feeding AI your real customer questions, stories and voice, then editing for specifics", "Using lots of buzzwords", "Hiding that you have a business"]
+answer = 1
+why = "Specific beats generic. Your real customer insight is the ingredient AI can't invent."
+
+[[modules.quiz]]
+q = "A good rule for AI customer support is…"
+options = ["Never let a human see conversations", "Answer from your own approved information, and hand off to a human for refunds, complaints and anything unclear", "Promise customers anything", "Hide that it's automated in every case"]
+answer = 1
+why = "Grounded answers plus clear human hand-off keeps customers happy and you out of trouble."
+
+[[modules.quiz]]
+q = "Which 'make money with AI' claim should make you most suspicious?"
+options = ["Learn a skill and offer it to local businesses", "Earn $10,000 a month on autopilot with no effort, just buy this course", "Use AI to work faster as a freelancer", "Build a small tool that solves a real problem"]
+answer = 1
+why = "Real income comes from solving real problems. 'Autopilot riches' pitches are usually selling the dream, not a business."
+
+[[modules.quiz]]
+q = "When AI writes a reply to a customer, you should…"
+options = ["Send it without reading", "Check facts, prices and promises before it goes out, at least until you trust the setup", "Add more exclamation marks", "Ask the customer to verify it"]
+answer = 1
+why = "You're accountable for what your business says, whoever drafted it."
+
+[[modules]]
+slug = "safety"
+title = "Safe, Private & Smart"
+tagline = "Use AI confidently without getting burned"
+description = "Spot hallucinations, protect your privacy, defend against AI-powered scams and deepfakes, and help your family use AI well."
+model = "shield"
+color = "#5ce1e6"
+lessons = ["hallucinations-and-verification", "privacy-what-not-to-share", "scams-deepfakes-and-voice-clones", "ai-and-your-family"]
+
+[[modules.quiz]]
+q = "Which information should you avoid pasting into a general AI chat?"
+options = ["A recipe", "Passwords, full card or bank numbers, and other people's private details", "A public news article", "A question about gardening"]
+answer = 1
+why = "Treat AI chats like a conversation that could be stored. Never share secrets or others' private data."
+
+[[modules.quiz]]
+q = "A relative calls in a panic asking for money urgently, and the voice sounds right. Best response?"
+options = ["Send money immediately", "Hang up and call them back on a number you already know, or ask your family 'safe word'", "Ask them to send a photo", "Wire half the money"]
+answer = 1
+why = "Voice cloning makes caller voices unreliable. Verify through a separate channel you trust."
+
+[[modules.quiz]]
+q = "Which is a typical sign of an AI hallucination?"
+options = ["The answer is short", "A confident, specific citation or quote that you can't find anywhere", "The answer uses bullet points", "It says 'I'm not sure'"]
+answer = 1
+why = "Invented sources look real. If you can't find it, don't use it."
+
+[[modules.quiz]]
+q = "Where can you usually control whether your chats are used to train models?"
+options = ["Nowhere", "In the app's privacy or data controls settings", "Only by emailing the CEO", "By typing 'don't train on this'"]
+answer = 1
+why = "Most major assistants offer data controls. Check them once, and again when the app updates."
+
+[[modules.quiz]]
+q = "What's a healthy rule for kids using AI for homework?"
+options = ["Let AI do the homework", "Use AI as a tutor that explains and quizzes, not a ghostwriter, and follow the school's rules", "Ban all technology forever", "Only use it after midnight"]
+answer = 1
+why = "Tutor, not ghostwriter. It builds real skills and stays within school rules."
+
+[[modules]]
+slug = "power"
+title = "Power-User Toolkit"
+tagline = "Research modes, agents, vibe-coding and your 90-day plan"
+description = "Graduate to the advanced features: deep research, reasoning models, voice and vision, browser agents, building small apps by describing them, and a plan that makes it all stick."
+model = "rocket"
+color = "#b48cff"
+lessons = ["deep-research-and-reasoning", "voice-vision-and-agents", "vibe-coding-for-everyone", "your-90-day-ai-plan"]
+
+[[modules.quiz]]
+q = "When is a 'reasoning' or 'thinking' mode worth the extra wait?"
+options = ["For a quick greeting", "For multi-step problems: planning, maths, tricky decisions and analysis", "Never", "Only for images"]
+answer = 1
+why = "Reasoning modes spend more effort before answering, which pays off on complex, multi-step problems."
+
+[[modules.quiz]]
+q = "What's a good way to use your phone camera with AI?"
+options = ["Photograph strangers to identify them", "Point it at a confusing appliance label, plant, menu or error screen and ask what it means", "Scan other people's documents secretly", "Nothing useful"]
+answer = 1
+why = "Vision features turn 'what is this?' into a two-second question. Respect other people's privacy."
+
+[[modules.quiz]]
+q = "What is 'vibe-coding'?"
+options = ["Coding while listening to music", "Describing the small app or tool you want in plain English and letting AI write the code, while you test and steer", "A programming language", "Hacking"]
+answer = 1
+why = "You describe and test; AI writes the code. Great for small personal tools."
+
+[[modules.quiz]]
+q = "Which habit makes AI skills stick long-term?"
+options = ["Binge everything in a day, then stop", "A small daily practice tied to real tasks, plus a list of wins and reusable prompts", "Only use AI when forced", "Collect apps you never open"]
+answer = 1
+why = "Small, consistent, real-world practice beats occasional marathons."
+
+[[modules.quiz]]
+q = "When a browser agent is filling in a form for you, you should…"
+options = ["Walk away for an hour", "Watch the key steps and confirm before anything is submitted or paid", "Give it your passwords in the chat", "Let it accept every cookie and terms page blindly"]
+answer = 1
+why = "Agents are capable but fallible. Supervise and approve the important clicks."

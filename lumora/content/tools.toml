@@ -1,0 +1,271 @@
+# Tool Finder. Pricing is indicative and changes often; always check the official site.
+
+[[tools]]
+name = "ChatGPT"
+category = "AI assistants"
+url = "https://chatgpt.com"
+what = "OpenAI's all-round assistant with voice, image creation, file analysis, deep research, custom GPTs and agent features."
+best_for = "An all-in-one daily assistant"
+pricing = "Free tier; paid plans from about $20/month"
+free_tier = true
+
+[[tools]]
+name = "Claude"
+category = "AI assistants"
+url = "https://claude.ai"
+what = "Anthropic's assistant, known for thoughtful writing, long-document work, Projects, Skills, artifacts and connectors."
+best_for = "Writing, analysis and working with long documents"
+pricing = "Free tier; paid plans from about $20/month"
+free_tier = true
+
+[[tools]]
+name = "Gemini"
+category = "AI assistants"
+url = "https://gemini.google.com"
+what = "Google's assistant, deeply connected to Gmail, Docs, Drive, YouTube, Maps and Android, with Gems and deep research."
+best_for = "People who live in Google's apps"
+pricing = "Free tier; paid via Google AI plans"
+free_tier = true
+
+[[tools]]
+name = "Microsoft Copilot"
+category = "AI assistants"
+url = "https://copilot.microsoft.com"
+what = "Microsoft's assistant, built into Windows and Edge, and into Word, Excel, PowerPoint, Outlook and Teams with Microsoft 365."
+best_for = "Microsoft 365 users and Windows PCs"
+pricing = "Free tier; Microsoft 365 plans include more"
+free_tier = true
+
+[[tools]]
+name = "Meta AI"
+category = "AI assistants"
+url = "https://www.meta.ai"
+what = "Meta's assistant inside WhatsApp, Instagram, Messenger and Facebook."
+best_for = "Quick questions inside messaging apps"
+pricing = "Free"
+free_tier = true
+
+[[tools]]
+name = "Perplexity"
+category = "Research"
+url = "https://www.perplexity.ai"
+what = "An answer engine that searches the web and replies with cited sources."
+best_for = "Quick research with links you can check"
+pricing = "Free tier; Pro plan available"
+free_tier = true
+
+[[tools]]
+name = "NotebookLM"
+category = "Research"
+url = "https://notebooklm.google.com"
+what = "Google's research notebook: upload your sources and get grounded answers, summaries, study guides and audio overviews."
+best_for = "Studying and working from your own documents"
+pricing = "Free tier; more with Google AI plans"
+free_tier = true
+
+[[tools]]
+name = "Zapier"
+category = "Automation"
+url = "https://zapier.com"
+what = "No-code automation connecting thousands of apps, with built-in AI steps and agents."
+best_for = "Beginners building their first automations"
+pricing = "Free tier; paid plans by task volume"
+free_tier = true
+
+[[tools]]
+name = "Make"
+category = "Automation"
+url = "https://www.make.com"
+what = "Visual automation builder for multi-step scenarios with branching and AI modules."
+best_for = "More complex automations at good value"
+pricing = "Free tier; paid plans by operations"
+free_tier = true
+
+[[tools]]
+name = "n8n"
+category = "Automation"
+url = "https://n8n.io"
+what = "Powerful workflow automation with AI agent nodes; can be self-hosted or used in the cloud."
+best_for = "Tinkerers and teams wanting control and self-hosting"
+pricing = "Free self-hosted community edition; cloud plans available"
+free_tier = true
+
+[[tools]]
+name = "Apple Shortcuts"
+category = "Automation"
+url = "https://support.apple.com/guide/shortcuts/welcome/ios"
+what = "Built-in automation for iPhone, iPad and Mac, which can include AI and app actions."
+best_for = "Personal automations on Apple devices"
+pricing = "Free with Apple devices"
+free_tier = true
+
+[[tools]]
+name = "Power Automate"
+category = "Automation"
+url = "https://www.microsoft.com/power-platform/products/power-automate"
+what = "Microsoft's automation platform, integrated with Microsoft 365 and Windows."
+best_for = "Workplaces using Microsoft 365"
+pricing = "Included in some Microsoft plans; premium tiers available"
+free_tier = false
+
+[[tools]]
+name = "Notion AI"
+category = "Productivity"
+url = "https://www.notion.so/product/ai"
+what = "AI built into Notion for writing, summarising, searching your workspace and filling databases."
+best_for = "Teams and individuals organising notes and projects in Notion"
+pricing = "Included in some Notion plans"
+free_tier = false
+
+[[tools]]
+name = "Otter.ai"
+category = "Productivity"
+url = "https://otter.ai"
+what = "Meeting transcription with automatic summaries and action items."
+best_for = "Recording and summarising meetings (with consent)"
+pricing = "Free tier; paid plans available"
+free_tier = true
+
+[[tools]]
+name = "Grammarly"
+category = "Writing"
+url = "https://www.grammarly.com"
+what = "Writing assistant for grammar, clarity and tone, with generative AI features, across your browser and apps."
+best_for = "Polishing everyday writing everywhere you type"
+pricing = "Free tier; Pro plan available"
+free_tier = true
+
+[[tools]]
+name = "Canva"
+category = "Design"
+url = "https://www.canva.com"
+what = "Easy design platform with AI image generation, editing, presentations, video and brand kits."
+best_for = "Social posts, presentations and simple designs"
+pricing = "Free tier; Pro plan available"
+free_tier = true
+
+[[tools]]
+name = "Adobe Firefly"
+category = "Design"
+url = "https://firefly.adobe.com"
+what = "Adobe's generative AI for images, video and design, integrated with Photoshop and Express."
+best_for = "Creative work with commercial-use focus"
+pricing = "Free credits; paid plans available"
+free_tier = true
+
+[[tools]]
+name = "Midjourney"
+category = "Design"
+url = "https://www.midjourney.com"
+what = "High-quality AI image generator known for its artistic style."
+best_for = "Striking artistic images"
+pricing = "Paid plans"
+free_tier = false
+
+[[tools]]
+name = "Ideogram"
+category = "Design"
+url = "https://ideogram.ai"
+what = "AI image generator that's particularly good at text inside images: posters, logos, invitations."
+best_for = "Images that include words"
+pricing = "Free tier; paid plans available"
+free_tier = true
+
+[[tools]]
+name = "Gamma"
+category = "Presentations"
+url = "https://gamma.app"
+what = "Generates presentations, documents and simple web pages from a prompt or outline."
+best_for = "Fast, good-looking decks"
+pricing = "Free tier; paid plans available"
+free_tier = true
+
+[[tools]]
+name = "Descript"
+category = "Video & audio"
+url = "https://www.descript.com"
+what = "Edit video and podcasts by editing the transcript; remove filler words and clean audio with AI."
+best_for = "Talking-head videos and podcasts"
+pricing = "Free tier; paid plans available"
+free_tier = true
+
+[[tools]]
+name = "CapCut"
+category = "Video & audio"
+url = "https://www.capcut.com"
+what = "Video editor with AI captions, auto-cuts, effects and templates, popular for short-form social video."
+best_for = "Short social videos"
+pricing = "Free tier; Pro plan available"
+free_tier = true
+
+[[tools]]
+name = "Runway"
+category = "Video & audio"
+url = "https://runwayml.com"
+what = "AI video generation and editing tools for creators."
+best_for = "Generating and transforming video clips"
+pricing = "Free credits; paid plans available"
+free_tier = true
+
+[[tools]]
+name = "ElevenLabs"
+category = "Video & audio"
+url = "https://elevenlabs.io"
+what = "Natural-sounding text-to-speech, voiceovers, dubbing and (consented) voice cloning."
+best_for = "Voiceovers and audio versions of text"
+pricing = "Free tier; paid plans available"
+free_tier = true
+
+[[tools]]
+name = "Suno"
+category = "Video & audio"
+url = "https://suno.com"
+what = "Creates full songs with vocals from a text description."
+best_for = "Personalised songs and jingles"
+pricing = "Free tier; paid plans available"
+free_tier = true
+
+[[tools]]
+name = "Lovable"
+category = "Build apps"
+url = "https://lovable.dev"
+what = "Describe a web app in plain English and it builds and hosts it for you."
+best_for = "Vibe-coding small apps and prototypes"
+pricing = "Free tier; paid plans available"
+free_tier = true
+
+[[tools]]
+name = "Replit"
+category = "Build apps"
+url = "https://replit.com"
+what = "Online coding platform with an AI agent that builds, runs and deploys apps from a description."
+best_for = "Building and hosting small tools"
+pricing = "Free tier; paid plans available"
+free_tier = true
+
+[[tools]]
+name = "Bolt"
+category = "Build apps"
+url = "https://bolt.new"
+what = "AI app builder that creates full-stack web apps in the browser from prompts."
+best_for = "Quick prototypes and simple sites"
+pricing = "Free tier; paid plans available"
+free_tier = true
+
+[[tools]]
+name = "Duolingo"
+category = "Learning"
+url = "https://www.duolingo.com"
+what = "Language-learning app using AI for conversation practice and personalised lessons."
+best_for = "Daily language practice"
+pricing = "Free tier; paid plans available"
+free_tier = true
+
+[[tools]]
+name = "Khanmigo"
+category = "Learning"
+url = "https://www.khanmigo.ai"
+what = "Khan Academy's AI tutor designed to guide students rather than give answers."
+best_for = "Kids' tutoring and homework help"
+pricing = "Free for teachers; family plans available"
+free_tier = true

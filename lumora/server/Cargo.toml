@@ -1,0 +1,55 @@
+[package]
+name = "lumora-server"
+version = "1.0.0"
+edition = "2021"
+description = "Lumora: the plain-English AI academy. API + static file server."
+license = "UNLICENSED"
+publish = false
+
+[[bin]]
+name = "lumora"
+path = "src/main.rs"
+
+[lib]
+name = "lumora"
+path = "src/lib.rs"
+
+[dependencies]
+anyhow = "1"
+argon2 = { version = "0.5", features = ["std"] }
+axum = { version = "0.8", features = ["macros"] }
+axum-extra = { version = "0.10", features = ["cookie"] }
+base64 = "0.22"
+cookie = "0.18"
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde", "std"] }
+dashmap = "6"
+dotenvy = "0.15"
+hex = "0.4"
+hmac = "0.12"
+pulldown-cmark = { version = "0.12", default-features = false, features = ["html"] }
+rand = "0.8"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_urlencoded = "0.7"
+sha2 = "0.10"
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite", "migrate", "macros", "derive", "chrono"] }
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+toml = "0.8"
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.6", features = ["fs", "compression-br", "compression-gzip", "trace", "set-header", "timeout", "limit"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+url = "2"
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+http-body-util = "0.1"
+tempfile = "3"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+opt-level = 3

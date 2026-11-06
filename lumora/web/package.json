@@ -1,0 +1,26 @@
+{
+  "name": "lumora-web",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build && node scripts/compress.mjs",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fontsource-variable/fraunces": "^5.3.0",
+    "@fontsource-variable/manrope": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.180.0",
+    "jsdom": "^26.1.0",
+    "typescript": "5.9",
+    "vite": "^7.3.7",
+    "vitest": "^3.2.7"
+  }
+}

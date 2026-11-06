@@ -1,0 +1,222 @@
+# Plain-English AI glossary (free for everyone)
+
+[[terms]]
+term = "Artificial intelligence (AI)"
+definition = "Computer systems that perform tasks we usually associate with human intelligence, such as understanding language, recognising images, making predictions or generating content."
+
+[[terms]]
+term = "Large language model (LLM)"
+definition = "The kind of AI behind chat assistants. It's trained on huge amounts of text to predict what comes next, which lets it write, summarise, translate and reason in natural language."
+example = "ChatGPT, Claude and Gemini are all powered by large language models."
+
+[[terms]]
+term = "Generative AI"
+definition = "AI that creates new content (text, images, audio, video or code) rather than just analysing existing data."
+
+[[terms]]
+term = "Chatbot / AI assistant"
+definition = "An app you talk to in everyday language. Modern assistants can also read files and images, search the web, and use tools."
+
+[[terms]]
+term = "Prompt"
+definition = "Whatever you type (or say) to an AI to tell it what you want. Better prompts include context, the task, and the format you need."
+example = "\"Write a 3-line thank-you note to my neighbour for watering my plants\" is a prompt."
+
+[[terms]]
+term = "Prompt engineering"
+definition = "The practice of writing prompts that reliably get good results: giving context, examples, structure and constraints."
+
+[[terms]]
+term = "Token"
+definition = "A chunk of text (roughly three-quarters of a word) that models read and write. Usage limits and API prices are usually counted in tokens."
+
+[[terms]]
+term = "Context window"
+definition = "How much text an AI can consider at once: your messages, its replies and any files in the conversation. Think of it as working memory."
+
+[[terms]]
+term = "Hallucination"
+definition = "When an AI states something false or made-up as if it were true, such as an invented statistic, quote or source."
+example = "Citing a book that doesn't exist is a classic hallucination."
+
+[[terms]]
+term = "Training data"
+definition = "The large collection of text, images or other data a model learned from. It has a cut-off date, so models may not know about recent events without web search."
+
+[[terms]]
+term = "Knowledge cut-off"
+definition = "The date after which a model has no training information. Use web search or research modes for anything more recent."
+
+[[terms]]
+term = "Fine-tuning"
+definition = "Extra training of an existing model on specialised examples so it behaves in a particular way or knows a particular domain better."
+
+[[terms]]
+term = "Temperature"
+definition = "A setting that controls how predictable or creative an AI's word choices are. Low = consistent and focused; high = varied and surprising."
+
+[[terms]]
+term = "Multimodal"
+definition = "Able to work with more than one type of input or output, such as text, images, audio and video."
+example = "Snapping a photo of a menu and asking for a translation uses multimodal AI."
+
+[[terms]]
+term = "Reasoning model / thinking mode"
+definition = "A model or mode that spends extra time working through a problem step by step before answering. Best for maths, planning and complex decisions."
+
+[[terms]]
+term = "Deep research"
+definition = "A mode where the AI runs many web searches, reads lots of sources and writes a structured, cited report. Takes minutes rather than seconds."
+
+[[terms]]
+term = "Custom instructions"
+definition = "Standing information and preferences you give an assistant once (who you are, how you like answers) that apply to every new chat."
+
+[[terms]]
+term = "Memory"
+definition = "A feature that lets an assistant remember facts about you across conversations. You can usually view, edit and delete what it remembers."
+
+[[terms]]
+term = "Project (AI workspace)"
+definition = "A space in an AI app that keeps related chats, files and instructions together for one ongoing piece of work."
+
+[[terms]]
+term = "Custom GPT / Gem"
+definition = "A named, customised assistant with its own instructions and reference files, built for a specific job. 'Custom GPTs' are in ChatGPT; 'Gems' are in Gemini."
+
+[[terms]]
+term = "Skill (AI skill)"
+definition = "A packaged set of instructions, examples and sometimes scripts that teaches an assistant to do a specific task your way. The assistant can load it automatically when relevant (for example, Claude Skills)."
+
+[[terms]]
+term = "Agent"
+definition = "An AI system that can plan and carry out multiple steps towards a goal using tools, such as browsing websites, filling forms, editing files or using apps."
+
+[[terms]]
+term = "Agentic AI"
+definition = "A general term for AI that acts with some autonomy (planning, using tools and taking actions) rather than only answering questions."
+
+[[terms]]
+term = "Browser agent"
+definition = "An AI agent that operates a web browser for you: clicking, typing and navigating pages to complete tasks."
+
+[[terms]]
+term = "Tool use / function calling"
+definition = "When an AI uses an external tool (a calculator, web search, code runner, calendar) to get information or take an action."
+
+[[terms]]
+term = "Connector / integration"
+definition = "A link between an AI assistant and another service (like Google Drive, Gmail or Slack) that lets the assistant read or act on your data there."
+
+[[terms]]
+term = "MCP (Model Context Protocol)"
+definition = "An open standard that lets AI assistants connect to tools and data sources in a consistent way: a universal adapter between AI apps and other software."
+
+[[terms]]
+term = "API"
+definition = "Application Programming Interface: a way for software to talk to other software. Developers and automation tools use AI providers' APIs to add AI to their own apps."
+
+[[terms]]
+term = "API key"
+definition = "A secret code that identifies you when software uses an API. Treat it like a password: never share it publicly."
+
+[[terms]]
+term = "Automation"
+definition = "Making a task happen automatically: when a trigger occurs, a set of actions runs without you doing them manually."
+
+[[terms]]
+term = "Trigger"
+definition = "The event that starts an automation, such as a new email, a form submission, or a scheduled time."
+
+[[terms]]
+term = "Action"
+definition = "A step an automation performs after it's triggered, like adding a spreadsheet row, sending a message or asking AI to summarise something."
+
+[[terms]]
+term = "No-code"
+definition = "Tools that let you build automations, apps or websites with visual editors instead of writing code. Zapier, Make and n8n are popular no-code automation tools."
+
+[[terms]]
+term = "Webhook"
+definition = "A way for one app to instantly notify another when something happens, by sending data to a special web address. Often used as an automation trigger."
+
+[[terms]]
+term = "Structured output / JSON"
+definition = "Asking an AI to reply in a fixed format with named fields (often JSON) so other software can reliably use the result."
+example = "{\"category\": \"billing\", \"urgency\": \"high\"}"
+
+[[terms]]
+term = "Scheduled task"
+definition = "A prompt that runs automatically at set times, such as a daily briefing or weekly news digest."
+
+[[terms]]
+term = "Vibe-coding"
+definition = "Building software by describing what you want in plain language and letting AI write the code, while you test it and give feedback."
+
+[[terms]]
+term = "Grounding"
+definition = "Making an AI answer from specific, trusted sources (like your documents or approved FAQs) instead of from its general memory, which reduces made-up answers."
+
+[[terms]]
+term = "RAG (retrieval-augmented generation)"
+definition = "A technique where the AI first looks up relevant information from a set of documents, then uses it to write its answer. Common in company chatbots and 'chat with your files' tools."
+
+[[terms]]
+term = "Embedding"
+definition = "A way of turning text into numbers that capture its meaning, so software can find similar content. It's what powers 'smart' search over documents."
+
+[[terms]]
+term = "Prompt injection"
+definition = "A trick where hidden instructions inside a web page, email or document try to hijack an AI, for example telling an agent to leak data or take unwanted actions."
+
+[[terms]]
+term = "Jailbreak"
+definition = "An attempt to trick an AI into ignoring its safety rules. Using jailbreaks usually breaks the service's terms."
+
+[[terms]]
+term = "Deepfake"
+definition = "A realistic but fake image, video or audio clip created with AI, often showing a real person saying or doing something they never did."
+
+[[terms]]
+term = "Voice cloning"
+definition = "Using AI to create a synthetic copy of someone's voice from recordings. Useful with consent, but also used in scams."
+
+[[terms]]
+term = "Text-to-image"
+definition = "AI that creates pictures from a written description."
+
+[[terms]]
+term = "Text-to-speech (TTS)"
+definition = "AI that turns written text into natural-sounding speech."
+
+[[terms]]
+term = "Speech-to-text / transcription"
+definition = "AI that turns spoken audio into written text."
+
+[[terms]]
+term = "Open-source / open-weight model"
+definition = "A model whose underlying files are publicly released, so anyone can run it on their own computer or servers (subject to its licence)."
+
+[[terms]]
+term = "Local AI"
+definition = "Running an AI model on your own device rather than in the cloud. More private, but usually less powerful than the biggest cloud models."
+
+[[terms]]
+term = "Bias (in AI)"
+definition = "When an AI's outputs unfairly favour or disadvantage certain groups, often because of patterns in its training data."
+
+[[terms]]
+term = "Human in the loop"
+definition = "Keeping a person involved to review or approve AI outputs or actions, especially for important, public or irreversible decisions."
+
+[[terms]]
+term = "Few-shot prompting"
+definition = "Including a few examples of what you want in your prompt so the AI copies the pattern, style or format."
+
+[[terms]]
+term = "System prompt"
+definition = "Hidden background instructions that set how an AI assistant behaves, written by the app maker or by you when building a custom assistant."
+
+[[terms]]
+term = "Canvas / artifacts"
+definition = "Side panels in some AI apps where documents, code or small apps appear and can be edited or run separately from the chat."

@@ -1,0 +1,11 @@
+{
+  "name": "lumora-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test --trace off"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  }
+}

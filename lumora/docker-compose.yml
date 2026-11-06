@@ -1,0 +1,16 @@
+services:
+  lumora:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: sqlite:///data/lumora.db
+      CONTENT_DIR: /app/content
+      STATIC_DIR: /app/web
+    volumes:
+      - lumora-data:/data
+    restart: unless-stopped
+volumes:
+  lumora-data:
