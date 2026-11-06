@@ -29,5 +29,5 @@ ENV BIND=0.0.0.0:8080 \
     RUST_LOG=info,tower_http=warn,sqlx=warn
 VOLUME ["/data"]
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=3s CMD ["/bin/sh", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /api/health HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q '\"ok\"' <&3"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s CMD ["/app/lumora", "healthcheck"]
 CMD ["/app/lumora"]

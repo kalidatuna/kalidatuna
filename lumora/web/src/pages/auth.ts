@@ -29,6 +29,7 @@ export default function auth(el: HTMLElement, ctx: Ctx) {
         <label class="field"><span>Password</span>
           <span class="pw"><input name="password" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" required minlength="8" /><button type="button" class="pw-toggle" aria-label="Show password">Show</button></span>
         </label>
+        ${signup ? '' : '<p class="forgot"><a href="/forgot-password">Forgot your password?</a></p>'}
         ${signup ? '<p class="fine">At least 8 characters. By creating an account you agree to our <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</p>' : ''}
         <p class="form-error" role="alert"></p>
         <button class="btn btn-primary btn-block btn-lg" type="submit">${signup ? 'Create free account' : 'Sign in'}</button>

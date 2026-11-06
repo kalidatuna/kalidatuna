@@ -7,6 +7,7 @@ use crate::{
     auth::{CurrentUser, User},
     billing::{self, PLANS},
     config::BillingMode,
+    email,
     error::{ApiError, ApiResult},
     routes::auth::load_user,
     state::AppState,
@@ -61,14 +62,23 @@ async fn activate(state: &AppState, user_id: i64, plan_id: &str, reference: &str
         .bind(user_id)
         .execute(&state.db)
         .await?;
-    sqlx::query("INSERT OR IGNORE INTO payments (user_id, reference, plan, amount_cents, provider) VALUES (?, ?, ?, ?, ?)")
-        .bind(user_id)
-        .bind(reference)
-        .bind(plan_id)
-        .bind(amount)
-        .bind(provider)
-        .execute(&state.db)
-        .await?;
+    let new_payment =
+        sqlx::query("INSERT OR IGNORE INTO payments (user_id, reference, plan, amount_cents, provider) VALUES (?, ?, ?, ?, ?)")
+            .bind(user_id)
+            .bind(reference)
+            .bind(plan_id)
+            .bind(amount)
+            .bind(provider)
+            .execute(&state.db)
+            .await?
+            .rows_affected()
+            > 0;
+    if new_payment {
+        if let (Ok(user), Some(plan)) = (load_user(state, user_id).await, billing::plan(plan_id)) {
+            let amount = format!("${:.2}", amount as f64 / 100.0);
+            email::send(state, email::purchase(&user.email, &user.name, plan.name, &amount, &state.config.public_url)).await;
+        }
+    }
     Ok(())
 }
 
@@ -175,6 +185,9 @@ pub async fn stripe_webhook(State(state): State<AppState>, headers: HeaderMap, b
                 } else {
                     s("/metadata/plan").filter(|p| billing::plan(p).is_some()).unwrap_or(u.plan.clone())
                 };
+                if status == "canceled" && u.has_pro() {
+                    email::send(&state, email::plan_ended(&u.email, &u.name, &state.config.public_url)).await;
+                }
                 sqlx::query("UPDATE users SET plan = ?, plan_status = ?, plan_renews_at = COALESCE(?, plan_renews_at), stripe_subscription_id = ? WHERE id = ?")
                     .bind(plan)
                     .bind(status)
@@ -187,6 +200,9 @@ pub async fn stripe_webhook(State(state): State<AppState>, headers: HeaderMap, b
         }
         "invoice.payment_failed" => {
             if let Some(c) = s("/customer") {
+                if let Some(u) = user_by(&state, "stripe_customer_id", &c).await? {
+                    email::send(&state, email::payment_failed(&u.email, &state.config.public_url)).await;
+                }
                 sqlx::query("UPDATE users SET plan_status = 'past_due' WHERE stripe_customer_id = ? AND plan IN ('monthly','yearly')")
                     .bind(c)
                     .execute(&state.db)

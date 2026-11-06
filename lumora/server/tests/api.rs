@@ -686,3 +686,221 @@ async fn stripe_checkout_and_portal_call_the_api() {
     assert_eq!(r.json()["url"], "https://billing.stripe.com/p/session/test");
     assert_eq!(seen.lock().unwrap()[1]["customer"], "cus_9");
 }
+
+// ---------- Email, password reset, contact, certificates ----------
+
+async fn outbox(state: &AppState, to: &str) -> Vec<(String, String, String)> {
+    sqlx::query_as("SELECT kind, subject, body_text FROM email_outbox WHERE to_email = ? ORDER BY id")
+        .bind(to)
+        .fetch_all(&state.db)
+        .await
+        .unwrap()
+}
+
+#[tokio::test]
+async fn signup_and_purchase_send_emails() {
+    let (app, state) = app().await;
+    let mut u = Client::new(&app);
+    u.signup("Mia", "mia@example.com").await;
+    u.post("/api/billing/demo/complete", json!({"plan": "lifetime"})).await;
+    let kinds: Vec<String> = outbox(&state, "mia@example.com").await.into_iter().map(|e| e.0).collect();
+    assert_eq!(kinds, vec!["welcome", "purchase"]);
+    let purchase = &outbox(&state, "mia@example.com").await[1];
+    assert!(purchase.1.contains("Lifetime"));
+    assert!(purchase.2.contains("$249.00"));
+
+    // Leads get the starter kit exactly once
+    let mut anon = Client::new(&app);
+    anon.post("/api/leads", json!({"email": "kit@example.com"})).await;
+    anon.post("/api/leads", json!({"email": "kit@example.com"})).await;
+    assert_eq!(outbox(&state, "kit@example.com").await.len(), 1);
+}
+
+fn reset_token(body: &str) -> String {
+    let start = body.find("token=").expect("link in email") + 6;
+    body[start..].split_whitespace().next().unwrap().to_string()
+}
+
+#[tokio::test]
+async fn password_reset_flow() {
+    let (app, state) = app().await;
+    let mut u = Client::new(&app);
+    u.signup("Noa", "noa@example.com").await;
+    let mut other_device = Client::new(&app);
+    other_device.post("/api/auth/login", json!({"email": "noa@example.com", "password": "correct horse 42"})).await;
+
+    let mut anon = Client::new(&app);
+    // Unknown emails get the same answer and no email
+    let r = anon.post("/api/auth/forgot", json!({"email": "ghost@example.com"})).await;
+    assert_eq!(r.status, StatusCode::OK);
+    assert!(outbox(&state, "ghost@example.com").await.is_empty());
+
+    let r = anon.post("/api/auth/forgot", json!({"email": "NOA@example.com"})).await;
+    assert_eq!(r.status, StatusCode::OK);
+    let mail = outbox(&state, "noa@example.com").await.into_iter().find(|e| e.0 == "password_reset").expect("reset email");
+    assert!(mail.2.contains("http://localhost:8080/reset-password?token="));
+    let token = reset_token(&mail.2);
+
+    // Bad token and weak password are rejected
+    assert_eq!(anon.post("/api/auth/reset", json!({"token": "nope", "password": "brand new pass"})).await.status, StatusCode::BAD_REQUEST);
+    assert_eq!(anon.post("/api/auth/reset", json!({"token": token, "password": "short"})).await.status, StatusCode::BAD_REQUEST);
+
+    let r = anon.post("/api/auth/reset", json!({"token": token, "password": "brand new pass"})).await;
+    assert_eq!(r.status, StatusCode::OK, "{}", r.text);
+    assert_eq!(r.json()["user"]["email"], "noa@example.com");
+    assert_eq!(anon.get("/api/me").await.json()["user"]["name"], "Noa", "reset signs you in");
+    // All other sessions are revoked, the token is single-use, and the new password works
+    assert!(other_device.get("/api/me").await.json()["user"].is_null());
+    assert!(u.get("/api/me").await.json()["user"].is_null());
+    assert_eq!(anon.post("/api/auth/reset", json!({"token": token, "password": "another new pass"})).await.status, StatusCode::BAD_REQUEST);
+    let mut fresh = Client::new(&app);
+    assert_eq!(
+        fresh.post("/api/auth/login", json!({"email": "noa@example.com", "password": "brand new pass"})).await.status,
+        StatusCode::OK
+    );
+    assert!(outbox(&state, "noa@example.com").await.iter().any(|e| e.0 == "password_changed"));
+}
+
+#[tokio::test]
+async fn expired_reset_tokens_are_rejected() {
+    let (app, state) = app().await;
+    let mut anon = Client::new(&app);
+    anon.signup("Old", "old@example.com").await;
+    anon.post("/api/auth/forgot", json!({"email": "old@example.com"})).await;
+    let mail = outbox(&state, "old@example.com").await.into_iter().find(|e| e.0 == "password_reset").unwrap();
+    sqlx::query("UPDATE password_resets SET expires_at = '2000-01-01T00:00:00Z'").execute(&state.db).await.unwrap();
+    let r = anon.post("/api/auth/reset", json!({"token": reset_token(&mail.2), "password": "brand new pass"})).await;
+    assert_eq!(r.status, StatusCode::BAD_REQUEST);
+    assert!(r.json()["error"]["message"].as_str().unwrap().contains("expired"));
+}
+
+#[tokio::test]
+async fn contact_form_stores_and_notifies() {
+    let (app, state) = app().await;
+    let mut anon = Client::new(&app);
+    let bad = anon
+        .post(
+            "/api/contact",
+            json!({"name": "Ola", "email": "ola@example.com", "topic": "Hacking", "message": "Hello there, quick question"}),
+        )
+        .await;
+    assert_eq!(bad.status, StatusCode::BAD_REQUEST);
+    let short = anon.post("/api/contact", json!({"name": "Ola", "email": "ola@example.com", "topic": "Feedback", "message": "hi"})).await;
+    assert_eq!(short.status, StatusCode::BAD_REQUEST);
+    let ok = anon
+        .post("/api/contact", json!({"name": "Ola", "email": "ola@example.com", "topic": "Teams & companies", "message": "We'd like 25 seats for our office."}))
+        .await;
+    assert_eq!(ok.status, StatusCode::OK, "{}", ok.text);
+    let support = outbox(&state, "support@lumora.test").await;
+    assert_eq!(support.len(), 1);
+    assert!(support[0].1.contains("Teams & companies"));
+    assert!(support[0].2.contains("25 seats"));
+    assert_eq!(outbox(&state, "ola@example.com").await[0].0, "contact_receipt");
+
+    let mut admin = Client::new(&app);
+    admin.signup("Admin", "admin@lumora.test").await;
+    let msgs = admin.get("/api/admin/messages").await.json();
+    assert_eq!(msgs["messages"][0]["email"], "ola@example.com");
+    let mails = admin.get("/api/admin/emails?to=ola@example.com").await.json();
+    assert_eq!(mails["provider"], "log");
+    assert_eq!(mails["emails"].as_array().unwrap().len(), 1);
+    assert_eq!(anon.get("/api/admin/emails").await.status, StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn certificates_are_publicly_verifiable() {
+    let (app, state) = app().await;
+    let mut u = Client::new(&app);
+    u.signup("Pat Verified", "pat@example.com").await;
+    u.post("/api/billing/demo/complete", json!({"plan": "yearly"})).await;
+    for slug in &state.content.order {
+        u.post(&format!("/api/lessons/{slug}/complete"), json!({})).await;
+    }
+    let d = u.get("/api/dashboard").await.json();
+    let code = d["certificate_code"].as_str().expect("issued").to_string();
+    assert!(code.starts_with("LUM-"));
+    let svg = u.get("/api/certificate").await.text;
+    assert!(svg.contains(&code));
+    assert!(svg.contains(&format!("/verify/{code}")));
+    // Stable across calls
+    assert_eq!(u.get("/api/dashboard").await.json()["certificate_code"], code.as_str());
+
+    let mut anon = Client::new(&app);
+    let v = anon.get(&format!("/api/verify/{}", code.to_lowercase())).await.json();
+    assert_eq!(v["valid"], true);
+    assert_eq!(v["name"], "Pat Verified");
+    assert_eq!(v["lessons"], 40);
+    assert_eq!(anon.get("/api/verify/LUM-FAKE-CODE").await.json()["valid"], false);
+}
+
+#[tokio::test]
+async fn emails_are_delivered_through_the_provider_api() {
+    use axum::{routing::post, Json};
+    use std::sync::{Arc, Mutex};
+    let seen: Arc<Mutex<Vec<(String, Value)>>> = Arc::default();
+    let seen2 = seen.clone();
+    let mock = Router::new().route(
+        "/emails",
+        post(move |headers: axum::http::HeaderMap, Json(body): Json<Value>| {
+            let seen = seen2.clone();
+            async move {
+                let auth = headers.get("authorization").and_then(|v| v.to_str().ok()).unwrap_or_default().to_string();
+                seen.lock().unwrap().push((auth, body));
+                Json(json!({"id": "email_123"}))
+            }
+        }),
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move { axum::serve(listener, mock).await.unwrap() });
+
+    let mut cfg = Config::for_tests(content_dir());
+    cfg.email.provider = lumora::config::EmailProvider::Resend;
+    cfg.email.api_key = "re_test".into();
+    cfg.email.api_base = format!("http://{addr}");
+    let (app, state) = app_with(cfg).await;
+    Client::new(&app).signup("Quinn", "quinn@example.com").await;
+    for _ in 0..50 {
+        let status: Option<(String,)> =
+            sqlx::query_as("SELECT status FROM email_outbox WHERE to_email = 'quinn@example.com'").fetch_optional(&state.db).await.unwrap();
+        if status.as_ref().is_some_and(|s| s.0 == "sent") {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+    }
+    let sent = seen.lock().unwrap();
+    assert_eq!(sent.len(), 1);
+    assert_eq!(sent[0].0, "Bearer re_test");
+    assert_eq!(sent[0].1["to"][0], "quinn@example.com");
+    assert!(sent[0].1["html"].as_str().unwrap().contains("Start lesson 1"));
+}
+
+/// Runs against Stripe's official API mock (https://github.com/stripe/stripe-mock), which validates
+/// every parameter against Stripe's OpenAPI spec. Set STRIPE_MOCK_URL (e.g. http://localhost:12111).
+#[tokio::test]
+async fn checkout_requests_are_valid_against_stripe_mock() {
+    let Ok(base) = std::env::var("STRIPE_MOCK_URL") else {
+        eprintln!("STRIPE_MOCK_URL not set; skipping stripe-mock validation");
+        return;
+    };
+    let (app, _) = app_with(stripe_config(&base)).await;
+    let mut u = Client::new(&app);
+    let id = u.signup("Stripe Tester", "stripe@example.com").await["user"]["id"].as_i64().unwrap();
+    for plan in ["monthly", "yearly", "lifetime"] {
+        let r = u.post("/api/billing/checkout", json!({"plan": plan})).await;
+        assert_eq!(r.status, StatusCode::OK, "{plan}: {}", r.text);
+        assert!(r.json()["url"].as_str().unwrap().starts_with("http"), "{plan}: {}", r.text);
+    }
+    webhook(
+        &app,
+        json!({"id": "evt_sm", "type": "checkout.session.completed", "data": {"object": {
+        "id": "cs_sm", "client_reference_id": id.to_string(), "customer": "cus_123", "subscription": "sub_123",
+        "amount_total": 1400, "metadata": {"plan": "monthly"}}}}),
+    )
+    .await;
+    // Existing customers reuse their customer id
+    let r = u.post("/api/billing/checkout", json!({"plan": "yearly"})).await;
+    assert_eq!(r.status, StatusCode::OK, "{}", r.text);
+    let r = u.post("/api/billing/portal", json!({})).await;
+    assert_eq!(r.status, StatusCode::OK, "{}", r.text);
+}

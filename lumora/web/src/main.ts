@@ -36,6 +36,11 @@ route('/welcome', () => import('./pages/welcome'));
 route('/admin', () => import('./pages/admin'));
 route('/terms', () => import('./pages/legal'));
 route('/privacy', () => import('./pages/legal'));
+route('/refunds', () => import('./pages/legal'));
+route('/forgot-password', () => import('./pages/recover'));
+route('/reset-password', () => import('./pages/recover'));
+route('/contact', () => import('./pages/contact'));
+route('/verify/:code', () => import('./pages/verify'));
 
 let stage: Stage | null = null;
 let stageLoading: Promise<void> | null = null;

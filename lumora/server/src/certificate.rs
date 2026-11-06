@@ -13,8 +13,10 @@ pub fn escape(s: &str) -> String {
         .collect()
 }
 
-pub fn render(name: &str, date: &str, lessons: usize, minutes: u32, code: &str) -> String {
+pub fn render(name: &str, date: &str, lessons: usize, minutes: u32, code: &str, verify_url: &str) -> String {
     let name = escape(name);
+    let code = escape(code);
+    let verify_url = escape(verify_url);
     let hours = (minutes as f32 / 60.0).round() as u32;
     format!(
         r##"<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1130" viewBox="0 0 1600 1130" font-family="Georgia, 'Times New Roman', serif">
@@ -51,6 +53,7 @@ pub fn render(name: &str, date: &str, lessons: usize, minutes: u32, code: &str) 
     <text x="1300" y="930" text-anchor="middle">{code}</text>
     <line x1="1170" y1="890" x2="1430" y2="890" stroke="#ffffff" stroke-opacity=".3"/>
     <text x="1300" y="965" text-anchor="middle" fill="#8f89bd" font-size="18">CREDENTIAL ID</text>
+    <text x="800" y="1040" text-anchor="middle" fill="#8f89bd" font-size="18">Verify at {verify_url}</text>
   </g>
 </svg>"##
     )
@@ -62,7 +65,7 @@ mod tests {
 
     #[test]
     fn escapes_names() {
-        let svg = render("<Ann & \"Bo\">", "Jan 1, 2026", 40, 600, "ABC");
+        let svg = render("<Ann & \"Bo\">", "Jan 1, 2026", 40, 600, "ABC", "https://x/verify/ABC");
         assert!(svg.contains("&lt;Ann &amp; &quot;Bo&quot;&gt;"));
         assert!(!svg.contains("<Ann"));
         assert!(svg.contains("about 10 hours"));

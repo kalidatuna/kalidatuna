@@ -8,6 +8,7 @@ pub mod billing;
 pub mod certificate;
 pub mod config;
 pub mod content;
+pub mod email;
 pub mod error;
 pub mod ratelimit;
 pub mod routes;
@@ -31,7 +32,7 @@ use tower_http::{
     trace::TraceLayer,
 };
 
-use routes::{admin, auth as a, billing as b, learn, library, misc};
+use routes::{admin, auth as a, billing as b, learn, library, misc, support};
 pub use state::AppState;
 
 pub fn api_router() -> Router<AppState> {
@@ -43,6 +44,10 @@ pub fn api_router() -> Router<AppState> {
         .route("/auth/signup", post(a::signup))
         .route("/auth/login", post(a::login))
         .route("/auth/logout", post(a::logout))
+        .route("/auth/forgot", post(support::forgot))
+        .route("/auth/reset", post(support::reset))
+        .route("/contact", post(support::contact))
+        .route("/verify/{code}", get(support::verify))
         .route("/me", get(a::me).patch(a::update_me).delete(a::delete_me))
         .route("/me/password", post(a::change_password))
         .route("/me/export", get(a::export_me))
@@ -72,6 +77,8 @@ pub fn api_router() -> Router<AppState> {
         .route("/admin/stats", get(admin::stats))
         .route("/admin/users", get(admin::users))
         .route("/admin/leads.csv", get(admin::leads_csv))
+        .route("/admin/messages", get(support::admin_messages))
+        .route("/admin/emails", get(support::admin_emails))
         .fallback(|| async { (StatusCode::NOT_FOUND, Json(json!({ "error": { "code": "not_found", "message": "Not found." } }))) })
 }
 

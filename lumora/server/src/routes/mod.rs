@@ -4,3 +4,4 @@ pub mod billing;
 pub mod learn;
 pub mod library;
 pub mod misc;
+pub mod support;

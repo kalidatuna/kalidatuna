@@ -20,6 +20,24 @@ pub struct StripeConfig {
     pub api_base: String,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum EmailProvider {
+    /// Emails are recorded in the outbox table only (development / until configured).
+    Log,
+    Resend,
+    Postmark,
+}
+
+#[derive(Clone, Debug)]
+pub struct EmailConfig {
+    pub provider: EmailProvider,
+    pub from: String,
+    pub api_key: String,
+    pub api_base: String,
+    /// Where contact-form messages are delivered.
+    pub support_inbox: String,
+}
+
 #[derive(Clone, Debug)]
 pub struct Config {
     pub bind: String,
@@ -35,6 +53,7 @@ pub struct Config {
     /// Requests per minute allowed on sensitive endpoints (login, signup, leads) per IP.
     pub auth_rate_per_minute: u32,
     pub session_days: i64,
+    pub email: EmailConfig,
 }
 
 fn env(key: &str) -> Option<String> {
@@ -76,6 +95,7 @@ impl Config {
             trust_proxy: env("TRUST_PROXY").map(|v| v == "true" || v == "1").unwrap_or(false),
             auth_rate_per_minute: env("AUTH_RATE_PER_MINUTE").and_then(|v| v.parse().ok()).unwrap_or(20),
             session_days: env("SESSION_DAYS").and_then(|v| v.parse().ok()).unwrap_or(30),
+            email: EmailConfig::from_env(),
         }
     }
 
@@ -94,6 +114,36 @@ impl Config {
             trust_proxy: false,
             auth_rate_per_minute: 1000,
             session_days: 30,
+            email: EmailConfig {
+                provider: EmailProvider::Log,
+                from: "Lumora <hello@lumora.test>".into(),
+                api_key: String::new(),
+                api_base: String::new(),
+                support_inbox: "support@lumora.test".into(),
+            },
+        }
+    }
+}
+
+impl EmailConfig {
+    pub fn from_env() -> Self {
+        let api_key = env("EMAIL_API_KEY").unwrap_or_default();
+        let provider = match env("EMAIL_PROVIDER").as_deref() {
+            Some("resend") if !api_key.is_empty() => EmailProvider::Resend,
+            Some("postmark") if !api_key.is_empty() => EmailProvider::Postmark,
+            _ => EmailProvider::Log,
+        };
+        let default_base = match provider {
+            EmailProvider::Resend => "https://api.resend.com",
+            EmailProvider::Postmark => "https://api.postmarkapp.com",
+            EmailProvider::Log => "",
+        };
+        EmailConfig {
+            provider,
+            from: env("EMAIL_FROM").unwrap_or_else(|| "Lumora <hello@lumora.app>".into()),
+            api_key,
+            api_base: env("EMAIL_API_BASE").unwrap_or_else(|| default_base.into()),
+            support_inbox: env("SUPPORT_EMAIL").unwrap_or_else(|| "support@lumora.app".into()),
         }
     }
 }

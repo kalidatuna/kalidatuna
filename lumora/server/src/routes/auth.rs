@@ -5,6 +5,7 @@ use serde_json::{json, Value};
 
 use crate::{
     auth::{self, ClientIp, CurrentUser, MaybeUser, User, USER_COLUMNS},
+    email,
     error::{ApiError, ApiResult},
     state::AppState,
 };
@@ -82,6 +83,7 @@ pub async fn signup(
     sqlx::query("INSERT OR IGNORE INTO leads (email, source) VALUES (?, 'signup')").bind(&email).execute(&state.db).await?;
     let cookie = auth::create_session(&state, id).await?;
     let user = load_user(&state, id).await?;
+    email::send(&state, email::welcome(&user.email, &user.name, &state.config.public_url)).await;
     Ok((jar.add(cookie), Json(json!({ "user": user.view() }))))
 }
 
@@ -161,6 +163,7 @@ pub async fn change_password(
     // Sign out every other device, then issue a fresh session for this one.
     sqlx::query("DELETE FROM sessions WHERE user_id = ?").bind(user.id).execute(&state.db).await?;
     let cookie = auth::create_session(&state, user.id).await?;
+    email::send(&state, email::password_changed(&user.email, &user.name, &state.config.public_url)).await;
     Ok((jar.add(cookie), Json(json!({ "ok": true }))))
 }
 

@@ -6,6 +6,7 @@ use crate::{
     auth::ClientIp,
     billing::PLANS,
     config::BillingMode,
+    email as mailer,
     error::{ApiError, ApiResult},
     routes::auth::valid_email,
     state::AppState,
@@ -56,17 +57,38 @@ pub async fn lead(State(state): State<AppState>, ClientIp(ip): ClientIp, Json(bo
     }
     let source: String =
         body.source.unwrap_or_else(|| "landing".into()).chars().filter(|c| c.is_ascii_alphanumeric() || *c == '-').take(40).collect();
-    sqlx::query("INSERT OR IGNORE INTO leads (email, source) VALUES (?, ?)").bind(&email).bind(source).execute(&state.db).await?;
+    let inserted = sqlx::query("INSERT OR IGNORE INTO leads (email, source) VALUES (?, ?)")
+        .bind(&email)
+        .bind(source)
+        .execute(&state.db)
+        .await?
+        .rows_affected();
+    if inserted > 0 {
+        mailer::send(&state, mailer::starter_kit(&email, &state.config.public_url)).await;
+    }
     Ok(Json(json!({ "ok": true, "starter_kit": "/starter-kit" })))
 }
 
 pub async fn sitemap(State(state): State<AppState>) -> impl IntoResponse {
     let base = state.config.public_url.trim_end_matches('/');
-    let mut urls: Vec<String> =
-        ["", "/pricing", "/learn", "/prompts", "/playbooks", "/glossary", "/tools", "/prompt-builder", "/starter-kit"]
-            .iter()
-            .map(|p| format!("{base}{p}"))
-            .collect();
+    let mut urls: Vec<String> = [
+        "",
+        "/pricing",
+        "/learn",
+        "/prompts",
+        "/playbooks",
+        "/glossary",
+        "/tools",
+        "/prompt-builder",
+        "/starter-kit",
+        "/contact",
+        "/terms",
+        "/privacy",
+        "/refunds",
+    ]
+    .iter()
+    .map(|p| format!("{base}{p}"))
+    .collect();
     urls.extend(state.content.order.iter().map(|s| format!("{base}/learn/{s}")));
     urls.extend(state.content.playbooks.iter().map(|p| format!("{base}/playbooks/{}", p.slug)));
     let body = format!(

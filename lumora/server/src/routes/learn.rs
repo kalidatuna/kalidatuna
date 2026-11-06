@@ -318,6 +318,8 @@ pub async fn dashboard(State(state): State<AppState>, CurrentUser(user): Current
     let recent: Vec<Value> =
         recent.into_iter().filter_map(|(s, at)| c.lesson(&s).map(|l| json!({ "slug": l.slug, "title": l.title, "at": at }))).collect();
 
+    let ready = state.content.order.iter().all(|s| done.contains(s));
+    let certificate_code = if ready { Some(crate::routes::support::issue_certificate(&state, user.id, &user.name).await?.0) } else { None };
     let minutes_done: u32 = done.iter().filter_map(|s| c.lesson(s)).map(|l| l.minutes).sum();
     let total = c.order.len();
     Ok(Json(json!({
@@ -336,7 +338,8 @@ pub async fn dashboard(State(state): State<AppState>, CurrentUser(user): Current
         "next_lesson": next,
         "modules": modules,
         "recent": recent,
-        "certificate_ready": state.content.order.iter().all(|s| done.contains(s)),
+        "certificate_ready": ready,
+        "certificate_code": certificate_code,
     })))
 }
 
@@ -421,8 +424,9 @@ pub async fn certificate(State(state): State<AppState>, CurrentUser(user): Curre
         .and_then(|d| chrono::DateTime::parse_from_rfc3339(d).ok())
         .map(|d| d.format("%B %-d, %Y").to_string())
         .unwrap_or_else(|| Utc::now().format("%B %-d, %Y").to_string());
-    let code = &crate::auth::hash_token(&format!("lumora-cert-{}-{}", user.id, user.created_at))[..12];
-    let svg = certificate::render(&user.name, &date, state.content.order.len(), state.content.total_minutes(), &code.to_uppercase());
+    let (code, _) = crate::routes::support::issue_certificate(&state, user.id, &user.name).await?;
+    let verify_url = format!("{}/verify/{}", state.config.public_url.trim_end_matches('/'), code);
+    let svg = certificate::render(&user.name, &date, state.content.order.len(), state.content.total_minutes(), &code, &verify_url);
     Ok(([(header::CONTENT_TYPE, "image/svg+xml; charset=utf-8"), (header::CACHE_CONTROL, "private, no-store")], svg))
 }
 

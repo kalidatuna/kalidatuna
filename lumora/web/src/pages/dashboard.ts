@@ -12,6 +12,7 @@ interface Dash {
   modules: { slug: string; title: string; color: string; model: string; completed: number; total: number; quiz_passed: boolean }[];
   recent: { slug: string; title: string; at: string }[];
   certificate_ready: boolean;
+  certificate_code: string | null;
 }
 
 export default async function dashboard(el: HTMLElement) {
@@ -77,7 +78,7 @@ export default async function dashboard(el: HTMLElement) {
         <div class="card cert-card ${d.certificate_ready ? 'ready' : ''}" data-hover-host>
           ${model3d('trophy', '#ffd166', 'model-trophy')}
           <h3>Your certificate</h3>
-          ${d.certificate_ready ? '<p class="muted">You finished the whole curriculum. Amazing!</p><a class="btn btn-primary btn-sm" href="/api/certificate" target="_blank" rel="noopener">View & download</a>' : `<p class="muted">${left} lesson${left === 1 ? '' : 's'} to go. Finish every lesson to earn your Lumora certificate.</p>`}
+          ${d.certificate_ready ? '<p class="muted">You finished the whole curriculum. Amazing!</p><a class="btn btn-primary btn-sm" href="/api/certificate" target="_blank" rel="noopener">View & download</a><p class="fine">Credential ID: <a href="/verify/' + esc(d.certificate_code ?? '') + '">' + esc(d.certificate_code ?? '') + '</a>. Share this link with employers.</p>' : `<p class="muted">${left} lesson${left === 1 ? '' : 's'} to go. Finish every lesson to earn your Lumora certificate.</p>`}
         </div>
         <div class="card">
           <h3>Saved</h3>

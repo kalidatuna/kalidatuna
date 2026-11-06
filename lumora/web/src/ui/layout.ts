@@ -88,7 +88,7 @@ export function renderFooter(host: HTMLElement) {
       </div>
       <div><h4>Learn</h4><a href="/learn">Curriculum</a><a href="/playbooks">Automation playbooks</a><a href="/prompts">Prompt library</a><a href="/prompt-builder">Prompt Builder</a></div>
       <div><h4>Free resources</h4><a href="/starter-kit">AI Starter Kit</a><a href="/glossary">AI glossary</a><a href="/tools">Tool Finder</a><a href="/learn/what-ai-really-is">Free first lesson</a></div>
-      <div><h4>Company</h4><a href="/pricing">Pricing</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="mailto:hello@lumora.app" data-external>Contact</a></div>
+      <div><h4>Company</h4><a href="/pricing">Pricing</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/refunds">Refund policy</a><a href="/contact">Contact</a></div>
     </div>
     <div class="container footer-base"><span>© ${year} Lumora. All rights reserved.</span><span>Made for curious humans. Content reviewed regularly as AI tools change.</span></div>`;
 }

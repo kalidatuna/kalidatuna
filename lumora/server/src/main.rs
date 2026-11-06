@@ -6,6 +6,9 @@ use tracing_subscriber::{fmt, EnvFilter};
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let _ = dotenvy::dotenv();
+    if std::env::args().nth(1).as_deref() == Some("healthcheck") {
+        return healthcheck().await;
+    }
     fmt().with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info,tower_http=warn,sqlx=warn"))).init();
 
     let config = Config::from_env();
@@ -31,5 +34,20 @@ async fn main() -> anyhow::Result<()> {
             let _ = tokio::signal::ctrl_c().await;
         })
         .await?;
+    Ok(())
+}
+
+/// `lumora healthcheck`: exits 0 when the local server answers /api/health (used by Docker).
+async fn healthcheck() -> anyhow::Result<()> {
+    let bind = std::env::var("BIND").unwrap_or_else(|_| "0.0.0.0:8080".into());
+    let port = bind.rsplit(':').next().unwrap_or("8080");
+    let res = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(3))
+        .no_proxy()
+        .build()?
+        .get(format!("http://127.0.0.1:{port}/api/health"))
+        .send()
+        .await?;
+    anyhow::ensure!(res.status().is_success(), "health endpoint returned {}", res.status());
     Ok(())
 }

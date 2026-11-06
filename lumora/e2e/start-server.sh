@@ -3,8 +3,12 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 ROOT="$(cd .. && pwd)"
-BIN="${LUMORA_BIN:-$ROOT/server/target/release/lumora}"
-[ -x "$BIN" ] || BIN="$ROOT/server/target/debug/lumora"
+# Use LUMORA_BIN if given, otherwise whichever of the release/debug builds is newest.
+REL="$ROOT/server/target/release/lumora"
+DBG="$ROOT/server/target/debug/lumora"
+if [ -n "${LUMORA_BIN:-}" ]; then BIN="$LUMORA_BIN"
+elif [ -x "$REL" ] && { [ ! -x "$DBG" ] || [ "$REL" -nt "$DBG" ]; }; then BIN="$REL"
+else BIN="$DBG"; fi
 DB_DIR="$(mktemp -d)"
 export DATABASE_URL="sqlite://$DB_DIR/e2e.db"
 export CONTENT_DIR="$ROOT/content"

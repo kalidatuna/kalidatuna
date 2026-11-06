@@ -18,9 +18,11 @@ It ships as **one fast Rust binary** that serves the JSON API, Stripe webhooks a
 | **Prompt Builder** | Interactive BRIEF-method builder that scores your prompt and opens it in ChatGPT or Claude |
 | **Free resources** | 54-term glossary, 30-tool Tool Finder, AI Starter Kit (lead magnet) |
 | **Member area** | Dashboard with progress ring, streaks, quiz scores, saved items and "continue learning" |
-| **Account** | Profile, password change (signs out other devices), JSON data export, account deletion |
+| **Account** | Profile, password change and email-based password reset (both sign out other devices), JSON data export, account deletion |
+| **Email** | Welcome, password reset, purchase confirmation, payment failed, plan ended, Starter Kit delivery and contact receipts, via Resend or Postmark (or logged to an outbox until you connect one) |
+| **Support & trust** | Contact form (stored, emailed to your support inbox, viewable in admin), refund policy, terms, privacy, and publicly verifiable certificates (`/verify/LUM-XXXX-XXXX`) |
 | **Billing** | Free tier, Pro Monthly ($14), Pro Yearly ($99), Lifetime ($249) via Stripe Checkout + Customer Portal |
-| **Admin** | MRR, revenue, conversion, signups chart, top lessons, member search, leads CSV export |
+| **Admin** | MRR, revenue, conversion, signups chart, top lessons, member search, contact inbox, sent-email log, leads CSV export |
 | **Marketing** | Landing page with live before/after demo, pricing comparison, FAQ, lead capture, sitemap, OG image |
 
 ### Free vs Pro
@@ -88,11 +90,17 @@ Out of the box, billing runs in **demo mode**: checkout is simulated, no card is
 
 Behaviour: a failed renewal sets the plan to `past_due` (access continues during Stripe's retry period); cancellation returns the member to Free; lifetime buyers are never downgraded by subscription events. The display prices in `server/src/billing.rs` (`PLANS`) should match your Stripe prices.
 
-To test locally with the Stripe CLI:
+The integration is tested in CI against Stripe's official [`stripe-mock`](https://github.com/stripe/stripe-mock), which validates every request against Stripe's API specification. To run that locally: `docker run -p 12111:12111 stripe/stripe-mock`, then `STRIPE_MOCK_URL=http://localhost:12111 cargo test`.
+
+To test webhooks end to end with the Stripe CLI:
 
 ```bash
 stripe listen --forward-to localhost:8080/api/stripe/webhook
 ```
+
+## Sending email
+
+Set `EMAIL_PROVIDER=resend` (or `postmark`), `EMAIL_API_KEY`, `EMAIL_FROM` (a sender on a domain you've verified with the provider) and `SUPPORT_EMAIL`. Until then, every email is recorded in the outbox and visible on the admin page, so nothing is lost and you can see exactly what would be sent. Delivery runs in the background and failures are recorded with the provider's error message.
 
 ## Deploying
 
@@ -104,7 +112,7 @@ cp .env.example .env    # set PUBLIC_URL, ADMIN_EMAILS and Stripe keys
 docker compose up -d --build
 ```
 
-The SQLite database lives in the `lumora-data` volume (`/data`). Back it up with `sqlite3 /data/lumora.db ".backup backup.db"`, or use Litestream for continuous replication.
+The image is about 150 MB, runs as a non-root user and has a built-in health check (`lumora healthcheck`). Database migrations run automatically at startup, so upgrading is just pulling a new image. The SQLite database lives in the `lumora-data` volume (`/data`). Back it up with `sqlite3 /data/lumora.db ".backup backup.db"`, or use Litestream for continuous replication.
 
 ### Behind a reverse proxy
 Terminate TLS in Caddy, nginx or your platform's load balancer, set `PUBLIC_URL=https://your-domain`, and set `TRUST_PROXY=true` so rate limiting uses the real client IP.
@@ -136,21 +144,21 @@ make test
 
 | Suite | Count | Covers |
 | --- | --- | --- |
-| `server` (`cargo test`) | 36 | Content validation, auth/session lifecycle, paywall enforcement, progress and streaks, quiz grading (no answer leakage), bookmarks, certificate, account export/delete, CSRF, rate limiting, security headers, admin metrics, Stripe signature verification, webhook state machine, and Checkout/Portal calls against a mock Stripe API |
+| `server` (`cargo test`) | 45 | Content validation, auth/session lifecycle, password reset (single-use, expiring tokens), email templates and provider delivery, contact form, certificate verification, paywall enforcement, progress and streaks, quiz grading (no answer leakage), bookmarks, certificate, account export/delete, CSRF, rate limiting, security headers, admin metrics, Stripe signature verification, webhook state machine, and Checkout/Portal calls validated against Stripe's official `stripe-mock` |
 | `web` (`vitest`) | 35 | Utilities and escaping, router, Prompt Builder logic, API client errors, every 3D model building and animating with valid geometry |
-| `e2e` (Playwright) | 29 | The full customer journey (sign up → learn → paywall → buy → unlock → dashboard), quizzes, search palette, prompt library, builder, account management and deletion, admin access, theme, performance budget, and mobile layouts on a Pixel 7 profile |
+| `e2e` (Playwright) | 33 | The full customer journey (sign up → learn → paywall → buy → unlock → dashboard), password reset from the emailed link, contact form, verified certificates, quizzes, search palette, prompt library, builder, account management and deletion, admin access, theme, performance budget, and mobile layouts on a Pixel 7 profile |
 
-CI runs all three suites on every push (`.github/workflows/lumora-ci.yml`).
+CI runs all three suites, plus a Docker build and container health check, on every push (`.github/workflows/lumora-ci.yml`).
 
 ## Before you launch: decisions to make
 
 These are business choices with sensible placeholders in the code. Review them:
 
-- **Brand and domain:** "Lumora" and the `@lumora.app` contact addresses (in `web/src/ui/layout.ts`, `web/src/pages/pricing.ts` and `web/src/pages/legal.ts`).
+- **Brand and domain:** "Lumora" and the `@lumora.app` addresses used in the legal pages and as email defaults (`web/src/pages/legal.ts`, `.env`).
 - **Prices:** `server/src/billing.rs` and your Stripe prices.
 - **Promises in the copy:** the 14-day money-back guarantee, team/volume pricing, gifting and student discounts. Keep them only if you'll honour them.
 - **Legal pages:** `web/src/pages/legal.ts` contains starter Terms and Privacy text. Have them reviewed for your jurisdiction.
-- **Email delivery:** the app records leads and receipts references but doesn't send email. Connect your email tool (for example via a webhook from your lead list, or Stripe's built-in receipts).
+- **Email provider:** create a Resend or Postmark account, verify your sending domain, and set the email variables above.
 - **Content freshness:** AI products change quickly. Lessons avoid fragile specifics, but plan a monthly review of `content/`, especially the Tool Finder pricing.
 
 ## Project layout
