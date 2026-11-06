@@ -5,6 +5,7 @@
 .center-head { text-align: center; margin: 0 auto 40px; }
 .center-head .lead { margin: 0 auto; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
 .h-sm { font-size: 1.3rem; margin: 0 0 14px; }
 .demo-note { display: inline-block; margin-top: 12px; padding: 6px 12px; border-radius: 999px; background: rgba(255, 210, 122, .12); color: var(--gold); font-size: .86rem; font-weight: 600; }
 :root[data-theme='light'] .demo-note { color: #a86a00; }
@@ -395,7 +396,7 @@
   .module-grid { grid-template-columns: repeat(2, 1fr); }
   .bento { grid-template-columns: 1fr 1fr; }
   .b-wide { grid-column: span 2; }
-  .grid-3, .steps { grid-template-columns: 1fr; }
+  .grid-3, .grid-2, .steps { grid-template-columns: 1fr; }
   .ba-grid { grid-template-columns: 1fr; }
   .ba-arrow { transform: rotate(90deg); justify-self: center; }
   .module-block { grid-template-columns: 1fr; }

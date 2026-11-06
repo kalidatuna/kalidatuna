@@ -37,10 +37,9 @@ export default function pricing(el: HTMLElement, ctx: Ctx) {
         <tbody>${ROWS.map(([f, a, b]) => `<tr><td>${f}</td><td>${a}</td><td><strong>${b}</strong></td></tr>`).join('')}</tbody>
       </table></div>
     </div>
-    <div class="grid-3 pricing-notes">
+    <div class="grid-2 pricing-notes">
       <div class="card reveal"><h3>Teams & companies</h3><p>Training 5+ people? We offer volume pricing, team onboarding and progress reports.</p><a class="btn btn-ghost btn-sm" href="/contact?topic=Teams%20%26%20companies">Talk to us</a></div>
       <div class="card reveal"><h3>Gift Lumora</h3><p>Know someone who'd love to finally "get" AI? Lifetime access makes a thoughtful gift.</p><a class="btn btn-ghost btn-sm" href="/contact?topic=Other">Send a gift</a></div>
-      <div class="card reveal"><h3>Students & nonprofits</h3><p>Discounts available for students, teachers and registered nonprofits. Just ask.</p><a class="btn btn-ghost btn-sm" href="/contact?topic=Billing%20%26%20refunds">Request a discount</a></div>
     </div>
   </section>`;
 }

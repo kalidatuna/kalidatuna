@@ -156,7 +156,7 @@ These are business choices with sensible placeholders in the code. Review them:
 
 - **Brand and domain:** "Lumora" and the `@lumora.app` addresses used in the legal pages and as email defaults (`web/src/pages/legal.ts`, `.env`).
 - **Prices:** `server/src/billing.rs` and your Stripe prices.
-- **Promises in the copy:** the 14-day money-back guarantee, team/volume pricing, gifting and student discounts. Keep them only if you'll honour them.
+- **Promises in the copy (confirmed):** the 14-day money-back guarantee, team/volume pricing and gifting, all handled through the contact form.
 - **Legal pages:** `web/src/pages/legal.ts` contains starter Terms and Privacy text. Have them reviewed for your jurisdiction.
 - **Email provider:** create a Resend or Postmark account, verify your sending domain, and set the email variables above.
 - **Content freshness:** AI products change quickly. Lessons avoid fragile specifics, but plan a monthly review of `content/`, especially the Tool Finder pricing.
