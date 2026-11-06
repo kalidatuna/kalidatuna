@@ -143,15 +143,18 @@ test('members manage their account: profile, bookmarks, export, cancel, delete',
 });
 
 test('admins see business metrics; members cannot', async ({ page }) => {
-  await signUp(page, 'Member Only');
+  const memberName = `Member ${Date.now()}`;
+  await signUp(page, memberName);
   await page.goto('/admin');
   await expect(page).toHaveURL(/\/$/);
   await page.context().clearCookies();
-  await signUp(page, 'Owner Admin', uniqueEmail('admin').replace(/^admin-.*@/, 'admin@'));
+  // The admin account may already exist (other tests or a retry), so sign in or sign up.
+  const res = await page.context().request.post('/api/auth/login', { headers: { 'content-type': 'application/json' }, data: { email: 'admin@e2e.test', password: PASSWORD } });
+  if (!res.ok()) await signUp(page, 'Owner Admin', 'admin@e2e.test');
   await page.goto('/admin');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Business overview');
   await expect(page.locator('.kpi')).toHaveCount(6);
   await expect(page.locator('[data-rows] tr').first()).toBeVisible();
-  await page.getByPlaceholder('Search name or email').fill('member only');
+  await page.getByPlaceholder('Search name or email').fill(memberName);
   await expect(page.locator('[data-rows] tr')).toHaveCount(1);
 });

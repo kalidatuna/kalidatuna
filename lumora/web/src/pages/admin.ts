@@ -55,8 +55,11 @@ export default async function admin(el: HTMLElement) {
     </div>
   </section>`;
   const rows = el.querySelector<HTMLElement>('[data-rows]')!;
+  let latest = 0;
   const load = async (q = '') => {
+    const seq = ++latest;
     const { users } = await get<{ users: AdminUser[] }>(`/admin/users?q=${encodeURIComponent(q)}`);
+    if (seq !== latest) return; // a newer search has started; ignore this stale response
     rows.innerHTML = users.map((u) => `<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${esc(u.plan)}</td><td>${esc(u.plan_status)}</td><td>${u.lessons_completed}</td><td>${fmtDate(u.created_at)}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">No members found.</td></tr>';
   };
   load();
