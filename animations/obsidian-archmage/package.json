@@ -1,0 +1,6 @@
+{
+  "name": "obsidian-archmage",
+  "private": true,
+  "description": "10-second CGI clip of an original masked sorcerer casting a spell, built with Three.js",
+  "dependencies": { "three": "0.169.0" }
+}
